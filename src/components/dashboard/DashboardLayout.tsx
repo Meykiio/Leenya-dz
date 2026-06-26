@@ -1,0 +1,263 @@
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessInfo } from "@/hooks/use-business-info";
+import { NavLink } from "@/components/NavLink";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Users2,
+  Scissors,
+  UserCheck,
+  BarChart2,
+  Settings2,
+  LogOut,
+  Menu,
+  X,
+  Copy,
+} from "lucide-react";
+import FloatingHelp from "@/components/FloatingHelp";
+
+const mainNav = [
+  { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, end: true },
+  { to: "/dashboard/bookings", label: "Réservations", icon: CalendarDays, pending: true },
+  { to: "/dashboard/queue", label: "File d'attente", icon: Users2, live: true },
+  { to: "/dashboard/services", label: "Services", icon: Scissors },
+  { to: "/dashboard/staff", label: "Équipe", icon: UserCheck },
+];
+
+const secondaryNav = [
+  { to: "/dashboard/analytics", label: "Analytiques", icon: BarChart2 },
+  { to: "/dashboard/settings", label: "Paramètres", icon: Settings2 },
+];
+
+const allNav = [...mainNav, ...secondaryNav];
+
+const categoryLabels: Record<string, string> = {
+  beauty_salon: "Salon de beauté",
+  barbershop: "Barbershop",
+  dental: "Dentiste",
+  clinic: "Clinique",
+  physiotherapy: "Kinésithérapie",
+  veterinary: "Vétérinaire",
+  other: "Autre",
+};
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, signOut } = useAuth();
+  const { business } = useBusinessInfo();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [queueCount, setQueueCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utilisateur";
+  const initials = profileName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+
+  // Fetch and subscribe to live queue count
+  useEffect(() => {
+    if (!business) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    const fetchCount = async () => {
+      const { count, error } = await supabase
+        .from("queue_tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", business.id)
+        .eq("queue_date", today)
+        .eq("status", "waiting");
+      if (!error) setQueueCount(count || 0);
+    };
+
+    fetchCount();
+
+    const channel = supabase
+      .channel("sidebar-queue-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "queue_tickets", filter: `business_id=eq.${business.id}` }, () => {
+        fetchCount();
+      })
+      .subscribe();
+
+    const fetchPendingCount = async () => {
+      if (!business) return;
+      const { count, error } = await supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", business.id)
+        .gte("date", format(new Date(), "yyyy-MM-dd"))
+        .eq("status", "pending");
+      if (!error) setPendingCount(count || 0);
+    };
+
+    fetchPendingCount();
+
+    const bookingChannel = supabase
+      .channel("sidebar-pending-bookings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `business_id=eq.${business.id}` }, () => {
+        fetchPendingCount();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(bookingChannel);
+    };
+  }, [business]);
+
+  const copyLink = async () => {
+    if (!business) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/${business.slug}`);
+    toast({ title: "Lien copie!" });
+  };
+
+  const navItemClasses = "flex items-center gap-2 rounded-md px-2 h-8 text-[13px] font-medium transition-all duration-[var(--transition-fast)]";
+  const navDefault = `${navItemClasses} text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] hover:text-[var(--text-primary)]`;
+  const navActive = "bg-[var(--accent-light)] text-[var(--accent)]";
+
+  const renderNavSection = (items: typeof mainNav, label?: string) => (
+    <>
+      {label && (
+        <p className="px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-[var(--text-tertiary)]">
+          {label}
+        </p>
+      )}
+      {items.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.end}
+          className={navDefault}
+          activeClassName={navActive}
+          onClick={() => setMobileOpen(false)}
+        >
+          <item.icon className="h-[15px] w-[15px] shrink-0" />
+          <span className="flex-1">{item.label}</span>
+          {item.live && queueCount > 0 && (
+            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-white font-mono text-[10px] font-semibold px-1">
+              {queueCount > 99 ? "99+" : queueCount}
+            </span>
+          )}
+          {item.pending && pendingCount > 0 && (
+            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[var(--warning)] text-white font-mono text-[10px] font-semibold px-1">
+              {pendingCount > 99 ? "99+" : pendingCount}
+            </span>
+          )}
+        </NavLink>
+      ))}
+    </>
+  );
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full">
+      {/* Logo area */}
+      <div className="px-3 pt-3 pb-3">
+        <h1 className="text-[15px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">Leenya</h1>
+        {business && (
+          <p className="text-xs text-[var(--text-tertiary)] truncate max-w-[180px] mt-0.5">
+            {business.name}
+          </p>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="mx-2.5 border-t border-[var(--border-default)] mb-2" />
+
+      {/* Nav */}
+      <nav className="flex-1 px-2.5 space-y-0.5 overflow-y-auto">
+        {renderNavSection(mainNav)}
+        <div className="mx-0 my-2 border-t border-[var(--border-default)]" />
+        {renderNavSection(secondaryNav)}
+      </nav>
+
+      {/* User profile */}
+      <div className="px-2.5 pb-3 pt-2.5 border-t border-[var(--border-default)]">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-light)] text-[var(--accent)] text-[11px] font-semibold shrink-0">
+            {initials}
+          </div>
+          <span className="flex-1 text-xs font-medium text-[var(--text-primary)] truncate">{profileName}</span>
+          <button
+            onClick={signOut}
+            className="text-[var(--text-tertiary)] hover:text-[var(--error)] transition-colors p-0.5"
+            title="Déconnexion"
+          >
+            <LogOut className="h-[13px] w-[13px]" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex bg-[var(--bg-base)]">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:w-[220px] lg:flex-col lg:fixed lg:inset-y-0 bg-[var(--bg-subtle)] border-r border-[var(--border-default)]">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[var(--bg-subtle)] border-r border-[var(--border-default)]">
+            <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+              <X className="h-5 w-5" />
+            </button>
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 lg:pl-[220px] flex flex-col">
+        {/* Top bar */}
+        <header className="sticky top-0 z-40 flex items-center justify-between h-[50px] border-b border-[var(--border-subtle)] bg-[var(--bg-base)] px-4 lg:px-6">
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden text-foreground" onClick={() => setMobileOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-semibold text-[var(--text-primary)] hidden sm:inline">
+              {format(new Date(), "EEEE d MMMM", { locale: fr })}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {business && (
+              <Button variant="ghost" size="sm" onClick={copyLink} className="gap-1.5 text-[var(--text-tertiary)] text-xs hidden sm:flex">
+                <Copy className="h-3.5 w-3.5" /> Copier le lien
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
+          <div className="max-w-[1100px]">
+            {children}
+          </div>
+        </main>
+
+        {/* Mobile bottom nav */}
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border-default)] bg-[var(--bg-base)] flex items-center justify-around py-2">
+          {allNav.slice(0, 5).map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={(item as any).end}
+              className="flex flex-col items-center gap-0.5 px-2 py-1 text-[var(--text-tertiary)]"
+              activeClassName="text-[var(--accent)]"
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="text-[10px]">{item.label.split(" ")[0]}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+
+      <FloatingHelp />
+    </div>
+  );
+}
