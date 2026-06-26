@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface BookingDay {
   date: string;
   completed: number;
+  cancelled: number;
   noShow: number;
 }
 
@@ -13,7 +14,7 @@ export default function BookingsChart({ data }: { data: BookingDay[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Réservations par jour</CardTitle>
+        <CardTitle className="text-base">Reservations par jour</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">
@@ -36,8 +37,10 @@ export default function BookingsChart({ data }: { data: BookingDay[] }) {
                 }}
                 labelFormatter={(v) => format(parseISO(v as string), "EEEE d MMM", { locale: fr })}
               />
-              <Bar dataKey="completed" name="Complétées" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="noShow" name="No-show" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="completed" name="Terminees" fill="#187A4A" stackId="a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="cancelled" name="Annulees" fill="hsl(var(--destructive))" stackId="a" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="noShow" name="No-show" fill="#A0A09C" stackId="a" radius={[0, 0, 4, 4]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

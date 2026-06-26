@@ -6,61 +6,85 @@ import { Badge } from "@/components/ui/badge";
 import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
-interface BookingRow {
+interface HistoryRow {
   id: string;
+  type: "booking" | "queue";
   date: string;
-  start_time: string;
-  end_time: string;
+  time: string;
   client_name: string;
   client_phone: string;
   service_name: string | null;
   staff_name: string | null;
-  duration: number | null;
-  price: number | null;
-  status: string | null;
+  status: string;
+  label?: string;
 }
 
-const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusStyles: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pending: { label: "En attente", variant: "outline" },
-  confirmed: { label: "Confirmé", variant: "secondary" },
-  arrived: { label: "Arrivé", variant: "secondary" },
+  confirmed: { label: "Confirme", variant: "secondary" },
+  arrived: { label: "Arrive", variant: "secondary" },
   in_service: { label: "En cours", variant: "default" },
-  completed: { label: "Terminé", variant: "default" },
-  cancelled: { label: "Annulé", variant: "destructive" },
+  completed: { label: "Termine", variant: "default" },
+  cancelled: { label: "Annule", variant: "destructive" },
   no_show: { label: "Absent", variant: "destructive" },
+  waiting: { label: "En attente", variant: "outline" },
+  called: { label: "Appele", variant: "secondary" },
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
-export default function BookingHistoryTable({ data }: { data: BookingRow[] }) {
+export default function BookingHistoryTable({ data }: { data: HistoryRow[] }) {
+  const [filter, setFilter] = useState<"all" | "booking" | "queue">("all");
   const [page, setPage] = useState(0);
-  const totalPages = Math.ceil(data.length / PAGE_SIZE);
-  const pageData = data.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const filtered = filter === "all" ? data : data.filter((r) => r.type === filter);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const exportCSV = () => {
-    const headers = "Date,Heure,Client,Téléphone,Service,Staff,Durée (min),Prix (DZD),Statut\n";
-    const rows = data.map((r) =>
+    const headers = "Type,Date,Heure,Client,Telephone,Service,Staff,Label,Statut\n";
+    const rows = filtered.map((r) =>
       [
-        r.date, r.start_time, r.client_name, r.client_phone,
-        r.service_name || "", r.staff_name || "", r.duration || "",
-        r.price || "", statusLabels[r.status || ""]?.label || r.status
+        r.type === "booking" ? "Reservation" : "File",
+        r.date, r.time, r.client_name, r.client_phone,
+        r.service_name || "", r.staff_name || "", r.label || "",
+        statusStyles[r.status]?.label || r.status,
       ].join(",")
     ).join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reservations-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.download = `activite-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Historique des réservations</CardTitle>
-        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1">
+      <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base">Historique</CardTitle>
+          <div className="flex rounded-md border border-[var(--border-default)] overflow-hidden h-7">
+            {(["all", "booking", "queue"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => { setFilter(f); setPage(0); }}
+                className={cn(
+                  "px-2.5 text-[10px] font-medium transition-colors",
+                  filter === f
+                    ? "bg-[var(--accent)] text-white"
+                    : "bg-[var(--bg-base)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                )}
+              >
+                {f === "all" ? "Toutes" : f === "booking" ? "Reservations" : "File"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1 h-7 text-xs">
           <Download className="h-3 w-3" /> CSV
         </Button>
       </CardHeader>
@@ -68,11 +92,11 @@ export default function BookingHistoryTable({ data }: { data: BookingRow[] }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-16">Type</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Client</TableHead>
               <TableHead className="hidden md:table-cell">Service</TableHead>
               <TableHead className="hidden lg:table-cell">Staff</TableHead>
-              <TableHead className="hidden md:table-cell">Prix</TableHead>
               <TableHead>Statut</TableHead>
             </TableRow>
           </TableHeader>
@@ -80,17 +104,25 @@ export default function BookingHistoryTable({ data }: { data: BookingRow[] }) {
             {pageData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Aucune réservation pour cette période
+                  Aucune activite pour cette periode
                 </TableCell>
               </TableRow>
             ) : (
               pageData.map((r) => {
-                const st = statusLabels[r.status || ""] || { label: r.status, variant: "outline" as const };
+                const st = statusStyles[r.status] || { label: r.status, variant: "outline" as const };
                 return (
-                  <TableRow key={r.id}>
+                  <TableRow key={`${r.type}-${r.id}`}>
+                    <TableCell>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] px-1.5 py-0",
+                        r.type === "booking" ? "text-primary border-primary/30" : "text-warning border-warning/30"
+                      )}>
+                        {r.type === "booking" ? "RDV" : "File"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-sm">
                       <div>{format(parseISO(r.date), "d MMM", { locale: fr })}</div>
-                      <div className="text-xs text-muted-foreground">{r.start_time?.slice(0, 5)}</div>
+                      <div className="text-xs text-muted-foreground">{r.time?.slice(0, 5)}</div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">{r.client_name}</div>
@@ -98,11 +130,8 @@ export default function BookingHistoryTable({ data }: { data: BookingRow[] }) {
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm">{r.service_name || "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{r.staff_name || "—"}</TableCell>
-                    <TableCell className="hidden md:table-cell text-sm">
-                      {r.price ? `${r.price.toLocaleString("fr-DZ")} DZD` : "—"}
-                    </TableCell>
                     <TableCell>
-                      <Badge variant={st.variant}>{st.label}</Badge>
+                      <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
                     </TableCell>
                   </TableRow>
                 );

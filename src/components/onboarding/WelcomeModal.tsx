@@ -9,16 +9,16 @@ interface WelcomeModalProps {
 
 const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
   const [copied, setCopied] = useState(false);
-  const link = `leenya.dz/${slug}`;
+  const link = `${window.location.origin}/${slug}`;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(`https://${link}`);
+    await navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleWhatsApp = () => {
-    const text = encodeURIComponent(`Réservez en ligne sur https://${link}`);
+    const text = encodeURIComponent(`Réservez en ligne sur ${link}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 

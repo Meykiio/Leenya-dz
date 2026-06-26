@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import { formatDateForDB } from "@/lib/timeSlots";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,9 @@ interface TicketData {
   status: string;
   position_in_queue: number | null;
   estimated_wait_minutes: number | null;
+  service_id: string | null;
+  business_id: string | null;
+  queue_date: string | null;
 }
 
 const CACHE_PREFIX = "leenya_ticket_";
@@ -40,10 +44,12 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const [currentServing, setCurrentServing] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState(0);
   const [isCalled, setIsCalled] = useState(false);
-  const [avgServiceMin, setAvgServiceMin] = useState<number | null>(null);
+  const [avgWaitTime, setAvgWaitTime] = useState<number | null>(null);
+  const [staffCount, setStaffCount] = useState(1);
   const [isOffline, setIsOffline] = useState(false);
   const businessIdRef = useRef<string | null>(null);
   const queueDateRef = useRef<string | null>(null);
+  const serviceIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const cached = localStorage.getItem(`${CACHE_PREFIX}${ticketId}`);
@@ -61,23 +67,51 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
     localStorage.setItem(`${CACHE_PREFIX}${ticketId}`, JSON.stringify({ ticket: t, waitingCount: wc, currentServing: cs }));
   };
 
-  const computeAvg = async (bizId: string, qDate: string) => {
-    const { data } = await supabase
+  const fetchHistoricalData = useCallback(async (bizId: string, servId: string | null) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const fromDate = formatDateForDB(thirtyDaysAgo);
+
+    let q = supabase
       .from("queue_tickets")
-      .select("called_at, completed_at")
+      .select("called_at, created_at")
       .eq("business_id", bizId)
-      .eq("queue_date", qDate)
       .eq("status", "completed")
       .not("called_at", "is", null)
-      .not("completed_at", "is", null);
+      .not("created_at", "is", null)
+      .gte("queue_date", fromDate);
 
+    if (servId) q = q.eq("service_id", servId);
+
+    const { data } = await q;
     if (data && data.length > 0) {
       const totalMin = data.reduce((sum, t) => {
-        return sum + (new Date(t.completed_at!).getTime() - new Date(t.called_at!).getTime()) / 60000;
+        return sum + (new Date(t.called_at!).getTime() - new Date(t.created_at!).getTime()) / 60000;
       }, 0);
-      setAvgServiceMin(Math.round(totalMin / data.length));
+      setAvgWaitTime(Math.round(totalMin / data.length));
+    } else {
+      setAvgWaitTime(null);
     }
-  };
+
+    let sc = 1;
+    if (servId) {
+      const { data: ssData } = await supabase
+        .from("staff_services")
+        .select("staff_member_id")
+        .eq("service_id", servId);
+      if (ssData && ssData.length > 0) {
+        const ids = ssData.map((s) => s.staff_member_id);
+        const { count } = await supabase
+          .from("staff_members")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", bizId)
+          .eq("is_active", true)
+          .in("id", ids);
+        if (count && count > 0) sc = count;
+      }
+    }
+    setStaffCount(sc);
+  }, []);
 
   const refreshQueueContext = async (bizId: string, qDate: string, ticketNumber: number) => {
     const { data: queueData } = await supabase
@@ -100,7 +134,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   useEffect(() => {
     supabase
       .from("queue_tickets")
-      .select("ticket_label, ticket_number, status, position_in_queue, estimated_wait_minutes, business_id, queue_date")
+      .select("ticket_label, ticket_number, status, position_in_queue, estimated_wait_minutes, service_id, business_id, queue_date")
       .eq("id", ticketId)
       .single()
       .then(({ data, error }) => {
@@ -113,18 +147,22 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           status: data.status ?? "waiting",
           position_in_queue: data.position_in_queue,
           estimated_wait_minutes: data.estimated_wait_minutes,
+          service_id: data.service_id,
+          business_id: data.business_id,
+          queue_date: data.queue_date,
         };
         setTicket(t);
         if (data.status === "called") setIsCalled(true);
         businessIdRef.current = data.business_id;
         queueDateRef.current = data.queue_date;
+        serviceIdRef.current = data.service_id;
 
-        computeAvg(data.business_id, data.queue_date);
+        fetchHistoricalData(data.business_id, data.service_id);
         refreshQueueContext(data.business_id, data.queue_date, data.ticket_number).then((ctx) => {
           if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
         });
       });
-  }, [ticketId]);
+  }, [ticketId, fetchHistoricalData]);
 
   useEffect(() => {
     if (!businessIdRef.current) return;
@@ -145,6 +183,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
               status: updated.status,
               position_in_queue: updated.position_in_queue,
               estimated_wait_minutes: updated.estimated_wait_minutes,
+              service_id: updated.service_id,
+              business_id: updated.business_id,
+              queue_date: updated.queue_date,
             };
             setTicket(t);
             if (updated.status === "called") setIsCalled(true);
@@ -152,7 +193,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
 
           if (businessIdRef.current && queueDateRef.current && ticket) {
             if (payload.new?.status === 'completed') {
-              computeAvg(businessIdRef.current, queueDateRef.current);
+              fetchHistoricalData(businessIdRef.current, serviceIdRef.current);
             }
             const ctx = await refreshQueueContext(
               businessIdRef.current,
@@ -169,7 +210,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       });
 
     return () => { supabase.removeChannel(channel); };
-  }, [ticketId, businessIdRef.current, ticket?.ticket_number]);
+  }, [ticketId, businessIdRef.current, ticket?.ticket_number, fetchHistoricalData]);
 
   const handleCancel = async () => {
     const { error } = await supabase
@@ -193,8 +234,8 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   if (ticket.status === "completed") return <TicketCompleted />;
   if (ticket.status === "cancelled") return <TicketCancelled onBack={onBack} />;
 
-  const fallbackMin = avgServiceMin ?? 10;
-  const estimatedMin = ticket.estimated_wait_minutes ?? waitingCount * fallbackMin;
+  const computedEwt = ticket.estimated_wait_minutes ?? Math.round((waitingCount / Math.max(staffCount, 1)) * (avgWaitTime ?? 15));
+  const estimatedMin = computedEwt;
   const progress = waitingCount > 0 ? Math.max(10, Math.min(90, 100 - (waitingCount / (waitingCount + 3)) * 100)) : 95;
 
   return (
@@ -272,7 +313,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           </div>
         </div>
 
-        <div className="mt-5">
+        <p className="text-[11px] text-muted-foreground/60 mt-3">* Estimation basée sur l'historique — le temps réel peut varier</p>
+
+        <div className="mt-4">
           <div className="w-full h-[3px] bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary rounded-full transition-all duration-500"

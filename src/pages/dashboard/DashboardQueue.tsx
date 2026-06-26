@@ -17,8 +17,9 @@ const DashboardQueue = () => {
   const { business } = useBusinessInfo();
   const [tickets, setTickets] = useState<QueueTicket[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [staffMembers, setStaffMembers] = useState<{ id: string; display_name: string }[]>([]);
   const [showAddClient, setShowAddClient] = useState(false);
-  const [newClient, setNewClient] = useState({ name: "", phone: "", service_id: "" });
+  const [newClient, setNewClient] = useState({ name: "", phone: "", service_id: "", staff_member_id: "" });
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +29,7 @@ const DashboardQueue = () => {
     if (!business) return;
     const { data, error: fetchError } = await supabase
       .from("queue_tickets")
-      .select("*, services(name)")
+      .select("*, services(name), staff_members(display_name)")
       .eq("business_id", business.id)
       .eq("queue_date", today)
       .in("status", ["waiting", "called", "in_service", "completed"])
@@ -66,8 +67,23 @@ const DashboardQueue = () => {
         setServices(data || []);
       }
     };
+
+    const fetchStaff = async () => {
+      const { data, error } = await supabase
+        .from("staff_members")
+        .select("id, display_name")
+        .eq("business_id", business.id)
+        .eq("is_active", true);
+
+      if (error) {
+        if (import.meta.env.DEV) console.error('[DashboardQueue] failed to fetch staff:', error.message);
+      } else {
+        setStaffMembers(data || []);
+      }
+    };
     
     fetchServices();
+    fetchStaff();
 
     const channel = supabase
       .channel("queue-realtime")
@@ -161,6 +177,7 @@ const DashboardQueue = () => {
       client_name: newClient.name,
       client_phone: newClient.phone,
       service_id: newClient.service_id || null,
+      staff_member_id: newClient.staff_member_id || null,
       ticket_number: ticket_num,
       ticket_label: ticket_lbl,
       queue_date: today,
@@ -171,7 +188,7 @@ const DashboardQueue = () => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: `Ticket ${ticket_lbl} créé` });
-      setNewClient({ name: "", phone: "", service_id: "" });
+      setNewClient({ name: "", phone: "", service_id: "", staff_member_id: "" });
       setShowAddClient(false);
     }
     setLoading(false);
@@ -294,11 +311,14 @@ const DashboardQueue = () => {
           name={newClient.name}
           phone={newClient.phone}
           serviceId={newClient.service_id}
+          staffId={newClient.staff_member_id}
           services={services}
+          staffMembers={staffMembers}
           loading={loading}
           onChangeName={(v) => setNewClient((prev) => ({ ...prev, name: v }))}
           onChangePhone={(v) => setNewClient((prev) => ({ ...prev, phone: v }))}
           onChangeService={(v) => setNewClient((prev) => ({ ...prev, service_id: v }))}
+          onChangeStaff={(v) => setNewClient((prev) => ({ ...prev, staff_member_id: v }))}
           onSubmit={addToQueue}
         />
       </div>

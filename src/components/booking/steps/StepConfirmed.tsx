@@ -43,9 +43,9 @@ export default function StepConfirmed({
       >
         <CheckCircle2 className="h-6 w-6" style={{ color: 'var(--success)' }} />
       </motion.div>
-      <h2 className="text-[20px] font-bold text-foreground">Reservation confirmee</h2>
-      <p className="text-[13px] font-mono text-muted-foreground">
-        #{bookingId?.slice(0, 8).toUpperCase()}
+      <h2 className="text-[20px] font-bold text-foreground">Demande envoyée</h2>
+      <p className="text-[13px] text-muted-foreground">
+        En attente de confirmation par le salon.
       </p>
 
       <div className="rounded-md border border-border bg-muted/50 p-[14px_16px] text-left space-y-1">

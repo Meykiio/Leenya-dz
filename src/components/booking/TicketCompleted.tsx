@@ -7,7 +7,7 @@ export default function TicketCompleted() {
       >
         <span style={{ color: 'var(--success)' }} className="text-xl">&#x2713;</span>
       </div>
-      <h2 className="text-[20px] font-bold text-foreground">Service termine</h2>
+      <h2 className="text-[20px] font-bold text-foreground">Service terminé</h2>
       <p className="text-[13px] text-muted-foreground">Merci pour votre visite !</p>
     </div>
   );

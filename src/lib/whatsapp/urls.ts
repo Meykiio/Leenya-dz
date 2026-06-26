@@ -54,13 +54,15 @@ export function buildQueueTicketUrl(
   phone: string | null,
   businessName: string,
   ticketLabel: string,
-  serviceName: string
+  serviceName: string,
+  waitTime?: number
 ): string {
   const lines = [
     `🎫 Ticket ${ticketLabel} - ${businessName}`,
     `💆 Service: ${serviceName}`,
-    `Vous serez notifié(e) quand c'est votre tour.`,
-  ];
+    waitTime != null ? `⏱ Attente estimée: ~${waitTime} min` : null,
+    `Surveillez l'ecran d'affichage pour votre tour.`,
+  ].filter(Boolean);
   return buildWaUrl(phone, lines.join("\n"));
 }
 
@@ -120,6 +122,24 @@ export function buildBookingAcceptedUrl(
     ``,
     `Merci de votre confiance!`,
   ].filter(Boolean);
+  return buildWaUrl(clientPhone, lines.join("\n"));
+}
+
+export function buildBookingCancelledUrl(
+  clientPhone: string,
+  businessName: string,
+  date: string,
+  time: string,
+  serviceName: string
+): string {
+  const lines = [
+    `ℹ️ Réservation annulée`,
+    `🏪 ${businessName}`,
+    `📅 ${date} à ${time}`,
+    `💆 Service: ${serviceName}`,
+    ``,
+    `N'hésitez pas à réserver à nouveau.`,
+  ];
   return buildWaUrl(clientPhone, lines.join("\n"));
 }
 

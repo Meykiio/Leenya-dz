@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Clock, Users, Share2, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import TicketTracker from "./TicketTracker";
+import StepStaff from "@/components/booking/steps/StepStaff";
 import { formatDateForDB } from "@/lib/timeSlots";
 import { buildQueueTicketUrl } from "@/lib/whatsapp";
 
@@ -13,6 +14,12 @@ interface Service {
   name: string;
   duration_minutes: number;
   price_dzd: number | null;
+}
+
+interface StaffMember {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
 }
 
 interface Props {
@@ -26,6 +33,10 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const [estimatedWait, setEstimatedWait] = useState(0);
   const [currentTicket, setCurrentTicket] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null | "no_preference">(null);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [staffConfirmed, setStaffConfirmed] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -36,31 +47,61 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
   const today = formatDateForDB(new Date());
 
-  const computeAvgWait = async () => {
-    const { data: completed } = await supabase
+  const computeEWT = async (serviceId: string | null, waiting: number) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const fromDate = formatDateForDB(thirtyDaysAgo);
+
+    let query = supabase
       .from("queue_tickets")
-      .select("called_at, completed_at")
+      .select("called_at, created_at")
       .eq("business_id", businessId)
-      .eq("queue_date", today)
       .eq("status", "completed")
       .not("called_at", "is", null)
-      .not("completed_at", "is", null);
+      .not("created_at", "is", null)
+      .gte("queue_date", fromDate);
 
+    if (serviceId) query = query.eq("service_id", serviceId);
+
+    const { data: completed } = await query;
+
+    let avgWaitMin: number;
     if (completed && completed.length > 0) {
       const totalMin = completed.reduce((sum, t) => {
-        const diff = (new Date(t.completed_at!).getTime() - new Date(t.called_at!).getTime()) / 60000;
-        return sum + diff;
+        return sum + (new Date(t.called_at!).getTime() - new Date(t.created_at!).getTime()) / 60000;
       }, 0);
-      return Math.round(totalMin / completed.length);
+      avgWaitMin = Math.round(totalMin / completed.length);
+    } else {
+      const fallback = selectedService?.duration_minutes ?? 10;
+      avgWaitMin = Math.round(fallback * 1.5);
     }
-    return null;
+
+    let staffCount = 1;
+    if (serviceId) {
+      const { data: ssData } = await supabase
+        .from("staff_services")
+        .select("staff_member_id")
+        .eq("service_id", serviceId);
+      if (ssData && ssData.length > 0) {
+        const ids = ssData.map((s) => s.staff_member_id);
+        const { count } = await supabase
+          .from("staff_members")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .eq("is_active", true)
+          .in("id", ids);
+        if (count && count > 0) staffCount = count;
+      }
+    }
+
+    return Math.round((waiting / staffCount) * avgWaitMin);
   };
 
   useEffect(() => {
     const fetchStats = async () => {
       const { data } = await supabase
         .from("queue_tickets")
-        .select("ticket_label, status, ticket_number, estimated_wait_minutes")
+        .select("ticket_label, status, ticket_number")
         .eq("business_id", businessId)
         .eq("queue_date", today)
         .in("status", ["waiting", "called", "in_service"])
@@ -70,9 +111,8 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       const waiting = data.filter((t) => t.status === "waiting");
       setWaitingCount(waiting.length);
 
-      const avgMin = await computeAvgWait();
-      const fallback = selectedService?.duration_minutes ?? 10;
-      setEstimatedWait(waiting.length * (avgMin ?? fallback));
+      const ewt = await computeEWT(selectedService?.id ?? null, waiting.length);
+      setEstimatedWait(ewt);
 
       const serving = data.find((t) => t.status === "in_service" || t.status === "called");
       setCurrentTicket(serving?.ticket_label ?? null);
@@ -88,6 +128,46 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     return () => { supabase.removeChannel(channel); };
   }, [businessId, today, selectedService]);
+
+  useEffect(() => {
+    if (!selectedService) {
+      setStaffMembers([]);
+      setSelectedStaff(null);
+      setStaffConfirmed(false);
+      return;
+    }
+    setLoadingStaff(true);
+    setStaffConfirmed(false);
+    setSelectedStaff(null);
+
+    const fetchStaffAndAssignments = async () => {
+      const [{ data: staffData }, { data: ssData }] = await Promise.all([
+        supabase
+          .from("staff_members")
+          .select("id, display_name, avatar_url")
+          .eq("business_id", businessId)
+          .eq("is_active", true),
+        supabase
+          .from("staff_services")
+          .select("staff_member_id")
+          .eq("service_id", selectedService.id),
+      ]);
+
+      if (!staffData || staffData.length === 0) {
+        setStaffMembers([]);
+        setLoadingStaff(false);
+        return;
+      }
+
+      const assignedIds = new Set((ssData || []).map((s) => s.staff_member_id));
+      const filtered = staffData.filter((s) => assignedIds.has(s.id));
+      setStaffMembers(filtered);
+      if (filtered.length === 0) setStaffConfirmed(true);
+      setLoadingStaff(false);
+    };
+
+    fetchStaffAndAssignments();
+  }, [selectedService, businessId]);
 
   const validatePhone = (value: string) => {
     const digits = value.replace(/\D/g, "");
@@ -134,11 +214,14 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     const { ticket_num, ticket_lbl } = ticketData[0];
 
+    const staffMemberId = selectedStaff && selectedStaff !== "no_preference" ? selectedStaff.id : null;
+
     const { data, error } = await supabase
       .from("queue_tickets")
       .insert({
         business_id: businessId,
         service_id: selectedService.id,
+        staff_member_id: staffMemberId,
         client_name: name.trim(),
         client_phone: phone.replace(/\D/g, ''),
         ticket_number: ticket_num,
@@ -146,6 +229,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         queue_date: today,
         status: "waiting",
         position_in_queue: ticket_num,
+        estimated_wait_minutes: estimatedWait,
       })
       .select("id")
       .single();
@@ -172,7 +256,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         {joinedLabel && phone && (
           <div className="px-5 pb-4">
             <Button variant="outline" size="sm" className="w-full gap-2 h-[44px]" asChild>
-              <a href={buildQueueTicketUrl(null, businessName, joinedLabel, joinedServiceName)} target="_blank" rel="noopener noreferrer">
+              <a href={buildQueueTicketUrl(null, businessName, joinedLabel, joinedServiceName, estimatedWait)} target="_blank" rel="noopener noreferrer">
                 <Share2 className="h-4 w-4" /> Partager sur WhatsApp
               </a>
             </Button>
@@ -194,6 +278,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {waitingCount} en attente</span>
           <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> ~<span className="font-mono">{estimatedWait}</span> min</span>
         </div>
+        <p className="text-[11px] text-muted-foreground/60">* Estimation basée sur l'historique — le temps réel peut varier</p>
         {currentTicket && (
           <p className="text-[12px] text-muted-foreground">
             En cours : <span className="font-mono font-semibold text-foreground">{currentTicket}</span>
@@ -236,8 +321,19 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         </div>
       </div>
 
+      {/* Staff selection */}
+      {selectedService && staffMembers.length > 0 && !staffConfirmed && (
+        <StepStaff
+          staffMembers={staffMembers}
+          selectedStaff={selectedStaff}
+          onSelect={(s) => setSelectedStaff(s)}
+          onBack={() => { setSelectedService(null); setStaffConfirmed(false); }}
+          onContinue={() => setStaffConfirmed(true)}
+        />
+      )}
+
       {/* Join form */}
-      {selectedService && (
+      {selectedService && (staffMembers.length === 0 || staffConfirmed) && (
         <div className="space-y-3">
           <h3 className="text-[15px] font-semibold text-foreground">Rejoindre la file</h3>
           <div>

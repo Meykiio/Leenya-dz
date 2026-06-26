@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Plus, CalendarDays } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl } from "@/lib/whatsapp";
+import { buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl, buildBookingCancelledUrl } from "@/lib/whatsapp";
 import type { Booking, Service, StaffMember, Business, NewBookingForm } from "@/types";
 import BookingFilters from "./bookings/BookingFilters";
 import BookingRow from "./bookings/BookingRow";
@@ -40,6 +40,7 @@ const DashboardBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [filterMode, setFilterMode] = useState<"upcoming" | "date">("upcoming");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -56,13 +57,21 @@ const DashboardBookings = () => {
 
   const fetchBookings = async () => {
     if (!business) return;
-    const dateStr = format(selectedDate, "yyyy-MM-dd");
-    const { data, error } = await supabase
+
+    let query = supabase
       .from("bookings")
       .select("*, services(name, price_dzd, duration_minutes), staff_members(display_name)")
-      .eq("business_id", business.id)
-      .eq("date", dateStr)
-      .order("start_time");
+      .eq("business_id", business.id);
+
+    if (filterMode === "upcoming") {
+      const today = format(new Date(), "yyyy-MM-dd");
+      query = query.gte("date", today).order("date").order("start_time");
+    } else {
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      query = query.eq("date", dateStr).order("start_time");
+    }
+
+    const { data, error } = await query;
 
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     setBookings(data || []);
@@ -126,7 +135,7 @@ const DashboardBookings = () => {
   useEffect(() => {
     if (!business) return;
     fetchBookings();
-  }, [business, selectedDate]);
+  }, [business, selectedDate, filterMode]);
 
   useEffect(() => {
     if (!business) return;
@@ -168,10 +177,21 @@ const DashboardBookings = () => {
     await updateStatus(id, "confirmed");
   };
 
-  // Reject booking: pending → cancelled
+  // Reject booking: pending → cancelled + send WhatsApp cancellation
   const rejectBooking = async (id: string) => {
+    const booking = bookings.find(b => b.id === id);
     await updateStatus(id, "cancelled");
     toast({ title: "Réservation refusée" });
+    if (booking && business && businessDetails) {
+      const url = buildBookingCancelledUrl(
+        booking.client_phone,
+        business.name,
+        format(new Date(booking.date), "d MMM yyyy", { locale: fr }),
+        booking.start_time?.slice(0, 5),
+        booking.services?.name || "Service"
+      );
+      window.open(url, "_blank");
+    }
   };
 
   // Send reminder to client
@@ -267,10 +287,14 @@ const DashboardBookings = () => {
           <PendingApprovals
             businessId={business.id}
             onStatusChange={fetchBookings}
+            onAccept={acceptBooking}
+            onReject={rejectBooking}
           />
         )}
 
         <BookingFilters
+          filterMode={filterMode}
+          onFilterModeChange={setFilterMode}
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           search={search}

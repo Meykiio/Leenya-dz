@@ -32,7 +32,11 @@ export default function QueueWaitingList({ tickets, businessName, onCall, onCanc
           <span className="font-mono text-[15px] font-semibold text-[var(--text-primary)] shrink-0 w-14">{t.ticket_label}</span>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
-            <p className="text-xs text-[var(--text-tertiary)]">{t.services?.name || "—"} · depuis {timeAgo(t.created_at)}</p>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              {t.services?.name || "—"}
+              {t.staff_members?.display_name && <> · {t.staff_members.display_name}</>}
+              <span className="mx-1.5">·</span>depuis {timeAgo(t.created_at)}
+            </p>
           </div>
           <div className="flex items-center gap-1">
             <Button size="sm" onClick={() => onCall(t.id)} className="gap-1 h-[26px] text-xs px-2.5">

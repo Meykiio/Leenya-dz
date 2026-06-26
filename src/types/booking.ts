@@ -41,6 +41,7 @@ export interface QueueTicket {
   called_at: string | null;
   completed_at: string | null;
   services?: Pick<Service, "name"> | null;
+  staff_members?: Pick<StaffMember, "display_name"> | null;
 }
 
 export interface Review {
@@ -74,6 +75,7 @@ export interface NewQueueTicketForm {
   name: string;
   phone: string;
   service_id: string;
+  staff_member_id?: string;
 }
 
 export interface BookingFilters {

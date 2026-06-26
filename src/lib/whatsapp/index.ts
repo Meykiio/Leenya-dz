@@ -8,4 +8,5 @@ export {
   buildBookingNotificationForBusinessUrl,
   buildBookingAcceptedUrl,
   buildQueueCalledUrl,
+  buildBookingCancelledUrl,
 } from "./urls";

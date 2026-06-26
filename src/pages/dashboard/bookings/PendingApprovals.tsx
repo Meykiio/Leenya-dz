@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Clock, AlertCircle, ArrowRight } from "lucide-react";
+import { Clock, AlertCircle } from "lucide-react";
 import type { Booking } from "@/types";
 
 const MAX_VISIBLE = 10;
@@ -12,9 +12,11 @@ const MAX_VISIBLE = 10;
 interface Props {
   businessId: string;
   onStatusChange: () => void;
+  onAccept: (id: string) => Promise<void>;
+  onReject: (id: string) => Promise<void>;
 }
 
-export default function PendingApprovals({ businessId, onStatusChange }: Props) {
+export default function PendingApprovals({ businessId, onStatusChange, onAccept, onReject }: Props) {
   const [pending, setPending] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,8 +36,14 @@ export default function PendingApprovals({ businessId, onStatusChange }: Props) 
 
   useEffect(() => { fetchPending(); }, [businessId]);
 
-  const handleStatus = async (id: string, status: string) => {
-    await supabase.from("bookings").update({ status }).eq("id", id);
+  const handleAccept = async (id: string) => {
+    await onAccept(id);
+    onStatusChange();
+    fetchPending();
+  };
+
+  const handleReject = async (id: string) => {
+    await onReject(id);
     onStatusChange();
     fetchPending();
   };
@@ -68,10 +76,10 @@ export default function PendingApprovals({ businessId, onStatusChange }: Props) 
               <p className="text-xs text-[var(--text-tertiary)]">{b.services?.name || "—"} {b.staff_members?.display_name ? `· ${b.staff_members.display_name}` : ""}</p>
             </div>
             <div className="flex gap-1.5 shrink-0">
-              <Button size="sm" onClick={() => handleStatus(b.id, "confirmed")} className="h-7 text-xs px-3">
+              <Button size="sm" onClick={() => handleAccept(b.id)} className="h-7 text-xs px-3">
                 Accepter
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleStatus(b.id, "cancelled")} className="h-7 text-xs px-3 text-[var(--error)] border-[var(--error-border)]">
+              <Button size="sm" variant="outline" onClick={() => handleReject(b.id)} className="h-7 text-xs px-3 text-[var(--error)] border-[var(--error-border)]">
                 Refuser
               </Button>
             </div>

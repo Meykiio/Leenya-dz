@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Camera } from "lucide-react";
+import { Camera, Wrench } from "lucide-react";
 import { getInitials, getAvatarColor } from "@/lib/avatar";
 
 interface StaffWithServices {
@@ -69,7 +69,8 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
         {member.is_active ? "Actif" : "Inactif"}
       </Badge>
       <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onOpenServices(member.id)}>
+        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs gap-1" onClick={() => onOpenServices(member.id)}>
+          <Wrench className="h-3 w-3" />
           {member.services?.length || 0} services
         </Button>
         <label className="flex items-center gap-1.5 cursor-pointer">

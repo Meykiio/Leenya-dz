@@ -1,22 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface HeatmapData {
-  [key: string]: number; // "day-hour" → count
+  [key: string]: number;
 }
 
 const dayLabels = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-const hours = Array.from({ length: 13 }, (_, i) => i + 7); // 7h–19h
+const hours = Array.from({ length: 13 }, (_, i) => i + 7);
 
 export default function PeakHoursGrid({ data }: { data: HeatmapData }) {
   const max = Math.max(1, ...Object.values(data));
 
-  const getOpacity = (count: number) => {
-    if (count === 0) return "opacity-0";
+  const getIntensity = (count: number) => {
+    if (count === 0) return "";
     const ratio = count / max;
-    if (ratio <= 0.25) return "opacity-25";
-    if (ratio <= 0.5) return "opacity-50";
-    if (ratio <= 0.75) return "opacity-75";
-    return "opacity-100";
+    if (ratio <= 0.25) return "bg-primary/25";
+    if (ratio <= 0.5) return "bg-primary/50";
+    if (ratio <= 0.75) return "bg-primary/75";
+    return "bg-primary";
   };
 
   return (
@@ -26,19 +26,16 @@ export default function PeakHoursGrid({ data }: { data: HeatmapData }) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="grid gap-1" style={{ gridTemplateColumns: `3rem repeat(7, 1fr)` }}>
-            {/* Header row */}
+          <div className="grid gap-1" style={{ gridTemplateColumns: `2.5rem repeat(7, 1fr)` }}>
             <div />
             {dayLabels.map((d) => (
-              <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
+              <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">
                 {d}
               </div>
             ))}
-
-            {/* Hour rows */}
             {hours.map((hour) => (
               <>
-                <div key={`label-${hour}`} className="text-xs text-muted-foreground py-1 text-right pr-2">
+                <div key={`l-${hour}`} className="text-[10px] text-muted-foreground py-1 text-right pr-1.5">
                   {hour}h
                 </div>
                 {dayLabels.map((_, dayIndex) => {
@@ -48,11 +45,11 @@ export default function PeakHoursGrid({ data }: { data: HeatmapData }) {
                     <div
                       key={key}
                       className="relative group"
-                      title={`${dayLabels[dayIndex]} ${hour}h: ${count} réservations`}
+                      title={`${dayLabels[dayIndex]} ${hour}h: ${count} activites`}
                     >
-                      <div className={`rounded h-6 bg-primary ${getOpacity(count)} transition-opacity`} />
+                      <div className={`rounded h-5 ${getIntensity(count)} transition-colors`} />
                       {count > 0 && (
-                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium text-foreground/60">
+                        <span className="absolute inset-0 flex items-center justify-center text-[8px] font-medium text-white/80">
                           {count}
                         </span>
                       )}

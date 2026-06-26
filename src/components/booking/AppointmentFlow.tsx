@@ -246,7 +246,7 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
     ...(hasStaffStep ? [{ key: "staff" as Step, label: "Equipe" }] : []),
     { key: "datetime" as Step, label: "Date" },
     { key: "details" as Step, label: "Infos" },
-    { key: "confirmed" as Step, label: "Confirme" },
+    { key: "confirmed" as Step, label: "Envoyee" },
   ];
   const currentStepIndex = allSteps.findIndex((s) => s.key === step);
 

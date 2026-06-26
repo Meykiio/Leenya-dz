@@ -4,21 +4,29 @@ import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
 import type { Service } from "@/types";
 
+interface StaffMember {
+  id: string;
+  display_name: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   name: string;
   phone: string;
   serviceId: string;
+  staffId: string;
   services: Service[];
+  staffMembers: StaffMember[];
   loading: boolean;
   onChangeName: (v: string) => void;
   onChangePhone: (v: string) => void;
   onChangeService: (v: string) => void;
+  onChangeStaff: (v: string) => void;
   onSubmit: () => void;
 }
 
-export default function AddToQueueDialog({ open, onClose, name, phone, serviceId, services, loading, onChangeName, onChangePhone, onChangeService, onSubmit }: Props) {
+export default function AddToQueueDialog({ open, onClose, name, phone, serviceId, staffId, services, staffMembers, loading, onChangeName, onChangePhone, onChangeService, onChangeStaff, onSubmit }: Props) {
   if (!open) return null;
 
   return (
@@ -43,6 +51,13 @@ export default function AddToQueueDialog({ open, onClose, name, phone, serviceId
             <select value={serviceId} onChange={(e) => onChangeService(e.target.value)} className="w-full rounded-md border border-[var(--border-default)] bg-[var(--bg-base)] px-3 py-1.5 text-sm h-8">
               <option value="">Sélectionner</option>
               {services.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Equipe</Label>
+            <select value={staffId} onChange={(e) => onChangeStaff(e.target.value)} className="w-full rounded-md border border-[var(--border-default)] bg-[var(--bg-base)] px-3 py-1.5 text-sm h-8">
+              <option value="">Pas de préférence</option>
+              {staffMembers.map((s) => (<option key={s.id} value={s.id}>{s.display_name}</option>))}
             </select>
           </div>
         </div>

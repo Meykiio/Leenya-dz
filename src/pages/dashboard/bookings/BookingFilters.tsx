@@ -3,11 +3,13 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Search } from "lucide-react";
+import { CalendarIcon, Search, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface Props {
+  filterMode: "upcoming" | "date";
+  onFilterModeChange: (m: "upcoming" | "date") => void;
   selectedDate: Date;
   onDateChange: (d: Date) => void;
   search: string;
@@ -17,20 +19,57 @@ interface Props {
   statusLabels: Record<string, string>;
 }
 
-export default function BookingFilters({ selectedDate, onDateChange, search, onSearchChange, statusFilter, onStatusFilterChange, statusLabels }: Props) {
+export default function BookingFilters({ filterMode, onFilterModeChange, selectedDate, onDateChange, search, onSearchChange, statusFilter, onStatusFilterChange, statusLabels }: Props) {
   return (
     <div className="flex flex-wrap gap-2.5 items-center">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className={cn("w-[180px] justify-start text-left font-normal h-8 text-xs")}>
-            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-            {format(selectedDate, "d MMM yyyy", { locale: fr })}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar mode="single" selected={selectedDate} onSelect={(d) => d && onDateChange(d)} className="p-3 pointer-events-auto" />
-        </PopoverContent>
-      </Popover>
+      <div className="flex rounded-md border border-[var(--border-default)] overflow-hidden h-8">
+        <button
+          onClick={() => onFilterModeChange("upcoming")}
+          className={cn(
+            "px-3 text-xs font-medium transition-colors",
+            filterMode === "upcoming"
+              ? "bg-[var(--accent)] text-white"
+              : "bg-[var(--bg-base)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+          )}
+        >
+          A venir
+        </button>
+        <button
+          onClick={() => onFilterModeChange("date")}
+          className={cn(
+            "px-3 text-xs font-medium transition-colors",
+            filterMode === "date"
+              ? "bg-[var(--accent)] text-white"
+              : "bg-[var(--bg-base)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+          )}
+        >
+          Par date
+        </button>
+      </div>
+
+      {filterMode === "date" ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("w-[180px] justify-start text-left font-normal h-8 text-xs")}>
+              <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+              {format(selectedDate, "d MMM yyyy", { locale: fr })}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={selectedDate} onSelect={(d) => d && onDateChange(d)} className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5"
+          onClick={() => onDateChange(new Date())}
+        >
+          <CalendarDays className="h-3.5 w-3.5" />
+          Aujourd'hui
+        </Button>
+      )}
 
       <div className="relative flex-1 min-w-[180px] max-w-xs">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-tertiary)]" />

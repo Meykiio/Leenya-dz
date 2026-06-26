@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Save } from "lucide-react";
+import { X, Save, Wrench } from "lucide-react";
 
 interface ServiceOption {
   id: string;
@@ -17,8 +17,12 @@ interface Props {
 }
 
 export default function ServiceAssignmentDialog({ open, staffName, services, selectedIds, onClose, onSave }: Props) {
-  const [selected, setSelected] = useState<string[]>(selectedIds);
+  const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setSelected(selectedIds);
+  }, [open, selectedIds]);
 
   if (!open) return null;
 
@@ -34,9 +38,13 @@ export default function ServiceAssignmentDialog({ open, staffName, services, sel
       <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-sm rounded-xl bg-[var(--bg-base)] border border-[var(--border-default)] p-6 space-y-4" style={{ boxShadow: 'var(--shadow-lg)' }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-[var(--text-primary)]">Services - {staffName}</h3>
+          <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-[var(--accent)]" />
+            {staffName}
+          </h3>
           <button onClick={onClose}><X className="h-4 w-4 text-[var(--text-tertiary)]" /></button>
         </div>
+        <p className="text-xs text-[var(--text-tertiary)] -mt-2">Choisir les services de ce membre</p>
         <div className="space-y-2 max-h-52 overflow-y-auto">
           {services.length === 0 ? (
             <p className="text-sm text-[var(--text-tertiary)]">Aucun service disponible</p>

@@ -54,8 +54,8 @@ const BusinessPublic = () => {
   const [hours, setHours] = useState<BusinessHour[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   
-  // Read tab from URL params, default to appointment
-  const defaultTab = searchParams.get('tab') === 'queue' ? 'queue' : 'appointment';
+  // Read tab from URL params, default to queue
+  const defaultTab = searchParams.get('tab') === 'appointment' ? 'appointment' : 'queue';
   const [activeTab, setActiveTab] = useState<"appointment" | "queue">(defaultTab);
 
   useEffect(() => {
@@ -120,9 +120,11 @@ const BusinessPublic = () => {
   useEffect(() => {
     if (business && !searchParams.get('tab')) {
       const showAppointments = business.accepts_appointments !== false;
-      if (!showAppointments) setActiveTab("queue");
+      const showQueue = business.accepts_walkins !== false;
+      if (activeTab === "queue" && !showQueue) setActiveTab("appointment");
+      if (activeTab === "appointment" && !showAppointments) setActiveTab("queue");
     }
-  }, [business, searchParams]);
+  }, [business, searchParams, activeTab]);
 
   if (loading) {
     return (
@@ -217,6 +219,23 @@ const BusinessPublic = () => {
                 )}
               </div>
             </div>
+
+            {/* Info cards */}
+            {activeTab === "appointment" && (
+              <div className="px-5 pt-3 pb-1">
+                <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
+                  Choisissez un service, un creneau, et envoyez votre demande.
+                  Le salon confirmera votre reservation sous peu.
+                </div>
+              </div>
+            )}
+            {activeTab === "queue" && (
+              <div className="px-5 pt-3 pb-1">
+                <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
+                  Choisissez un service, prenez un ticket, et attendez votre tour en direct.
+                </div>
+              </div>
+            )}
 
             {/* Tab content */}
             {activeTab === "appointment" && showAppointments && (

@@ -71,7 +71,8 @@ Présentez-vous maintenant.`,
 {business_name}
 💆 Service: {service}
 
-Temps d'attente estimé: {wait_time}`,
+Temps d'attente estime: {wait_time}
+Surveillez l'ecran d'affichage pour votre tour.`,
       variables: ['business_name', 'ticket_label', 'service', 'wait_time'],
     },
     {
