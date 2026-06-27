@@ -37,3 +37,6 @@ doctor/
 # Supabase local dev
 supabase/.temp/
 supabase/query_*.sql
+
+# Vite temp files
+*.timestamp-*.mjs
