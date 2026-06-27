@@ -1,6 +1,6 @@
 # System Instructions — Leenya
 
-This file is consumed by AI coding agents (Claude Code, Copilot, etc.) to understand the project, its state, and conventions. Updated: 2026-06-26.
+This file is consumed by AI coding agents (Claude Code, Copilot, etc.) to understand the project, its state, and conventions. Updated: 2026-06-27.
 
 ---
 
@@ -67,7 +67,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 | `src/pages/Landing.tsx` | Marketing landing page |
 | `src/pages/BookingTrack.tsx` | Anonymous booking tracking |
 | `src/pages/MyBookings.tsx` | Client booking history |
-| `src/pages/StaffView.tsx` | Staff queue view |
+| `src/pages/StaffView.tsx` | Staff queue + bookings (tabbed view) |
 | `src/pages/QueueDisplay.tsx` | TV display mode |
 | `src/pages/NotFound.tsx` | 404 page |
 
@@ -78,7 +78,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 | `src/components/FloatingHelp.tsx` | WhatsApp help button (env var VITE_SUPPORT_PHONE) |
 | `src/components/onboarding/OnboardingWizard.tsx` | 4-step wizard |
 | `src/hooks/useWhatsAppTemplates.ts` | Template CRUD + compilation |
-| `supabase/schema/MASTER_SCHEMA.sql` | Complete consolidated schema (idempotent, single source of truth — run this on any fresh Supabase project) |
+| `supabase/schema/MASTER_SCHEMA.sql` | Complete consolidated schema + `create_staff_user` RPC (idempotent, single source of truth) |
 
 ---
 
@@ -125,7 +125,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 6. **Queue booking** — Service selection → name/phone → ticket → realtime tracker. Double-join prevented at DB level (unique index) + app level (pre-insert phone check).
 7. **Queue display** — `/display/:slug` full-screen TV mode.
 8. **Dashboard (owner)** — Overview (with pending count stat), bookings (with PendingApprovals section + sidebar badge + realtime), queue, services, staff (with avatars + service assignment), settings, analytics.
-9. **Staff view** — Simplified queue management.
+9. **Staff view** — Tabbed interface (queue + bookings), realtime, WhatsApp on call, login via email/password.
 10. **Client bookings** — MyBookings with review capability.
 11. **Booking tracker** — Anonymous tracking by token.
 12. **WhatsApp templates** — 7 types, editable, preview, reset.
@@ -157,7 +157,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 ## Build & Test
 
 ```bash
-npm run build    # TypeScript + Vite build. Must pass with zero errors.
+npm run build    # TypeScript + Vite build. Must pass with zero errors (warnings are OK).
 npm run dev      # Dev server with HMR
 npx tsc --noEmit # Type-check only
 ```
@@ -187,17 +187,30 @@ npx tsc --noEmit # Type-check only
 - **Booking visibility:** PendingApprovals section, sidebar pending badge, dashboard pending stat, real-time booking subscription.
 - **Queue double-join:** app-level pre-insert check added alongside existing DB-level index.
 - **Auth fixes:** `refreshRole()` in AuthContext, auto-login on signup when email confirmation is off.
-- **`npm run build` passes:** zero errors, zero warnings.
+- **Staff auth login:** `create_staff_user` RPC works end-to-end — owner creates staff account with email/password, staff logs in, redirected to /staff. All 36 auth.users columns correctly set (matches GoTrue format exactly). Handles duplicate email gracefully.
+- **EWT formula improved:** Uses historical wait times (30-day window), staff count divisor, fallback formula, stored in DB, included in WhatsApp URL.
+- **QueueDisplay sound:** Singleton AudioContext fixes paused_in_background error, click-to-unlock overlay, muted hint.
+- **Staff delete:** Trash button with confirmation dialog in DashboardStaff.
+- **Onboarding auth guard:** Redirects to /login if not authenticated.
+- **Phase 2a Doctor audit fixes:** C-001/C-002 (PII leak → RPC-based access), C-003 (anon cancel → dropped), H-001 (role self-insert → dropped), H-005 (business hours → trigger), H-007 (state machine → triggers), H-008 (anon cancel → RPC), H-009 (SECURITY DEFINER → EXECUTE revoked), C-005 (vitest CVE), H-003 (npm audit 19→2). See `doctor/reports/FINAL_AUDIT.md`.
+- **Security model updated:** Public queue/booking access now via RPCs (not direct table queries). See `src/components/booking/TicketTracker.tsx`, `src/pages/QueueDisplay.tsx`, `src/pages/BookingTrack.tsx`.
 
-### Pre-Existing Gaps (Not Fixed)
+### Pre-Existing Gaps (Not Fixed — See Phase 2b)
 
+- RLS policies are PERMISSIVE (need AS RESTRICTIVE) — Phase 2b
+- Blanket per-table grants (need per-table replacement) — Phase 2b
+- Storage bucket `business-assets` allows public listing — Phase 2b
+- Leaked password protection disabled — Phase 2b
+- Error messages leak schema details — Phase 2b
+- 17 queries missing `business_id` scope — Phase 2b
+- 38 lint errors (`@typescript-eslint/no-explicit-any`) — Phase 2b
+- `.env` in git history — Phase 2b
 - No step indicator UI in AppointmentFlow
 - `getInitials()` and `getAvatarColor()` duplicated in AppointmentFlow.tsx and DashboardStaff.tsx
 - Analytics delta display may divide by zero
-- WhatsApp template variable format may be fragile
+- WhatsApp variable format may be fragile
 - No error boundaries on major page sections
 - No loading skeletons (spinners only)
-- `.env` file committed to repo (fix: add to `.gitignore`)
 
 ### AI Agent Behavior Rules
 

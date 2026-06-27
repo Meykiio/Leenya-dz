@@ -69,12 +69,7 @@ export default function QueueDisplay() {
 
   const fetchQueue = useCallback(async (bizId: string) => {
     const { data } = await supabase
-      .from("queue_tickets")
-      .select("id, ticket_label, status, ticket_number, service_id, services(name), staff_members(display_name)")
-      .eq("business_id", bizId)
-      .eq("queue_date", today)
-      .in("status", ["waiting", "called", "in_service"])
-      .order("ticket_number", { ascending: true });
+      .rpc("get_business_queue", { p_business_id: bizId, p_queue_date: today });
 
     if (!data) return;
 
@@ -82,8 +77,8 @@ export default function QueueDisplay() {
       id: t.id,
       ticket_label: t.ticket_label,
       status: t.status,
-      service_name: t.services?.name || null,
-      staff_name: t.staff_members?.display_name || null,
+      service_name: t.service_name || null,
+      staff_name: t.staff_name || null,
     }));
 
     const serving = mapped.find((t) => t.status === "in_service" || t.status === "called") || null;

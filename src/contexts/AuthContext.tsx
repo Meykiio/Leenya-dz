@@ -60,12 +60,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        fetchRole(session.user.id);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setRole(null);
+          setRoleReady(true);
+          setSessionReady(true);
+          return;
+        }
+        setSession(session);
+        setUser(user);
+        fetchRole(user.id);
       } else {
+        setSession(null);
+        setUser(null);
+        setRole(null);
         setRoleReady(true);
       }
       setSessionReady(true);

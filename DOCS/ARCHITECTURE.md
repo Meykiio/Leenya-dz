@@ -88,13 +88,34 @@ src/
 ## Data Flow
 
 ```
-Browser → React Router → Page Component → Supabase Client → Supabase
-                                                    ↓
-                                              Realtime (WebSocket)
+Browser → React Router → Page Component → Supabase Client → Supabase REST/RPC
+                                           (anon key)           or Realtime
+                                                                    ↓
+                                                              PostgreSQL
+                                                              (RLS + Triggers)
 ```
 
+### Public anonymous access (queue + booking tracking):
+```
+Browser → RPC call (token parameter) → SECURITY DEFINER function → filtered row(s)
+```
+Anon users no longer query tables directly. Public data access is through parameterized RPCs (Phase 2a):
+- `get_queue_ticket(p_ticket_id)` — one queue ticket (no PII)
+- `get_business_queue(p_business_id, p_statuses)` — active tickets for display
+- `get_completed_ticket_stats(p_business_id)` — aggregate stats
+- `get_queue_context(p_business_id, p_ticket_id)` — position in queue
+- `get_booking_by_token(p_token)` — one booking by tracking token
+- `cancel_booking_by_token(p_token)` — cancel booking (token required)
+
+### Authenticated access (dashboard):
+```
+Browser (logged-in) → Supabase client (JWT in session) → Table query with RLS
+```
+Dashboard pages fetch by `business.id` from `auth.uid()` via `use-business-info.ts`. RLS enforces owner/tenant isolation.
+
+### Flow steps:
 1. **Auth:** Supabase Auth emits `onAuthStateChange` → `AuthContext` stores session → `ProtectedRoute` checks role.
-2. **Business pages:** Public pages use `slug` from URL params → `useEffect` fetches from Supabase.
+2. **Business pages:** Public pages use `slug` from URL params → `useEffect` fetches via Supabase (RPC for anon data, direct table for business data with RLS).
 3. **Dashboard:** Dashboard pages fetch by `business.id` from `auth.uid()` via `use-business-info.ts`.
 4. **Realtime:** Dashboard pages subscribe to Supabase Realtime channels for live queue/booking updates. Channels cleaned up on unmount.
 
@@ -167,18 +188,42 @@ Full schema is in `supabase/schema/MASTER_SCHEMA.sql` (idempotent, single source
 - `staff_services`: UNIQUE(staff_member_id, service_id), CASCADE deletes
 - `businesses.slug` is indexed via its UNIQUE constraint — no separate index needed
 
-### Auth Helpers
+### DB Triggers (Phase 2a additions)
+
+- `check_business_hours_trigger` — BEFORE INSERT on bookings: validates start_time falls within business's operating hours for the given date
+- `check_queue_ticket_state_transition_trigger` — BEFORE UPDATE on queue_tickets: enforces valid state transitions (waiting→called→in_service→completed, waiting→cancelled, etc.)
+- `check_booking_state_transition_trigger` — BEFORE UPDATE on bookings: enforces valid booking state transitions
+- `check_past_booking_trigger` — BEFORE INSERT on bookings: prevents creating bookings with past dates
+
+### Auth Helpers (SECURITY DEFINER, restricted to authenticated users)
 
 - `generate_ticket_number(business_id)` — Atomic daily counter per business via UPSERT
-- `check_booking_overlap()` — Trigger that prevents double-booking using advisory lock
-- `check_insert_rate_limit()` — Trigger that limits 10 requests/phone/10min
-- `assign_owner_role(user_id)` — SECURITY DEFINER, bypasses RLS to assign owner role during onboarding
-- `upsert_profile(id, full_name)` — SECURITY DEFINER, bypasses RLS to create/update profile during onboarding
-- `upsert_business(owner_id, name, slug, ...)` — SECURITY DEFINER, bypasses RLS to create/update business + default hours
-- `insert_services(business_id, services_jsonb)` — SECURITY DEFINER, bypasses RLS to bulk-insert services during onboarding
-- `get_monthly_booking_count(business_id)` — SECURITY DEFINER, counts bookings + tickets for plan enforcement
-- `check_plan_booking_limit()` — Trigger that enforces 30-booking/month cap on free plan
-- `check_booking_service_business()` — Trigger that validates service/staff belong to business before INSERT
+- `assign_owner_role(user_id)` — Bypasses RLS to assign owner role during onboarding
+- `upsert_profile(id, full_name)` — Bypasses RLS to create/update profile during onboarding
+- `upsert_business(owner_id, name, slug, ...)` — Bypasses RLS to create/update business + default hours
+- `insert_services(business_id, services_jsonb)` — Bypasses RLS to bulk-insert services during onboarding
+- `get_monthly_booking_count(business_id)` — Counts bookings + tickets for plan enforcement
+- `create_staff_user(email, password, staff_member_id, business_id, full_name)` — Creates auth.users + identities + user_roles for staff login
+
+### Public RPCs (SECURITY DEFINER, callable by anon — Phase 2a)
+
+- `get_queue_ticket(p_ticket_id)` — Returns one queue ticket with no PII (nulls client_name, client_phone)
+- `get_business_queue(p_business_id, p_statuses)` — Returns active queue tickets for TV display (no PII)
+- `get_completed_ticket_stats(p_business_id)` — Returns stats (avg wait time, total today)
+- `get_queue_context(p_business_id, p_ticket_id)` — Returns position in queue for given ticket
+- `get_booking_by_token(p_token)` — Returns one booking matching the tracking token
+- `cancel_booking_by_token(p_token)` — Cancels a booking, requires valid token
+
+### DB Triggers
+
+- `check_booking_overlap()` — Prevents double-booking using advisory lock
+- `check_insert_rate_limit()` — Limits 10 requests/phone/10min
+- `check_plan_booking_limit()` — Enforces 30-booking/month cap on free plan
+- `check_booking_service_business()` — Validates service/staff belong to business before INSERT
+- `check_business_hours_trigger` — Ensures booking falls within operating hours
+- `check_queue_ticket_state_transition_trigger` — Enforces queue_ticket state machine
+- `check_booking_state_transition_trigger` — Enforces booking state machine
+- `check_past_booking_trigger` — Prevents past-dated bookings
 
 ---
 
@@ -186,15 +231,14 @@ Full schema is in `supabase/schema/MASTER_SCHEMA.sql` (idempotent, single source
 
 ### Row-Level Security
 
-All tables have RLS enabled:
+All tables have RLS enabled (**PERMISSIVE** mode — switching to RESTRICTIVE is Phase 2b):
 
 - **businesses:** owner manages (ALL), public reads (SELECT for active)
 - **services:** owner manages (ALL), public reads (SELECT for active)
 - **staff_members:** owner manages (ALL), public reads (SELECT for active)
 - **staff_services:** owner manages (ALL), public reads (SELECT)
-- **bookings:** owner manages (ALL), public + client reads (SELECT with restrictions), public INSERT with restrictions
-- **queue_tickets:** owner manages (ALL), public INSERT, public reads own ticket via token
-- **bookings:** public INSERT allowed with rate limit + overlap prevention (trigger-based)
+- **bookings:** owner manages (ALL). **⚠️ Anon SELECT/UPDATE revoked (Phase 2a).** Public INSERT allowed with rate limit + overlap prevention (trigger-based). Public read/write via RPCs only.
+- **queue_tickets:** owner manages (ALL). **⚠️ Anon SELECT/UPDATE revoked (Phase 2a).** Public INSERT allowed. Public read via RPCs only.
 - **waiting_counters:** only through `generate_ticket_number()` function
 
 ### Storage RLS

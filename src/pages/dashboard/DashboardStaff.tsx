@@ -87,14 +87,31 @@ const DashboardStaff = () => {
   useEffect(() => { fetchStaff(); fetchServices(); }, [business]);
   useEffect(() => { if (staff.length > 0) loadServiceAssignments(); }, [staff.length]);
 
-  const addStaff = async (name: string) => {
+  const addStaff = async (name: string, email?: string, password?: string) => {
     if (!business) return;
-    const { error } = await supabase.from("staff_members").insert({
-      business_id: business.id,
-      display_name: name,
-    });
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else toast({ title: "Membre ajoute" });
+    const { data, error: insertError } = await supabase
+      .from("staff_members")
+      .insert({ business_id: business.id, display_name: name })
+      .select("id")
+      .single();
+    if (insertError) {
+      toast({ title: "Erreur", description: insertError.message, variant: "destructive" });
+      return;
+    }
+    if (email && password) {
+      const { error: rpcError } = await supabase.rpc("create_staff_user", {
+        p_staff_id: data.id,
+        p_email: email,
+        p_password: password,
+      });
+      if (rpcError) {
+        toast({ title: "Erreur", description: `Membre ajouté mais échec de création du compte: ${rpcError.message}`, variant: "destructive" });
+      } else {
+        toast({ title: "Compte crée", description: "Le membre peut maintenant se connecter." });
+      }
+    } else {
+      toast({ title: "Membre ajoute" });
+    }
     fetchStaff();
   };
 
@@ -120,6 +137,13 @@ const DashboardStaff = () => {
     const { error: updateError } = await supabase.from("staff_members").update({ avatar_url: publicUrl }).eq("id", staffId);
     if (updateError) { toast({ title: "Erreur", description: updateError.message, variant: "destructive" }); return; }
     toast({ title: "Avatar mis a jour" });
+    fetchStaff();
+  };
+
+  const deleteStaff = async (staffId: string) => {
+    const { error } = await supabase.from("staff_members").delete().eq("id", staffId);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else toast({ title: "Membre supprimé" });
     fetchStaff();
   };
 
@@ -177,6 +201,7 @@ const DashboardStaff = () => {
                 onToggleBookings={toggleBookings}
                 onUploadAvatar={uploadAvatar}
                 onOpenServices={openServiceDialog}
+                onDelete={deleteStaff}
               />
             ))}
           </div>

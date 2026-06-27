@@ -1,8 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Camera, Wrench } from "lucide-react";
+import { Camera, Wrench, Trash2 } from "lucide-react";
 import { getInitials, getAvatarColor } from "@/lib/avatar";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface StaffWithServices {
   id: string;
@@ -19,9 +23,10 @@ interface Props {
   onToggleBookings: (id: string, current: boolean) => void;
   onUploadAvatar: (id: string, file: File) => void;
   onOpenServices: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export default function StaffRow({ member, onToggleActive, onToggleBookings, onUploadAvatar, onOpenServices }: Props) {
+export default function StaffRow({ member, onToggleActive, onToggleBookings, onUploadAvatar, onOpenServices, onDelete }: Props) {
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
       <div className="relative shrink-0">
@@ -81,6 +86,23 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
           <span className="hidden sm:inline">Reservations</span>
           <Switch checked={member.accepts_bookings} onCheckedChange={() => onToggleBookings(member.id, member.accepts_bookings)} />
         </label>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce membre?</AlertDialogTitle>
+              <AlertDialogDescription>{member.display_name} sera retiré de l'équipe. Les réservations et tickets associés ne seront pas supprimés.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDelete(member.id)} className="bg-destructive text-destructive-foreground">Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

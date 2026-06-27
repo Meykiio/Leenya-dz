@@ -93,8 +93,8 @@
 - **User story:** As a visitor, I can join a business's walk-in queue by selecting a service, entering my name and phone, getting a ticket number, and tracking my position in real time.
 - **Files:**
   - `src/components/booking/QueueFlow.tsx` — Service selection + name/phone + ticket generation
-  - `src/components/booking/TicketTracker.tsx` — Real-time ticket status display
-- **Notes:** Shows live stats (waiting count, estimated wait, current serving) with realtime subscription. Ticket number generated via `generate_ticket_number()` RPC (atomic UPSERT). TicketTracker stores state in localStorage for resilience. Shows different screens for waiting/called/completed/cancelled. "Called" has a pulsing animation.
+  - `src/components/booking/TicketTracker.tsx` — Real-time ticket status display (uses `get_queue_ticket`, `get_completed_ticket_stats`, `get_queue_context` RPCs)
+- **Notes:** Shows live stats (waiting count, estimated wait, current serving) with realtime subscription. Ticket number generated via `generate_ticket_number()` RPC (atomic UPSERT). TicketTracker stores state in localStorage for resilience. Shows different screens for waiting/called/completed/cancelled. "Called" has a pulsing animation. **Data access via RPC** — anon direct table queries revoked for security. Cancel button removed for anonymous users (C-003 fix).
 - **Queue double-join prevention:** Partial unique index `idx_one_active_ticket_per_phone` on `queue_tickets(business_id, client_phone, queue_date) WHERE status IN ('waiting', 'called', 'in_service')` prevents the same phone from having multiple active tickets at the DB level. Additional app-level pre-insert check in QueueFlow.tsx and DashboardQueue.tsx queries for existing active tickets on same phone+date+business before generation — defense in depth.
 
 ---
@@ -104,8 +104,8 @@
 - **Status:** Done
 - **User story:** As a business owner, I can open a full-screen TV display showing the current queue for my waiting room.
 - **Files:**
-  - `src/pages/QueueDisplay.tsx` — Full-screen dark display, shows current ticket (large), next 5 tickets, clock
-- **Notes:** URL format: `/display/:slug`. Auto-hides cursor after 3s of inactivity. Shows clock and watermark. Realtime updates via Supabase subscription. Dark background (#0C0C0A).
+  - `src/pages/QueueDisplay.tsx` — Full-screen dark display, shows current ticket (large), next 5 tickets, clock (uses `get_business_queue` RPC)
+- **Notes:** URL format: `/display/:slug`. Auto-hides cursor after 3s of inactivity. Shows clock and watermark. Realtime updates via Supabase subscription. Dark background (#0C0C0A). **Data access via RPC** — no direct table query.
 
 ---
 
@@ -231,8 +231,8 @@
 - **Status:** Done
 - **User story:** As any visitor with a tracking token URL, I can view my booking details and cancel it without logging in.
 - **Files:**
-  - `src/pages/BookingTrack.tsx` — Booking display by token, cancel with confirmation dialog
-- **Notes:** URL format: `/booking/track/:token`. Shows booking status as badge. Cancel only allowed for pending/confirmed statuses. Shows business address and phone. No auth required.
+  - `src/pages/BookingTrack.tsx` — Booking display by token, cancel with confirmation dialog (uses `get_booking_by_token` and `cancel_booking_by_token` RPCs)
+- **Notes:** URL format: `/booking/track/:token`. Shows booking status as badge. Cancel only allowed for pending/confirmed statuses. Shows business address and phone. No auth required. **Data access via RPC** — anon direct table queries revoked for security (see doctor audit).
 
 ---
 
@@ -253,6 +253,18 @@
 - **Files:**
   - `src/components/FloatingHelp.tsx`
 - **Notes:** Uses `import.meta.env.VITE_SUPPORT_PHONE` (env var) with fallback `213770000000`. Always renders. Set `VITE_SUPPORT_PHONE` in production to the real support number.
+
+---
+
+## Staff Auth Login
+
+- **Status:** Done
+- **User story:** As a business owner, I can create a login account (email + password) for staff members so they can access the staff view.
+- **Files:**
+  - `supabase/schema/MASTER_SCHEMA.sql` — `create_staff_user` RPC function (SECURITY DEFINER)
+  - `src/pages/dashboard/staff/AddStaffForm.tsx` — Collapsible email/password fields
+  - `src/pages/dashboard/DashboardStaff.tsx` — Calls RPC after staff member insert
+- **Notes:** Uses SECURITY DEFINER function to insert into auth.users + auth.identities + user_roles. Sets all 36 auth.users columns to match GoTrue expected format exactly (instance_id=all-zeros UUID, aud/role='authenticated', raw_app_meta_data={provider:"email"}, raw_user_meta_data with sub+email_verified, confirmation_token/recovery_token='', bcrypt cost 10). Trigger `on_auth_user_created` auto-creates profile row. If email already exists, links staff to existing auth user (ON CONFLICT DO NOTHING on user_roles). Duplicate email handled gracefully.
 
 ---
 

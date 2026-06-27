@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
+import { buildQueueCalledUrl } from "@/lib/whatsapp";
 import { Plus, Tv, Users2 } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import type { QueueTicket, Service } from "@/types";

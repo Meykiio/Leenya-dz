@@ -1,6 +1,6 @@
 # Leenya — AI Context File
 
-Last updated: 2026-06-26
+Last updated: 2026-06-27
 
 ## Project in One Paragraph
 
@@ -13,14 +13,14 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 1. **Never change database table or column names** without updating ALL queries, types, and RLS policies that reference them
 2. **All Supabase queries must have error handling** — check `.error` on every response
 3. **All real-time subscriptions must be cleaned up on unmount** — call `supabase.removeChannel(channel)` in the cleanup function
-4. **RLS is enabled on all tables** — test permissions after any schema change. All policies use `RESTRICTIVE` (not permissive)
+4. **RLS is enabled on all tables** — test permissions after any schema change. ⚠️ Policies currently use `PERMISSIVE` (default) — switching to `RESTRICTIVE` is a Phase 2b item. Critical public data paths (queue, booking) use RPCs instead of direct table queries.
 5. **Design system colors are in CSS variables** — never use raw hex/rgb in components. Use semantic tokens from `src/index.css` and `tailwind.config.ts`. All shadcn tokens are HSL
 6. **Font classes**: `font-sans` → Sora, `font-mono` → JetBrains Mono, `font-arabic` → IBM Plex Sans Arabic
 7. **Never edit these auto-generated files**: `src/integrations/supabase/client.ts`, `src/integrations/supabase/types.ts`, `.env`, `supabase/config.toml`
 8. **Import the Supabase client from** `@/integrations/supabase/client` — never create a new client
 9. **Roles are in `user_roles` table** — never store roles on profiles or in localStorage
 10. **No DELETE on bookings, queue_tickets, profiles, reviews, user_roles** — only status changes (cancel, no-show)
-11. **All RLS policies are RESTRICTIVE** (Supabase `PERMISSIVE: No`) — a row must match at least one policy per operation type
+11. **RLS policies are PERMISSIVE (default)** — switching to RESTRICTIVE is Phase 2b. Public data access (queue, booking) uses RPCs, not direct tables. See `doctor/plans/MASTER_REMEDIATION_PLAN.md`
 
 ---
 
@@ -92,10 +92,20 @@ user_roles.user_id → auth.users.id
 - `generate_ticket_number(p_business_id)` → returns `{ticket_num, ticket_lbl}` — atomic daily counter
 - `has_role(_user_id, _role)` → boolean — SECURITY DEFINER, bypasses RLS
 - `get_user_role(_user_id)` → app_role enum
+- `get_queue_ticket(p_ticket_id)` → one queue ticket (no PII) — public RPC
+- `get_business_queue(p_business_id, p_statuses)` → active queue tickets — public RPC
+- `get_completed_ticket_stats(p_business_id)` → stats — public RPC
+- `get_queue_context(p_business_id, p_ticket_id)` → queue position — public RPC
+- `get_booking_by_token(p_token)` → one booking — public RPC
+- `cancel_booking_by_token(p_token)` → cancel booking — public RPC
 
 **Key triggers:**
 - `check_booking_overlap` — on bookings INSERT/UPDATE, prevents double-booking with advisory locks
 - `check_insert_rate_limit` — on bookings AND queue_tickets INSERT, max 10 per phone per 10 min
+- `check_business_hours_trigger` — on bookings INSERT, validates booking within operating hours
+- `check_queue_ticket_state_transition_trigger` — enforces queue_ticket state machine
+- `check_booking_state_transition_trigger` — enforces booking state machine
+- `check_past_booking_trigger` — prevents past-dated bookings
 
 **Enums:**
 - `app_role`: owner, staff, client
@@ -145,6 +155,7 @@ user_roles.user_id → auth.users.id
 
 ## Current Known Issues
 
+### Product Gaps
 1. No automated SMS/WhatsApp notifications — only manual wa.me URL links
 2. No payment processing — subscription plans displayed but not enforced server-side
 3. No staff-specific schedules — all staff share business hours
@@ -155,11 +166,41 @@ user_roles.user_id → auth.users.id
 8. Single location per owner only
 9. No offline/PWA support
 
+### Security Gaps (Phase 2b)
+1. RLS policies are `PERMISSIVE` — need `AS RESTRICTIVE` (H-006)
+2. Blanket `GRANT ALL ON ALL TABLES` — need per-table grants (H-004)
+3. Storage bucket `business-assets` allows public listing (H-010)
+4. Leaked password protection disabled in Supabase Auth (H-011)
+5. No Content Security Policy (H-002/M-02)
+6. Error messages leak schema details (SEC-01)
+7. 17 queries missing `business_id` scope (ARC-04)
+8. 38 lint errors (all `no-explicit-any`) (H-002)
+9. `.env` in git history not purged (C-004)
+10. `@tanstack/react-query` imported but unused (+13 kB dead bundle)
+
 ---
 
-## What Was Recently Changed (Last 2 Sessions)
+## What Was Recently Changed (Last 3 Sessions)
 
-### Session 2 (2026-06-26, current)
+### Session 3 (2026-06-27, current)
+- **Full Doctor audit completed:** All 30 specialist reviews + Red Team runtime tests against live Supabase
+- **Phase 2a remediation applied (release blockers):**
+  - C-001: queue_tickets anon SELECT revoked → `get_queue_ticket`/`get_business_queue` RPCs (no PII)
+  - C-002: bookings anon SELECT/UPDATE revoked → `get_booking_by_token`/`cancel_booking_by_token` RPCs
+  - C-003: queue_tickets anon UPDATE policy dropped
+  - H-001: user_roles self-insert policy dropped
+  - H-005: `check_business_hours_trigger` added (BEFORE INSERT on bookings)
+  - H-007: `check_queue_ticket_state_transition_trigger` + `check_booking_state_transition_trigger` + `check_past_booking_trigger` added
+  - H-008: bookings anon UPDATE revoked → `cancel_booking_by_token` RPC requires token
+  - H-009: EXECUTE revoked from anon on all SECURITY DEFINER functions except 7 public RPCs
+  - C-005: vitest updated (critical CVE)
+  - H-003: `npm audit fix` reduced 19→2 vulns
+  - Fixed missing `buildQueueCalledUrl` import in DashboardQueue.tsx
+- **Client code updated:** QueueDisplay, TicketTracker, BookingTrack use RPCs instead of direct table queries
+- **Runtime retest:** 3/3 direct table queries blocked for anon. RPCs functional. No PII exposed.
+- **Final score:** 3.1/10 — DO NOT SHIP (improved from 3.4 after fixes, ratings held pending full Phase 2b)
+
+### Session 2 (2026-06-26)
 - **File splits completed:** All 6 remaining large files split into domain subdirectories (queue/, staff/, bookings/, steps/)
 - **Booking visibility:** PendingApprovals section, sidebar pending badge, dashboard pending stat, real-time booking subscription
 - **Queue double-join app-level fix:** Pre-insert phone check in QueueFlow + DashboardQueue

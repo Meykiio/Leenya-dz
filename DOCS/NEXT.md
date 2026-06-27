@@ -18,29 +18,85 @@
 
 **What:** Write a one-off SQL script that for each `staff_members` row, inserts into `staff_services` all services from the same business.
 
+### ✅ Doctor audit completed — Phase 2a release blockers fixed
+
+**Status: DONE.** Full 30-specialist audit run against live Supabase. 8 critical/high findings fixed in Phase 2a (PII leaks, SECURITY DEFINER exposure, missing DB enforcement). See `doctor/reports/FINAL_AUDIT.md`.
+
 ---
 
-## P1 — High Priority
+## P1 — Phase 2b Security Hardening (NEXT)
 
-### 3. Verify Supabase email confirmation setting
+### Fix RLS policies: PERMISSIVE → RESTRICTIVE (H-006)
 
-**Why:** Frontend handles both ON and OFF states, but confirmation is still ON in Supabase Dashboard. Owner needs to manually toggle off if they want auto-login.
+**Why:** All RLS policies use the default PERMISSIVE mode — any matching policy grants access. RESTRICTIVE requires all matching policies to grant access. Currently if one policy is too broad, it can't be constrained.
+
+**What:** Add `AS RESTRICTIVE` to all CREATE POLICY statements in MASTER_SCHEMA.sql.
+
+### Fix blanket per-table grants (H-004)
+
+**Why:** `GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated` means any table added without RLS is fully accessible.
+
+**What:** Replace with explicit per-table grants.
+
+### Fix storage bucket public listing (H-010)
+
+**Why:** `business-assets` bucket allows anyone to list all files, exposing filenames and paths.
+
+**What:** Remove the public SELECT policy on `storage.objects`. Public URLs still work without listing permission.
+
+### Enable leaked password protection (H-011)
+
+**Why:** Supabase Auth's HaveIBeenPwned check is disabled — users can register with compromised passwords.
+
+**What:** Toggle on in Supabase Dashboard → Authentication → Settings.
+
+### Map error messages to user-safe values (SEC-01)
+
+**Why:** 25+ locations expose internal details (table names, column names, foreign key errors) to users.
+
+**What:** Add a mapping layer or use generic messages.
+
+### Add business_id to 17 query WHERE clauses (ARC-04)
+
+**Why:** 17 Supabase queries don't filter by `business_id`, risking cross-tenant data leaks for authenticated users.
+
+**What:** Audit and fix each query.
+
+### Fix 38 lint errors (H-002)
+
+**Why:** All are `@typescript-eslint/no-explicit-any` — weakens type safety in critical paths.
+
+**What:** Add proper types or intentionally revise lint rules.
+
+### Remove .env from git history (C-004)
+
+**Why:** `.env` committed in initial commit (7aba8a). Contains project structure info.
+
+**What:** Use BFG or `git filter-branch` to purge from history.
+
+---
+
+## P2 — High Priority UX
+
+### Verify Supabase email confirmation setting
+
+**Why:** Frontend handles both ON and OFF states, but confirmation is still ON in Supabase Dashboard.
 
 **What:** Log into Supabase Dashboard → Authentication → Settings → toggle "Confirm email" OFF.
 
-### 4. Add step indicator UI to AppointmentFlow
+### Add step indicator UI to AppointmentFlow
 
 **Why:** 5-step flow exists but user can't see where they are.
 
 **What:** Add "Etape X sur 5" indicator at top of each step.
 
-### 5. Verify and fix ResetPassword flow
+### Verify and fix ResetPassword flow
 
 **Why:** The code exists but depends on Supabase email service being configured.
 
 **What:** Trigger a password reset on deployed site and check if email arrives.
 
-### 6. Add loading skeletons to slow pages
+### Add loading skeletons to slow pages
 
 **Why:** Multiple pages show spinners instead of skeleton placeholders.
 
@@ -48,19 +104,15 @@
 
 ### Fix: Upcoming reservations not visible by default
 
-**Why:** The default booking view shows today only. A booking made for tomorrow or next week is invisible until the owner manually filters to that date. Owners will miss reservations.
+**Why:** The default booking view shows today only. A booking made for tomorrow or next week is invisible until the owner manually filters to that date.
 
-**What:** Change the default date filter in DashboardBookings.tsx from "today" to "upcoming" (today + future dates), ordered by date ascending. Add a "Aujourd'hui" quick-filter button for when the owner wants to focus on the current day only.
-
-**Acceptance:** When an owner opens the bookings page, they see all upcoming bookings (today and later) sorted by nearest date first. A "Aujourd'hui" button filters to today only.
+**What:** Change the default date filter in DashboardBookings.tsx from "today" to "upcoming" (today + future dates), ordered ascending. Add "Aujourd'hui" quick-filter button.
 
 ### Fix: Queue tab should be the default on the public business page
 
-**Why:** The current default tab is "Reservations". For most Algerian service businesses (barbershops, salons), walk-in queue is the primary use case. Clients landing on the page should see the queue immediately.
+**Why:** Current default tab is "Reservations" but walk-in queue is the primary use case for most Algerian service businesses.
 
-**What:** In BusinessPublic.tsx, change the default active tab from 'appointment' to 'queue'. Keep the tab bar so owners who prefer appointments can still switch. The `?tab=queue` URL param already works — make queue the default when no param is present.
-
-**Acceptance:** Visiting `/:slug` defaults to the queue tab. Visiting `/:slug?tab=appointment` still opens the appointment tab.
+**What:** Change default active tab from 'appointment' to 'queue'. `?tab=queue` URL param already works — make queue the default.
 
 ---
 

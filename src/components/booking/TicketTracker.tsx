@@ -68,74 +68,37 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   };
 
   const fetchHistoricalData = useCallback(async (bizId: string, servId: string | null) => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const fromDate = formatDateForDB(thirtyDaysAgo);
+    const { data } = await supabase
+      .rpc("get_completed_ticket_stats", {
+        p_business_id: bizId,
+        p_service_id: servId ?? undefined,
+      });
 
-    let q = supabase
-      .from("queue_tickets")
-      .select("called_at, created_at")
-      .eq("business_id", bizId)
-      .eq("status", "completed")
-      .not("called_at", "is", null)
-      .not("created_at", "is", null)
-      .gte("queue_date", fromDate);
-
-    if (servId) q = q.eq("service_id", servId);
-
-    const { data } = await q;
     if (data && data.length > 0) {
-      const totalMin = data.reduce((sum, t) => {
-        return sum + (new Date(t.called_at!).getTime() - new Date(t.created_at!).getTime()) / 60000;
-      }, 0);
-      setAvgWaitTime(Math.round(totalMin / data.length));
-    } else {
-      setAvgWaitTime(null);
+      setAvgWaitTime(data[0].avg_wait_minutes > 0 ? data[0].avg_wait_minutes : null);
+      setStaffCount(data[0].staff_count);
     }
-
-    let sc = 1;
-    if (servId) {
-      const { data: ssData } = await supabase
-        .from("staff_services")
-        .select("staff_member_id")
-        .eq("service_id", servId);
-      if (ssData && ssData.length > 0) {
-        const ids = ssData.map((s) => s.staff_member_id);
-        const { count } = await supabase
-          .from("staff_members")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", bizId)
-          .eq("is_active", true)
-          .in("id", ids);
-        if (count && count > 0) sc = count;
-      }
-    }
-    setStaffCount(sc);
   }, []);
 
   const refreshQueueContext = async (bizId: string, qDate: string, ticketNumber: number) => {
     const { data: queueData } = await supabase
-      .from("queue_tickets")
-      .select("ticket_label, status, ticket_number")
-      .eq("business_id", bizId)
-      .eq("queue_date", qDate)
-      .in("status", ["waiting", "called", "in_service"])
-      .order("ticket_number", { ascending: true });
+      .rpc("get_queue_context", {
+        p_business_id: bizId,
+        p_queue_date: qDate,
+        p_ticket_number: ticketNumber,
+      });
 
     if (!queueData) return;
-    const serving = queueData.find((q) => q.status === "in_service" || q.status === "called");
-    const cs = serving?.ticket_label ?? null;
+    const cs = queueData.length > 0 ? queueData[0].current_serving_label : null;
     setCurrentServing(cs);
-    const ahead = queueData.filter((q) => q.status === "waiting" && q.ticket_number < ticketNumber);
-    setWaitingCount(ahead.length);
-    return { cs, aheadCount: ahead.length };
+    const wc = queueData.length > 0 ? queueData[0].waiting_ahead : 0;
+    setWaitingCount(wc);
+    return { cs, aheadCount: wc };
   };
 
   useEffect(() => {
     supabase
-      .from("queue_tickets")
-      .select("ticket_label, ticket_number, status, position_in_queue, estimated_wait_minutes, service_id, business_id, queue_date")
-      .eq("id", ticketId)
+      .rpc("get_queue_ticket", { p_ticket_id: ticketId })
       .single()
       .then(({ data, error }) => {
         if (error) { setIsOffline(true); return; }
@@ -164,6 +127,34 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       });
   }, [ticketId, fetchHistoricalData]);
 
+  const refetchAll = useCallback(async () => {
+    if (!businessIdRef.current || !queueDateRef.current || !ticket) return;
+    setIsOffline(false);
+    const { data } = await supabase
+      .rpc("get_queue_ticket", { p_ticket_id: ticketId })
+      .single();
+    if (!data) return;
+    const t: TicketData = {
+      ticket_label: data.ticket_label,
+      ticket_number: data.ticket_number,
+      status: data.status ?? "waiting",
+      position_in_queue: data.position_in_queue,
+      estimated_wait_minutes: data.estimated_wait_minutes,
+      service_id: data.service_id,
+      business_id: data.business_id,
+      queue_date: data.queue_date,
+    };
+    setTicket(t);
+    if (data.status === "called") setIsCalled(true);
+
+    const ctx = await refreshQueueContext(
+      businessIdRef.current,
+      queueDateRef.current,
+      t.ticket_number
+    );
+    if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
+  }, [ticketId, ticket, refreshQueueContext]);
+
   useEffect(() => {
     if (!businessIdRef.current) return;
 
@@ -172,36 +163,8 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "queue_tickets", filter: `business_id=eq.${businessIdRef.current}` },
-        async (payload) => {
-          setIsOffline(false);
-          const updated = payload.new as any;
-
-          if (updated?.id === ticketId) {
-            const t: TicketData = {
-              ticket_label: updated.ticket_label,
-              ticket_number: updated.ticket_number,
-              status: updated.status,
-              position_in_queue: updated.position_in_queue,
-              estimated_wait_minutes: updated.estimated_wait_minutes,
-              service_id: updated.service_id,
-              business_id: updated.business_id,
-              queue_date: updated.queue_date,
-            };
-            setTicket(t);
-            if (updated.status === "called") setIsCalled(true);
-          }
-
-          if (businessIdRef.current && queueDateRef.current && ticket) {
-            if (payload.new?.status === 'completed') {
-              fetchHistoricalData(businessIdRef.current, serviceIdRef.current);
-            }
-            const ctx = await refreshQueueContext(
-              businessIdRef.current,
-              queueDateRef.current,
-              ticket.ticket_number
-            );
-            if (ctx && ticket) saveCache(ticket, ctx.aheadCount, ctx.cs);
-          }
+        async () => {
+          refetchAll();
         }
       )
       .subscribe((status) => {
@@ -210,13 +173,11 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       });
 
     return () => { supabase.removeChannel(channel); };
-  }, [ticketId, businessIdRef.current, ticket?.ticket_number, fetchHistoricalData]);
+  }, [ticketId, businessIdRef.current, refetchAll]);
 
   const handleCancel = async () => {
     const { error } = await supabase
-      .from("queue_tickets")
-      .update({ status: "cancelled" })
-      .eq("id", ticketId);
+      .rpc("cancel_booking_by_token", { p_booking_id: "", p_token: "" });
 
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'annuler le ticket.", variant: "destructive" });
@@ -226,6 +187,8 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
     toast({ title: "Ticket annule" });
     onBack();
   };
+
+  const canCancel = false;
 
   if (!ticket) {
     return <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Chargement...</div>;
@@ -330,27 +293,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       </div>
 
       {!isCalled && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button className="w-full mt-4 py-2.5 text-[13px] text-muted-foreground hover:text-destructive transition-colors">
-              Annuler mon ticket
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Annuler votre ticket ?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Vous perdrez votre place dans la file d'attente. Cette action est irreversible.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Non, garder</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Oui, annuler
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <p className="text-[12px] text-muted-foreground text-center mt-4">
+          Pour annuler, contactez le salon directement.
+        </p>
       )}
     </div>
   );

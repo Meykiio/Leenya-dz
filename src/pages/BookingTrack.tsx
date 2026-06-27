@@ -30,9 +30,7 @@ const BookingTrack = () => {
   useEffect(() => {
     if (!token) return;
     supabase
-      .from("bookings")
-      .select("*, services(name), businesses(name, address, phone)")
-      .eq("booking_token", token)
+      .rpc("get_booking_by_token", { p_token: token })
       .single()
       .then(({ data, error }) => {
         if (error || !data) setBooking(null);
@@ -44,13 +42,13 @@ const BookingTrack = () => {
   const handleCancel = async () => {
     if (!booking) return;
     setCancelling(true);
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "cancelled" })
-      .eq("id", booking.id)
-      .eq("booking_token", token);
+    const { data: success, error } = await supabase
+      .rpc("cancel_booking_by_token", {
+        p_booking_id: booking.id,
+        p_token: token,
+      });
 
-    if (error) {
+    if (error || !success) {
       toast({ title: "Erreur", description: "Impossible d'annuler la réservation.", variant: "destructive" });
     } else {
       setBooking({ ...booking, status: "cancelled" });

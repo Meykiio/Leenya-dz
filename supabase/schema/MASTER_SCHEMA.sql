@@ -5,6 +5,14 @@
 -- ============================================================
 
 -- ============================================================
+-- SCHEMA GRANTS (after DROP SCHEMA public CASCADE)
+-- ============================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
+
+-- ============================================================
 -- EXTENSIONS
 -- ============================================================
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
@@ -425,6 +433,71 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.assign_owner_role(UUID) TO authenticated;
+
+-- -----------------------------------------------------------
+-- create_staff_user — SECURITY DEFINER to bypass RLS for staff account creation
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.create_staff_user(
+  p_staff_id UUID,
+  p_email TEXT,
+  p_password TEXT
+)
+RETURNS UUID
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_existing_id UUID;
+  v_user_id UUID;
+BEGIN
+  -- If auth user for this email already exists, just link staff to it
+  SELECT id INTO v_existing_id FROM auth.users WHERE email = p_email;
+  IF v_existing_id IS NOT NULL THEN
+    UPDATE public.staff_members SET profile_id = v_existing_id WHERE id = p_staff_id;
+    INSERT INTO public.user_roles (user_id, role) VALUES (v_existing_id, 'staff'::app_role)
+    ON CONFLICT (user_id, role) DO NOTHING;
+    RETURN v_existing_id;
+  END IF;
+
+  v_user_id := gen_random_uuid();
+
+  INSERT INTO auth.users (
+    instance_id, id, email, encrypted_password,
+    email_confirmed_at, confirmation_sent_at,
+    aud, role,
+    raw_app_meta_data, raw_user_meta_data,
+    confirmation_token, recovery_token, email_change, email_change_token_new,
+    created_at, updated_at
+  )
+  VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    v_user_id, p_email,
+    extensions.crypt(p_password, extensions.gen_salt('bf', 10)),
+    now(), now(),
+    'authenticated', 'authenticated',
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    jsonb_build_object('sub', v_user_id, 'email', p_email, 'email_verified', true, 'phone_verified', false),
+    '', '', '', '',
+    now(), now()
+  );
+
+  INSERT INTO auth.identities (user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
+  VALUES (
+    v_user_id,
+    jsonb_build_object('sub', v_user_id, 'email', p_email, 'email_verified', false, 'phone_verified', false),
+    'email', v_user_id::text,
+    now(), now(), now()
+  );
+
+  INSERT INTO public.user_roles (user_id, role) VALUES (v_user_id, 'staff'::app_role);
+
+  UPDATE public.staff_members SET profile_id = v_user_id WHERE id = p_staff_id;
+
+  RETURN v_user_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_staff_user(UUID, TEXT, TEXT) TO authenticated;
 
 -- -----------------------------------------------------------
 -- upsert_profile — SECURITY DEFINER to bypass RLS for onboarding
@@ -893,6 +966,15 @@ CREATE POLICY "Staff can view business bookings" ON public.bookings
       SELECT 1 FROM public.staff_members sm
       JOIN public.businesses b ON b.id = sm.business_id
       WHERE sm.profile_id = auth.uid() AND b.id = business_id
+    )
+  );
+
+DROP POLICY IF EXISTS "Staff can update business bookings" ON public.bookings;
+CREATE POLICY "Staff can update business bookings" ON public.bookings
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.staff_members sm
+      WHERE sm.profile_id = auth.uid() AND sm.business_id = bookings.business_id
     )
   );
 

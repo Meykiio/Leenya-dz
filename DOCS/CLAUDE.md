@@ -53,16 +53,18 @@ npx tsc --noEmit # Type-check only
 
 ## What was just done (last session)
 
-- All file splits completed (types, WhatsApp lib, dashboard bookings, AppointmentFlow, TicketTracker, Staff, Queue)
-- Queue double-join: app-level pre-insert check added (phone + date + business query before ticket generation)
-- PendingApprovals component: shows future pending bookings capped at 10
-- Sidebar pending badge: real-time pending count next to "Reservations"
-- Dashboard stat: pending count replaces NO-SHOWS card
-- AuthContext.refreshRole() added for onboarding redirect fix
-- LoginForm signup: auto-login when email confirmation is off
-- Database recreated from scratch with MASTER_SCHEMA.sql
-- Full docs audit in progress
+- Staff auth login: `create_staff_user` RPC works end-to-end (owner creates email/password account → staff logs in → redirected to /staff)
+  - All 36 auth.users columns set correctly (instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, etc.)
+  - bcrypt cost 10, provider_id=UUID, confirmation_token='', duplicate email handled
+  - Multiple debugging iterations via Supabase MCP (database inspection, password verification)
+- EWT formula improved: historical wait times (30-day window), staff count divisor, fallback, stored in DB, WhatsApp URL waitTime param
+- QueueDisplay sound: singleton AudioContext, click-to-unlock, muted hint
+- Staff delete: trash icon + AlertDialog confirmation
+- AddStaffForm wrapped in `<form>` (fixes console warning)
+- Onboarding auth guard: redirects to /login if not authenticated
+- MCP setup: Supabase remote MCP via OAuth for database inspection
+- Full docs update for this session
 
 ## Next likely task
 
-Complete docs audit, fix remaining inaccuracies, then return to feature work.
+Run the doctor audit framework (`doctor/` folder — 30 specialist roles) before accepting real customers. Start with ROI-ranked top 5 roles. See `doctor/04_roi_ranking.md`.

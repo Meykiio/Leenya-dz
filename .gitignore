@@ -30,3 +30,10 @@ dist-ssr
 
 # Generated files
 repomix-output.xml
+
+# Doctor audit (internal, not for public repo)
+doctor/
+
+# Supabase local dev
+supabase/.temp/
+supabase/query_*.sql

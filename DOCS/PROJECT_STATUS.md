@@ -1,6 +1,6 @@
 # Project Status — Leenya
 
-**Last updated:** 2026-06-26
+**Last updated:** 2026-06-27
 **Version:** 0.0.0 (pre-release)
 **Project name:** Leenya (formerly Dawrni/Darek)
 **One-line pitch:** Queue and appointment management SaaS for Algerian service businesses.
@@ -24,10 +24,10 @@
 | Owner dashboard — bookings mgmt | 90% | Working — date filter, status filter, search, CRUD, WhatsApp actions, PendingApprovals section, sidebar badge, real-time subscription |
 | Owner dashboard — queue mgmt | 85% | Working — realtime, call/complete/cancel/no-show, display mode |
 | Owner dashboard — services CRUD | 90% | Working — add/edit/delete/toggle, name_ar field, slider for duration |
-| Owner dashboard — staff CRUD | 90% | Working — add/edit/toggle, **avatar upload**, **service assignment** |
+| Owner dashboard — staff CRUD | 95% | Working — add/edit/toggle, **avatar upload**, **service assignment**, **auth login creation**, **delete** |
 | Owner dashboard — settings | 70% | All tabs present, most work, some features are placeholders |
 | Owner dashboard — analytics | 70% | Working — metric cards, charts, peak hours grid, popular services, history table |
-| Staff view | 80% | Working — queue management, call/complete/no-show |
+| Staff view | 90% | Working — queue management, call/complete/no-show, **bookings tab**, **staff login** |
 | Client bookings page | 70% | Working — list upcoming/past, cancel, leave review |
 | Booking tracker (anonymous token) | 80% | Working — view by token, cancel |
 | Reviews | 60% | Working — display on public page, submit from MyBookings |
@@ -53,8 +53,8 @@ The following flows work end-to-end in a local dev environment with a correctly 
 4. **Dashboard → Manage queue:** Owner can view today's queue in real time, call/complete/cancel/no-show tickets, and open TV display mode.
 5. **Dashboard → Manage bookings:** Owner can filter by date/status, search, create bookings, accept/reject, mark arrived/in-service/completed/cancelled/no-show, and send WhatsApp reminders.
 6. **Dashboard → Services CRUD:** Owner can add/edit/delete services with name, duration, price, and active toggle.
-7. **Dashboard → Staff CRUD:** Owner can add/edit staff members with active/accepts-bookings toggles, upload avatars (initials fallback with deterministic color), and assign services via checkbox dialog.
-8. **Staff view:** Staff member can view today's queue and bookings, call/complete/no-show tickets.
+7. **Dashboard → Staff CRUD:** Owner can add/edit staff members with active/accepts-bookings toggles, upload avatars (initials fallback with deterministic color), assign services via checkbox dialog, **create auth login accounts (email/password)**, and **delete staff members**.
+8. **Staff view:** Staff member can login via email/password, view today's queue and bookings in tabbed interface, call/complete/no-show tickets, and send WhatsApp messages.
 9. **Booking tracker:** Anyone with a booking token URL can view and cancel their booking.
 10. **My Bookings:** Logged-in client can view their booking history and cancel upcoming bookings.
 11. **Analytics:** Owner can view metrics, charts, peak hours, popular services, and booking history.
@@ -133,3 +133,13 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - Auth: refreshRole() fixes onboarding redirect loop; auto-login on signup when email confirmation is off
 - All large files split into domain subdirectories (bookings/, queue/, staff/, booking/steps/)
 - MASTER_SCHEMA.sql re-applied after full DB reset
+
+**Updated 2026-06-27 (Session 3):**
+- Staff auth login fully working: owner creates staff account with email/password, staff logs in, redirected to /staff
+- create_staff_user RPC function works end-to-end with all 36 auth.users columns set correctly (instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, confirmation_token, recovery_token, etc.)
+- EWT formula improved: uses historical wait times (30-day window), staff count divisor, fallback formula, stored in DB
+- QueueDisplay sound: singleton AudioContext, click-to-unlock overlay, muted hint
+- Staff delete: trash button with confirmation dialog in DashboardStaff
+- Onboarding auth guard: redirects to /login if not authenticated
+- MCP set up for database inspection via opencode
+- Supabase MCP used to compare auth.users rows between working and non-working users

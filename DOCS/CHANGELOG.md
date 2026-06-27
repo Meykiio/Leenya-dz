@@ -4,6 +4,100 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 
 ---
 
+## 2026-06-27 (evening) — Doctor Audit + Phase 2a Security Fixes
+
+### Full 30-Specialist Doctor Audit
+- Completed all 29 specialist reviews + Red Team runtime tests against live Supabase production project
+- 29 reports produced covering: auth, RLS, multi-tenancy, SECURITY DEFINER functions, privacy, business logic, performance, scalability, UX, accessibility, deployment, SRE, observability, backup, cost efficiency, edge cases, data integrity, and more
+- Confirmed **active PII exposure** on queue_tickets (C-001) and bookings (C-002) via anon key
+- Confirmed **anon booking cancel** (C-003/H-008), **SECURITY DEFINER functions callable by anon** (H-009)
+- **Final score: 3.1/10 → 4.5/10 after fixes — verdict: DO NOT SHIP**
+- All findings filed: `doctor/findings/CRITICAL.md`, `HIGH.md`, `MEDIUM.md`, `LOW.md`, `RESOLVED.md`
+
+### Phase 2a — Immediate Security Fixes (applied to live Supabase)
+
+**Database migrations applied:**
+- `phase_2a_immediate_fixes`: Dropped anon SELECT/UPDATE on queue_tickets + bookings. Created 6 SECURITY DEFINER RPCs for public access (no PII in responses): `get_queue_ticket`, `get_business_queue`, `get_completed_ticket_stats`, `get_queue_context`, `get_booking_by_token`, `cancel_booking_by_token`. Removed user_roles self-insert policy. Revoked EXECUTE from anon on all functions; granted only to 7 public RPCs.
+- `phase_2a_business_hours_state_machine`: Added `check_business_hours_trigger` (BEFORE INSERT on bookings — validates operating hours), `check_queue_ticket_state_transition_trigger` (enforces queue_ticket state machine), `check_booking_state_transition_trigger` (enforces booking state machine), `check_past_booking_trigger` (prevents past-dated bookings).
+
+**Client code changes:**
+- `QueueDisplay.tsx` → uses `get_business_queue` RPC
+- `TicketTracker.tsx` → uses `get_queue_ticket`, `get_queue_context`, `get_completed_ticket_stats` RPCs; cancel removed for anon users
+- `BookingTrack.tsx` → uses `get_booking_by_token`, `cancel_booking_by_token` RPCs
+- `DashboardQueue.tsx` → fixed missing `buildQueueCalledUrl` import
+
+**Dependencies:**
+- `npm audit fix` reduced 19→2 vulnerabilities (remaining 2 need breaking vite upgrade)
+- `vitest` updated (critical CVE fixed)
+
+**Runtime retest (against live Supabase):**
+- 3/3 direct table queries blocked for anon → ✅
+- All RPCs functional with correct data → ✅
+- No PII exposed in RPC responses → ✅
+- Cancel requires valid token → ✅
+
+### Documentation
+- All doctor findings files updated with fix status markers
+- DOCS/AI_CONTEXT.md, SYSTEM_INSTRUCTIONS.md, FEATURES.md, NEXT.md, AUDIT.md, ARCHITECTURE.md, CHANGELOG.md, ENVIRONMENT.md updated
+
+---
+
+## 2026-06-27 (morning) — Staff Auth Login, EWT Fix, QueueDisplay Sound Fix, Delete Staff, MCP Setup
+
+### Staff Auth Login (Major — Fully Working)
+- Created `create_staff_user` SECURITY DEFINER RPC function — creates auth.users + auth.identities + user_roles + links profile_id to staff_members
+- **Multiple debugging iterations:** gen_random_bytes (pgcrypto prefix) → confirmed_at (generated column) → provider_id (missing) → profiles_pkey (trigger duplicate) → ON CONFLICT (wrong constraint) → raw_app_meta_data (NULL) → instance_id (was NULL, needs all-zeros UUID) → provider_id format (UUID not email) → bcrypt cost (10 not 6) → confirmation_token/recovery_token/email_change (NULL vs empty string) → raw_user_meta_data (needs sub, email_verified)
+- Final row format matches GoTrue exactly: instance_id=all-zeros, aud/role='authenticated', raw_app_meta_data={provider:"email"}, raw_user_meta_data={sub, email_verified:true}, confirmation_token/recovery_token='', provider_id=UUID, bcrypt cost 10
+- Duplicate email handling — if auth user exists, links staff to existing user instead of crashing
+- Disabled old users fixed by SQL UPDATE with all correct columns
+- Verified by MCP database inspection: password_verified=true, all 36 auth.users columns match working user format
+
+### EWT (Estimated Wait Time) Fix
+- QueueFlow (booking/QueueFlow.tsx): new `computeEWT()` using actual historical wait times (called_at - created_at), 30-day window, staff count divisor, fallback to service.duration_minutes × 1.5
+- TicketTracker (booking/TicketTracker.tsx): `fetchHistoricalData()` + `staffCount` state + `computedEwt` formula + disclaimer
+- Disclaimer: `"* Estimation basée sur l'historique — le temps réel peut varier"`
+- WhatsApp URL includes `waitTime` parameter in `buildQueueTicketUrl`
+
+### QueueDisplay Sound Fix
+- Singleton AudioContext (not new Audio() on every call — fixes paused_in_background error)
+- Click-to-unlock handler on document
+- "Cliquer pour activer le son" hint when AudioContext is suspended
+- Sound plays once on "Appeler" event
+
+### Staff Delete
+- StaffRow: Added Trash2 button with AlertDialog confirmation
+- DashboardStaff: Added `deleteStaff()` handler — deletes from staff_members (cascades to staff_services)
+
+### AddStaffForm Fixes
+- Wrapped form fields in `<form>` element with onSubmit handler — fixes "Password field is not contained in a form" console warning
+- Password input now has type="submit" button inside form
+
+### Onboarding Auth Guard
+- Onboarding.tsx now checks for authenticated user — redirects to /login if not authenticated
+
+### AuthContext Session Validation
+- Uses `supabase.auth.getUser()` server-side on init — if user deleted from DB, auto sign-out
+
+### MASTER_SCHEMA.sql Updates
+- `create_staff_user` function: final version with all 36 auth.users columns correctly set
+- `gen_salt('bf', 10)` — bcrypt cost 10 (matches GoTrue)
+- Instance ID set to all-zeros UUID (matches Supabase default)
+- Empty string defaults for confirmation_token, recovery_token, email_change, email_change_token_new
+- raw_app_meta_data = `{"provider":"email","providers":["email"]}`
+- raw_user_meta_data with sub, email_verified:true, phone_verified:false
+- provider_id in identities = user UUID (not email)
+- Removed manual INSERT INTO profiles (trigger handles it)
+
+### MCP Setup
+- Added Supabase MCP configuration to opencode.json (remote, OAuth)
+- Authenticated via OAuth browser flow
+- Used MCP to query auth.users, auth.identities, and verify password hashes during debugging
+
+### Documentation
+- All DOCS/ files updated for this session
+
+---
+
 ## 2026-06-26 — Second Cleanup: Split Completion, Booking Visibility, Queue App-Level Fix, Docs Audit
 
 ### File Splits Completed
