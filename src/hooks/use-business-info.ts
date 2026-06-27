@@ -7,6 +7,7 @@ export interface BusinessInfo {
   name: string;
   slug: string;
   category: string | null;
+  phone: string | null;
 }
 
 export function useBusinessInfo() {
@@ -18,7 +19,7 @@ export function useBusinessInfo() {
     if (!user) return;
     supabase
       .from("businesses")
-      .select("id, name, slug, category")
+      .select("id, name, slug, category, phone")
       .eq("owner_id", user.id)
       .limit(1)
       .single()

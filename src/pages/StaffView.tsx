@@ -149,7 +149,8 @@ const StaffView = () => {
   };
 
   const waiting = tickets.filter((t) => t.status === "waiting");
-  const serving = tickets.filter((t) => t.status === "called" || t.status === "in_service");
+  const called = tickets.filter((t) => t.status === "called");
+  const inService = tickets.filter((t) => t.status === "in_service");
 
   const timeAgo = (dateStr: string) => {
     const mins = differenceInMinutes(new Date(), new Date(dateStr));
@@ -232,16 +233,52 @@ const StaffView = () => {
                 <p className="text-xs text-[var(--text-secondary)]">En attente</p>
               </div>
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 text-center">
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{serving.length}</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{called.length + inService.length}</p>
                 <p className="text-xs text-[var(--text-secondary)]">En service</p>
               </div>
             </div>
 
-            {/* Currently serving */}
-            {serving.length > 0 && (
+            {/* Called — waiting to be served */}
+            {called.length > 0 && (
               <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">En service</h3>
-                {serving.map((t) => (
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">Appelé(s)</h3>
+                {called.map((t) => (
+                  <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
+                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{t.ticket_label}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"} • {t.called_at ? timeAgo(t.called_at) : ""}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="sm" onClick={() => updateTicketStatus(t.id, "in_service")} className="gap-1">
+                        <Play className="h-3 w-3" /> Commencer
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-destructive">No-show</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Marquer comme no-show?</AlertDialogTitle>
+                            <AlertDialogDescription>Le client {t.client_name} sera marqué comme absent.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>Confirmer</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Currently in service */}
+            {inService.length > 0 && (
+              <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">En cours</h3>
+                {inService.map((t) => (
                   <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
                     <span className="font-mono text-lg font-bold text-[var(--accent)]">{t.ticket_label}</span>
                     <div className="flex-1 min-w-0">

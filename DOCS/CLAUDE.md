@@ -65,6 +65,12 @@ npx tsc --noEmit # Type-check only
 - MCP setup: Supabase remote MCP via OAuth for database inspection
 - Full docs update for this session
 
-## Next likely task
+## What was just done (Phase 2d)
 
-Run the doctor audit framework (`doctor/` folder — 30 specialist roles) before accepting real customers. Start with ROI-ranked top 5 roles. See `doctor/04_roi_ranking.md`.
+- **Security audit complete:** `FINAL_AUDIT.md` — score 7.5/10. All critical + high items fixed.
+- **Sentry monitoring** integrated (`@sentry/react` + `@sentry/vite-plugin`)
+- **CI/CD** pipelines created (`.github/workflows/ci.yml` + `e2e.yml`)
+- **CSP headers** configured for dev and production
+- **Playwright E2E** tests added (`e2e/`)
+- **RLS integration tests** added (`supabase/tests/rls_policies.sql`)
+- **Bug fixes:** CSP WebSocket `wss://` fix, StaffView state machine split, WhatsApp 404 fix

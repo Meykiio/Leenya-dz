@@ -3,7 +3,7 @@
 **Date (original):** 2026-06-25
 **Last updated:** 2026-06-27 (archived — superseded by `doctor/` audit)
 **Scope:** Full codebase — MASTER_SCHEMA.sql, 30+ source files, storage policies, triggers, functions, realtime subscriptions, frontend components.
-**⚠️ SUPERSEDED:** This audit was a preliminary pass. The comprehensive 30-specialist `doctor/` audit (2026-06-27) supersedes this document. See `doctor/reports/FINAL_AUDIT.md` for the authoritative audit. Key findings this doc missed: anon SELECT policies on bookings/queue_tickets not token-scoped at RLS layer, 14 SECURITY DEFINER functions callable by anon, role self-insert, missing DB state machine enforcement, permissive RLS policy mode.
+**⚠️ SUPERSEDED:** This audit was a preliminary pass. See `FINAL_AUDIT.md` (root) for the authoritative audit (score: 7.5/10). Key findings this doc missed: anon SELECT policies on bookings/queue_tickets not token-scoped at RLS layer, 14 SECURITY DEFINER functions callable by anon, role self-insert, missing DB state machine enforcement, permissive RLS policy mode.
 
 ---
 

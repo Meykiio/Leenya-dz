@@ -69,7 +69,8 @@ export default function SettingsWhatsApp() {
 
   const handleTestSend = () => {
     if (!compiledMessage) return;
-    const url = `https://wa.me/?text=${encodeURIComponent(compiledMessage)}`;
+    const phone = business?.phone ? `213${business.phone.replace(/\D/g, "").replace(/^0?213?/, "")}` : "";
+    const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(compiledMessage)}` : `https://api.whatsapp.com/send/?text=${encodeURIComponent(compiledMessage)}`;
     window.open(url, '_blank');
   };
 

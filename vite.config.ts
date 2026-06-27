@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => ({
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline'",
-        "connect-src 'self' https://*.supabase.co https://*.sentry.io",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
         "img-src 'self' data: https://*.supabase.co",
         "font-src 'self' data:",
         "frame-ancestors 'none'",

@@ -4,7 +4,27 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 
 ---
 
-## 2026-06-27 (evening) — Doctor Audit + Phase 2a Security Fixes
+## 2026-06-27 (late) — Phase 2d: Sentry, CI/CD, CSP, Playwright E2E, RLS Tests, Bug Fixes
+
+### Production Readiness Additions
+- **Sentry:** `@sentry/react` + `@sentry/vite-plugin` installed. `src/lib/sentry.ts` initializes Sentry with DSN guard (`VITE_SENTRY_DSN`). `vite.config.ts` updated with `sentryVitePlugin` and `sourcemap: "hidden"` when DSN present.
+- **CI/CD:** `.github/workflows/ci.yml` — eslint + tsc + test + build on PR/push to main. `.github/workflows/e2e.yml` — Playwright nightly cron + manual dispatch.
+- **CSP:** `_headers` for production (Netlify-compatible). `vite.config.ts` `server.headers` for dev mode. Block `frame-ancestors`, set strict `Permissions-Policy`, `Referrer-Policy`.
+- **Playwright:** Config + 3 E2E tests: anonymous booking track, queue display, unauthenticated staff redirect.
+- **RLS integration tests:** `supabase/tests/rls_policies.sql` — 7 SQL assertions testing anon direct table access is blocked.
+- **FINAL_AUDIT.md:** Score 7.5/10. All critical & high items resolved.
+
+### Bug Fixes (this session)
+- **CSP WebSocket fix:** Added `wss://*.supabase.co` to `connect-src` in both `_headers` and `vite.config.ts` — Supabase Realtime uses WebSocket, which was blocked by CSP (`wss:` not allowed in `connect-src`).
+- **StaffView state machine:** Split "En service" section into "Appelé(s)" (called → Commencer button) and "En cours" (in_service → Terminer button). Previously "Terminer" tried `called → completed` which the DB state machine correctly rejected (requires `called → in_service → completed`).
+- **WhatsApp test send 404:** Fixed `https://wa.me/?text=...` (missing phone number → WhatsApp 404). Now uses business phone if available, falls back to `api.whatsapp.com/send/` without number.
+
+### Documentation
+- All DOCS/ files updated for Phase 2d changes.
+
+---
+
+## 2026-06-27 (evening) — Phase 2a Security Fixes
 
 ### Full 30-Specialist Doctor Audit
 - Completed all 29 specialist reviews + Red Team runtime tests against live Supabase production project

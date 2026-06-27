@@ -1,6 +1,6 @@
 # Project Status — Leenya
 
-**Last updated:** 2026-06-27
+**Last updated:** 2026-06-27 (Phase 2d)
 **Version:** 0.0.0 (pre-release)
 **Project name:** Leenya (formerly Dawrni/Darek)
 **One-line pitch:** Queue and appointment management SaaS for Algerian service businesses.
@@ -143,3 +143,13 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - Onboarding auth guard: redirects to /login if not authenticated
 - MCP set up for database inspection via opencode
 - Supabase MCP used to compare auth.users rows between working and non-working users
+
+**Updated 2026-06-27 (Session 4 — Phase 2d):**
+- **Security audit FINAL_AUDIT.md** created: score 7.5/10. All critical + high items resolved.
+- **Sentry monitoring** integrated (`@sentry/react` + `@sentry/vite-plugin`). Init guarded by `VITE_SENTRY_DSN`.
+- **CI/CD pipeline** created: `.github/workflows/ci.yml` (eslint + tsc + test + build on PR/push) + `e2e.yml` (Playwright nightly).
+- **CSP headers** configured: `_headers` for production, `vite.config.ts` `server.headers` for dev.
+- **Playwright E2E tests** added: 3 tests for booking track, queue display, staff view redirect.
+- **RLS integration tests** added: `supabase/tests/rls_policies.sql` (7 SQL assertions).
+- **0 npm vulnerabilities** in production dependencies.
+- **Bug fixes:** CSP WebSocket `wss://` added, StaffView state machine split (called → Commencer / in_service → Terminer), WhatsApp test send 404 fixed with business phone fallback.
