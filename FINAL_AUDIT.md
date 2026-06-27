@@ -20,7 +20,7 @@
 | H-008 | Trigger manquant — machine à états (2/3) | Haut | ✅ Corrigé |
 | H-009 | Trigger manquant — réservations passées (3/3) | Haut | ✅ Corrigé |
 | H-010 | Liste des buckets de stockage exposée | Haut | ✅ Corrigé |
-| H-011 | Protection mots de passe leakés | Haut | ⏳ Manuel (dashboard Supabase) |
+| H-011 | Protection mots de passe leakés | Haut | ⏳ Pro plan requis (déclenché plus tard) |
 | ARC-04 | Requêtes non filtrées par `business_id` | Haut | ✅ Corrigé (11 requêtes) |
 | SEC-01 | Fuite d'erreurs internes (messages)` | Haut | ✅ Corrigé (32 fuites) |
 
@@ -40,7 +40,7 @@
 ## Notes
 
 - Score : 7.5/10. Tous les éléments critiques et hauts sont résolus.
-- Le seul élément H restant (H-011) est un toggle manuel dans le dashboard Supabase.
+- Le seul élément H restant (H-011) nécessite le plan Pro Supabase — délégué après montée en charge.
 - Voir `supabase/tests/rls_policies.sql` pour les tests d'intégration RLS.
 - Les workflows CI/CD sont dans `.github/workflows/`.
 - Les tests E2E Playwright sont dans `e2e/`.
