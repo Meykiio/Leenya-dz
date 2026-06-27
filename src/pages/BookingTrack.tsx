@@ -23,6 +23,7 @@ const statusLabels: Record<string, { label: string; variant: "default" | "second
 
 const BookingTrack = () => {
   const { token } = useParams<{ token: string }>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -33,8 +34,12 @@ const BookingTrack = () => {
       .rpc("get_booking_by_token", { p_token: token })
       .single()
       .then(({ data, error }) => {
-        if (error || !data) setBooking(null);
-        else setBooking(data);
+        if (error || !data) {
+          if (error) console.error("get_booking_by_token:", error);
+          setBooking(null);
+        } else {
+          setBooking(data);
+        }
         setLoading(false);
       });
   }, [token]);

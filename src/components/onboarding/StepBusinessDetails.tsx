@@ -12,6 +12,7 @@ type BusinessCategory = Database["public"]["Enums"]["business_category"];
 
 interface StepBusinessDetailsProps {
   category: BusinessCategory;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultData: any;
   onNext: (data: { businessName: string; businessPhone: string; address: string; wilayaCode: string; wilayaName: string; slug: string; businessId: string }) => void;
   onBack: () => void;
@@ -72,8 +73,10 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         slug,
         businessId: bizId,
       });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      console.error("onboarding create business failed:", err);
+      toast({ title: "Erreur", description: "Impossible de créer votre commerce.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

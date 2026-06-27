@@ -35,6 +35,7 @@ const ResetPassword = () => {
       if (error) throw error;
       toast({ title: "Mot de passe mis à jour", description: "Vous pouvez maintenant vous connecter." });
       navigate("/login");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     } finally {

@@ -58,6 +58,7 @@ export default function HoursTab({ businessId }: { businessId: string }) {
     fetchHours();
   }, [businessId]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateDay = (index: number, field: keyof DayHours, value: any) => {
     setHours((prev) => {
       const next = [...prev];
@@ -72,7 +73,8 @@ export default function HoursTab({ businessId }: { businessId: string }) {
   const save = async () => {
     setLoading(true);
     // Delete existing and re-insert
-    await supabase.from("business_hours").delete().eq("business_id", businessId);
+    const { error: delError } = await supabase.from("business_hours").delete().eq("business_id", businessId);
+    if (delError) { console.error("delete hours:", delError); setLoading(false); return; }
     const rows = hours.map((h) => ({
       business_id: businessId,
       day_of_week: h.day_of_week,
@@ -81,7 +83,7 @@ export default function HoursTab({ businessId }: { businessId: string }) {
       closes_at: h.is_closed ? null : h.closes_at,
     }));
     const { error } = await supabase.from("business_hours").insert(rows);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("save hours:", error); toast({ title: "Erreur", description: "Impossible d'enregistrer les horaires.", variant: "destructive" }); }
     else toast({ title: "Horaires enregistrés ✓" });
     setLoading(false);
   };

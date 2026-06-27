@@ -81,6 +81,7 @@ const LoginForm = () => {
         if (error) throw error;
         await handlePostAuth();
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({
         title: "Erreur",

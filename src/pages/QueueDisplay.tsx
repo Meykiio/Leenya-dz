@@ -18,6 +18,7 @@ let audioUnlocked = false;
 function getAudioCtx(): AudioContext | null {
   if (audioCtx) return audioCtx;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Ctx = window.AudioContext || (window as any).webkitAudioContext;
     if (!Ctx) return null;
     audioCtx = new Ctx();
@@ -68,11 +69,13 @@ export default function QueueDisplay() {
   const prevServingId = useRef<string | null>(null);
 
   const fetchQueue = useCallback(async (bizId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .rpc("get_business_queue", { p_business_id: bizId, p_queue_date: today });
 
+    if (error) { console.error("fetchQueue:", error); return; }
     if (!data) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapped: TicketData[] = data.map((t: any) => ({
       id: t.id,
       ticket_label: t.ticket_label,
@@ -100,7 +103,8 @@ export default function QueueDisplay() {
       .select("id, name")
       .eq("slug", slug)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error("fetchBusinessBySlug:", error); return; }
         if (!data) return;
         setBusinessName(data.name);
         setBusinessId(data.id);

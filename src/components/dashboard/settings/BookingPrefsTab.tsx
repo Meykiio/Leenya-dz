@@ -52,7 +52,7 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
       accepts_walkins: form.accepts_walkins,
       advance_booking_days: form.advance_booking_days,
     }).eq("id", businessId);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("save prefs:", error); toast({ title: "Erreur", description: "Impossible de mettre à jour les préférences.", variant: "destructive" }); }
     else toast({ title: "Préférences enregistrées ✓" });
     setLoading(false);
   };

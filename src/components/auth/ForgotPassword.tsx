@@ -24,6 +24,7 @@ const ForgotPassword = ({ onBack }: ForgotPasswordProps) => {
       });
       if (error) throw error;
       setSent(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({
         title: "Erreur",

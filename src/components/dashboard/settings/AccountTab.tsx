@@ -55,7 +55,7 @@ export default function AccountTab() {
       phone: form.phone || null,
       preferred_lang: form.preferred_lang,
     }).eq("id", user.id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("saveProfile:", error); toast({ title: "Erreur", description: "Impossible de mettre à jour votre profil.", variant: "destructive" }); }
     else toast({ title: "Profil mis à jour ✓" });
     setLoading(false);
   };
@@ -66,7 +66,7 @@ export default function AccountTab() {
       return;
     }
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("changePassword:", error); toast({ title: "Erreur", description: "Impossible de changer le mot de passe.", variant: "destructive" }); }
     else { toast({ title: "Mot de passe modifié ✓" }); setPassword(""); }
   };
 

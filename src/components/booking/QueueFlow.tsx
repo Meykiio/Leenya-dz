@@ -99,7 +99,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
   useEffect(() => {
     const fetchStats = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("queue_tickets")
         .select("ticket_label, status, ticket_number")
         .eq("business_id", businessId)
@@ -107,6 +107,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         .in("status", ["waiting", "called", "in_service"])
         .order("ticket_number", { ascending: true });
 
+      if (error) { console.error("fetchStats:", error); return; }
       if (!data) return;
       const waiting = data.filter((t) => t.status === "waiting");
       setWaitingCount(waiting.length);
@@ -141,7 +142,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     setSelectedStaff(null);
 
     const fetchStaffAndAssignments = async () => {
-      const [{ data: staffData }, { data: ssData }] = await Promise.all([
+      const [staffRes, ssRes] = await Promise.all([
         supabase
           .from("staff_members")
           .select("id, display_name, avatar_url")
@@ -152,6 +153,11 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           .select("staff_member_id")
           .eq("service_id", selectedService.id),
       ]);
+
+      const staffData = staffRes.data;
+      const ssData = ssRes.data;
+      if (staffRes.error) { console.error("fetchStaff:", staffRes.error); }
+      if (ssRes.error) { console.error("fetchStaffServices:", ssRes.error); }
 
       if (!staffData || staffData.length === 0) {
         setStaffMembers([]);
@@ -184,7 +190,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     if (!validatePhone(phone)) return;
     setSubmitting(true);
 
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("queue_tickets")
       .select("id, ticket_label")
       .eq("business_id", businessId)
@@ -192,6 +198,8 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       .eq("queue_date", today)
       .in("status", ["waiting", "called", "in_service"])
       .maybeSingle();
+
+    if (existingError) { console.error("checkExistingTicket:", existingError); }
 
     if (existing) {
       toast({

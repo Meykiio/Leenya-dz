@@ -246,6 +246,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <NavLink
               key={item.to}
               to={item.to}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               end={(item as any).end}
               className="flex flex-col items-center gap-0.5 px-2 py-1 text-[var(--text-tertiary)]"
               activeClassName="text-[var(--accent)]"

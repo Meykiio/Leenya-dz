@@ -72,12 +72,13 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
   const checkSlug = useCallback(async (slug: string) => {
     if (!slug || slug.length < 3) { setSlugAvailable(null); return; }
     setSlugChecking(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("businesses")
       .select("id")
       .eq("slug", slug)
       .neq("id", businessId)
       .limit(1);
+    if (error) { console.error("checkSlug:", error); setSlugChecking(false); return; }
     setSlugAvailable(!data || data.length === 0);
     setSlugChecking(false);
   }, [businessId]);
@@ -106,12 +107,13 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
       address: form.address || null,
       wilaya_code: form.wilaya_code || null,
       wilaya_name: form.wilaya_name || null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       category: form.category as any,
       slug: form.slug,
       logo_url: form.logo_url || null,
       cover_url: form.cover_url || null,
     }).eq("id", businessId);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("save business info:", error); toast({ title: "Erreur", description: "Impossible de mettre à jour les informations.", variant: "destructive" }); }
     else toast({ title: "Informations enregistrées ✓" });
     setLoading(false);
   };

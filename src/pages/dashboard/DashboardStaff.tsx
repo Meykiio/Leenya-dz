@@ -37,42 +37,46 @@ const DashboardStaff = () => {
       .select("id, display_name, is_active, accepts_bookings, avatar_url")
       .eq("business_id", business.id)
       .order("display_name");
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("fetchStaff:", error); toast({ title: "Erreur", description: "Impossible de charger l'équipe.", variant: "destructive" }); }
     setStaff(data || []);
     setInitialLoading(false);
   };
 
   const fetchServices = async () => {
     if (!business) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("services")
       .select("id, name")
       .eq("business_id", business.id)
       .eq("is_active", true)
       .order("display_order");
+    if (error) { console.error("fetchServices:", error); return; }
     setServices(data || []);
   };
 
   const fetchStaffServices = async (staffId: string): Promise<string[]> => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("staff_services")
       .select("service_id")
       .eq("staff_member_id", staffId);
+    if (error) { console.error("fetchStaffServices:", error); return []; }
     return (data || []).map((s) => s.service_id);
   };
 
   const loadServiceAssignments = async () => {
     if (!business) return;
-    const { data: ssData } = await supabase
+    const { data: ssData, error: ssError } = await supabase
       .from("staff_services")
       .select("staff_member_id, service_id")
       .in("staff_member_id", (staff || []).map((s) => s.id));
-    const { data: svcData } = await supabase
+    const { data: svcData, error: svcError } = await supabase
       .from("services")
       .select("id, name")
       .eq("business_id", business.id)
       .eq("is_active", true)
       .order("display_order");
+    if (ssError) { console.error("loadServiceAssignments ss:", ssError); }
+    if (svcError) { console.error("loadServiceAssignments svc:", svcError); }
     const svcMap = (svcData || []).reduce((acc, s) => ({ ...acc, [s.id]: s.name }), {} as Record<string, string>);
     const staffSvcMap: Record<string, { id: string; name: string }[]> = {};
     (ssData || []).forEach((ss) => {
@@ -95,7 +99,8 @@ const DashboardStaff = () => {
       .select("id")
       .single();
     if (insertError) {
-      toast({ title: "Erreur", description: insertError.message, variant: "destructive" });
+      console.error("addStaff:", insertError);
+      toast({ title: "Erreur", description: "Impossible d'ajouter le membre.", variant: "destructive" });
       return;
     }
     if (email && password) {
@@ -105,7 +110,8 @@ const DashboardStaff = () => {
         p_password: password,
       });
       if (rpcError) {
-        toast({ title: "Erreur", description: `Membre ajouté mais échec de création du compte: ${rpcError.message}`, variant: "destructive" });
+        console.error("create_staff_user rpc:", rpcError);
+        toast({ title: "Erreur", description: "Membre ajouté mais échec de création du compte.", variant: "destructive" });
       } else {
         toast({ title: "Compte crée", description: "Le membre peut maintenant se connecter." });
       }
@@ -116,14 +122,16 @@ const DashboardStaff = () => {
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("staff_members").update({ is_active: !current }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (!business) return;
+    const { error } = await supabase.from("staff_members").update({ is_active: !current }).eq("business_id", business.id).eq("id", id);
+    if (error) { console.error("toggleActive:", error); toast({ title: "Erreur", description: "Impossible de modifier le membre.", variant: "destructive" }); }
     fetchStaff();
   };
 
   const toggleBookings = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("staff_members").update({ accepts_bookings: !current }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (!business) return;
+    const { error } = await supabase.from("staff_members").update({ accepts_bookings: !current }).eq("business_id", business.id).eq("id", id);
+    if (error) { console.error("toggleBookings:", error); toast({ title: "Erreur", description: "Impossible de modifier le membre.", variant: "destructive" }); }
     fetchStaff();
   };
 
@@ -132,17 +140,17 @@ const DashboardStaff = () => {
     const ext = file.name.split(".").pop();
     const path = `staff-avatars/${business.id}/${staffId}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true });
-    if (uploadError) { toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" }); return; }
+    if (uploadError) { console.error("uploadAvatar:", uploadError); toast({ title: "Erreur upload", description: "Impossible de télécharger l'image.", variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
-    const { error: updateError } = await supabase.from("staff_members").update({ avatar_url: publicUrl }).eq("id", staffId);
-    if (updateError) { toast({ title: "Erreur", description: updateError.message, variant: "destructive" }); return; }
+    const { error: updateError } = await supabase.from("staff_members").update({ avatar_url: publicUrl }).eq("business_id", business.id).eq("id", staffId);
+    if (updateError) { console.error("updateAvatar:", updateError); toast({ title: "Erreur", description: "Impossible de mettre à jour l'avatar.", variant: "destructive" }); return; }
     toast({ title: "Avatar mis a jour" });
     fetchStaff();
   };
 
   const deleteStaff = async (staffId: string) => {
-    const { error } = await supabase.from("staff_members").delete().eq("id", staffId);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    const { error } = await supabase.from("staff_members").delete().eq("business_id", business.id).eq("id", staffId);
+    if (error) { console.error("deleteStaff:", error); toast({ title: "Erreur", description: "Impossible de supprimer le membre.", variant: "destructive" }); }
     else toast({ title: "Membre supprimé" });
     fetchStaff();
   };

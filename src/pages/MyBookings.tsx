@@ -64,7 +64,8 @@ export default function MyBookings() {
   const cancelBooking = async (id: string) => {
     const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("cancelBooking:", error);
+      toast({ title: "Erreur", description: "Impossible d'annuler la réservation.", variant: "destructive" });
       return;
     }
     toast({ title: "Réservation annulée" });
@@ -83,7 +84,8 @@ export default function MyBookings() {
     });
     setSubmittingReview(false);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("submitReview:", error);
+      toast({ title: "Erreur", description: "Impossible d'envoyer votre avis.", variant: "destructive" });
       return;
     }
     toast({ title: "Avis publié" });

@@ -34,8 +34,10 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
       if (roleError && !roleError.message.includes("duplicate")) throw roleError;
 
       onNext(name.trim());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      console.error("onboarding create profile failed:", err);
+      toast({ title: "Erreur", description: "Impossible de créer votre profil.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

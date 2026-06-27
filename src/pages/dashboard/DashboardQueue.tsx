@@ -38,7 +38,8 @@ const DashboardQueue = () => {
 
     if (fetchError) {
       setError("Impossible de charger la file d'attente.");
-      toast({ title: "Erreur", description: fetchError.message, variant: "destructive" });
+      console.error("fetchTickets:", fetchError);
+      toast({ title: "Erreur", description: "Impossible de charger la file d'attente.", variant: "destructive" });
     } else {
       setError(null);
     }
@@ -101,19 +102,21 @@ const DashboardQueue = () => {
   const completedToday = tickets.filter((t) => t.status === "completed");
 
   const updateTicketStatus = async (id: string, status: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: any = { status };
     if (status === "called") updates.called_at = new Date().toISOString();
     if (status === "in_service") updates.called_at = updates.called_at || new Date().toISOString();
     if (status === "completed" || status === "no_show") updates.completed_at = new Date().toISOString();
 
-    let query = supabase.from("queue_tickets").update(updates).eq("id", id);
+    let query = supabase.from("queue_tickets").update(updates).eq("business_id", business.id).eq("id", id);
     if (status === "called") {
       query = query.eq("status", "waiting");
     }
 
     const { data, error } = await query.select("*");
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("updateTicketStatus:", error);
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le ticket.", variant: "destructive" });
       return;
     }
     if (status === "called" && (!data || data.length === 0)) {
@@ -186,7 +189,8 @@ const DashboardQueue = () => {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("createTicket:", error);
+      toast({ title: "Erreur", description: "Impossible de créer le ticket.", variant: "destructive" });
     } else {
       toast({ title: `Ticket ${ticket_lbl} créé` });
       setNewClient({ name: "", phone: "", service_id: "", staff_member_id: "" });

@@ -67,7 +67,7 @@ const StaffView = () => {
       .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("ticket_number");
 
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("fetchTickets:", error); toast({ title: "Erreur", description: "Impossible de charger la file.", variant: "destructive" }); }
     setTickets(data || []);
     setLoading(false);
   }, [business, staffMemberId, today]);
@@ -83,7 +83,7 @@ const StaffView = () => {
       .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("start_time");
 
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("fetchBookings:", error); toast({ title: "Erreur", description: "Impossible de charger les réservations.", variant: "destructive" }); }
     setBookings(data || []);
     setLoading(false);
   }, [business, staffMemberId, today]);
@@ -101,18 +101,20 @@ const StaffView = () => {
   }, [business, fetchTickets, fetchBookings]);
 
   const updateTicketStatus = async (id: string, status: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: any = { status };
     if (status === "called") updates.called_at = new Date().toISOString();
     if (status === "completed" || status === "no_show") updates.completed_at = new Date().toISOString();
 
-    let query = supabase.from("queue_tickets").update(updates).eq("id", id);
+    let query = supabase.from("queue_tickets").update(updates).eq("business_id", business!.id).eq("id", id);
     if (status === "called") {
       query = query.eq("status", "waiting");
     }
 
     const { data, error } = await query.select("client_phone, ticket_label");
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("updateTicketStatus:", error);
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le ticket.", variant: "destructive" });
       return;
     }
     if (status === "called" && (!data || data.length === 0)) {
@@ -129,13 +131,15 @@ const StaffView = () => {
   };
 
   const updateBookingStatus = async (id: string, status: BookingStatus) => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    const { error } = await supabase.from("bookings").update({ status }).eq("business_id", business!.id).eq("id", id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("updateBookingStatus:", error);
+      toast({ title: "Erreur", description: "Impossible de mettre à jour la réservation.", variant: "destructive" });
     }
   };
 
   const sendBookingWhatsApp = (booking: Booking) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serviceName = (booking.services as any)?.name || "Service";
     const url = buildBookingConfirmationUrl(
       booking.client_phone, business!.name, booking.date,

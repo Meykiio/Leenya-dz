@@ -17,8 +17,10 @@ import {
 
 const DashboardServices = () => {
   const { business } = useBusinessInfo();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [services, setServices] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editing, setEditing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", name_ar: "", duration_minutes: 30, price_dzd: 1000, is_active: true });
@@ -31,7 +33,7 @@ const DashboardServices = () => {
       .eq("business_id", business.id)
       .order("display_order");
 
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("fetchServices:", error); toast({ title: "Erreur", description: "Impossible de charger les services.", variant: "destructive" }); }
     setServices(data || []);
     setLoading(false);
   };
@@ -44,6 +46,7 @@ const DashboardServices = () => {
     setShowForm(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const openEdit = (s: any) => {
     setEditing(s);
     setForm({ name: s.name, name_ar: s.name_ar || "", duration_minutes: s.duration_minutes, price_dzd: s.price_dzd || 0, is_active: s.is_active });
@@ -60,8 +63,8 @@ const DashboardServices = () => {
       const { error } = await supabase.from("services").update({
         name: form.name.trim(), name_ar: form.name_ar.trim() || null,
         duration_minutes: form.duration_minutes, price_dzd: form.price_dzd, is_active: form.is_active,
-      }).eq("id", editing.id);
-      if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+      }).eq("business_id", business.id).eq("id", editing.id);
+      if (error) { console.error("saveService update:", error); toast({ title: "Erreur", description: "Impossible de modifier ce service.", variant: "destructive" }); return; }
       toast({ title: "Service mis a jour" });
     } else {
       const { error } = await supabase.from("services").insert({
@@ -69,7 +72,7 @@ const DashboardServices = () => {
         duration_minutes: form.duration_minutes, price_dzd: form.price_dzd, is_active: form.is_active,
         display_order: services.length,
       });
-      if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+      if (error) { console.error("saveService insert:", error); toast({ title: "Erreur", description: "Impossible d'ajouter ce service.", variant: "destructive" }); return; }
       toast({ title: "Service ajoute" });
     }
     setShowForm(false);
@@ -77,11 +80,12 @@ const DashboardServices = () => {
   };
 
   const deleteService = async (id: string) => {
-    const { error } = await supabase.from("services").delete().eq("id", id);
+    const { error } = await supabase.from("services").delete().eq("business_id", business.id).eq("id", id);
     if (error) {
       const msg = error.message.includes("foreign key") || error.message.includes("violates")
         ? "Impossible de supprimer: ce service a des réservations existantes. Désactivez-le plutôt."
-        : error.message;
+        : "Impossible de supprimer ce service.";
+      console.error("deleteService:", error);
       toast({ title: "Erreur", description: msg, variant: "destructive" });
       return;
     }
@@ -90,8 +94,8 @@ const DashboardServices = () => {
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("services").update({ is_active: !current }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    const { error } = await supabase.from("services").update({ is_active: !current }).eq("business_id", business.id).eq("id", id);
+    if (error) { console.error("toggleActive:", error); toast({ title: "Erreur", description: "Impossible de modifier ce service.", variant: "destructive" }); }
     fetchServices();
   };
 

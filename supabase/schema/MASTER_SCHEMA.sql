@@ -592,7 +592,171 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.insert_services(UUID, JSONB) TO authenticated;
 
+-- -----------------------------------------------------------
 -- Public RPCs (Phase 2a — anon can call, no PII returned)
+-- -----------------------------------------------------------
+
+-- get_queue_ticket — fetch a single queue ticket by ID
+CREATE OR REPLACE FUNCTION public.get_queue_ticket(p_ticket_id UUID)
+RETURNS TABLE(ticket_label TEXT, ticket_number INTEGER, status queue_status, position_in_queue INTEGER, estimated_wait_minutes INTEGER, service_id UUID, business_id UUID, queue_date DATE)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT qt.ticket_label, qt.ticket_number, qt.status, qt.position_in_queue,
+         qt.estimated_wait_minutes, qt.service_id, qt.business_id, qt.queue_date
+  FROM public.queue_tickets qt
+  WHERE qt.id = p_ticket_id
+    AND qt.status IN ('waiting', 'called', 'in_service', 'completed');
+$$;
+
+-- get_business_queue — fetch all active queue tickets for a business on a date
+CREATE OR REPLACE FUNCTION public.get_business_queue(
+  p_business_id UUID,
+  p_queue_date DATE
+)
+RETURNS TABLE(id UUID, ticket_label TEXT, status queue_status, ticket_number INTEGER, service_name TEXT, staff_name TEXT)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT qt.id, qt.ticket_label, qt.status, qt.ticket_number,
+         s.name, sm.display_name
+  FROM public.queue_tickets qt
+  LEFT JOIN public.services s ON s.id = qt.service_id
+  LEFT JOIN public.staff_members sm ON sm.id = qt.staff_member_id
+  WHERE qt.business_id = p_business_id
+    AND qt.queue_date = p_queue_date
+    AND qt.status IN ('waiting', 'called', 'in_service')
+  ORDER BY qt.ticket_number ASC;
+$$;
+
+-- get_completed_ticket_stats — average wait time and active staff count
+CREATE OR REPLACE FUNCTION public.get_completed_ticket_stats(
+  p_business_id UUID,
+  p_service_id UUID DEFAULT NULL::UUID
+)
+RETURNS TABLE(avg_wait_minutes INTEGER, staff_count INTEGER)
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_avg_min integer;
+  v_staff_count integer;
+BEGIN
+  SELECT COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (called_at - created_at)) / 60))::integer, 0)
+  INTO v_avg_min
+  FROM public.queue_tickets
+  WHERE business_id = p_business_id
+    AND status = 'completed'
+    AND called_at IS NOT NULL
+    AND created_at IS NOT NULL
+    AND queue_date >= CURRENT_DATE - 30
+    AND (p_service_id IS NULL OR service_id = p_service_id);
+
+  SELECT COUNT(DISTINCT sm.id)::integer
+  INTO v_staff_count
+  FROM public.staff_members sm
+  WHERE sm.business_id = p_business_id
+    AND sm.is_active = true
+    AND (p_service_id IS NULL OR EXISTS (
+      SELECT 1 FROM public.staff_services ss WHERE ss.staff_member_id = sm.id AND ss.service_id = p_service_id
+    ));
+
+  IF v_staff_count = 0 THEN v_staff_count := 1; END IF;
+
+  RETURN QUERY SELECT v_avg_min, v_staff_count;
+END;
+$$;
+
+-- get_queue_context — ticket position and current serving label
+CREATE OR REPLACE FUNCTION public.get_queue_context(
+  p_business_id UUID,
+  p_queue_date DATE,
+  p_ticket_number INTEGER
+)
+RETURNS TABLE(ticket_label TEXT, status queue_status, ticket_number INTEGER, current_serving_label TEXT, waiting_ahead INTEGER)
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_serving_label text;
+  v_ahead integer;
+BEGIN
+  SELECT q.ticket_label INTO v_serving_label
+  FROM public.queue_tickets q
+  WHERE q.business_id = p_business_id
+    AND q.queue_date = p_queue_date
+    AND q.status IN ('called', 'in_service')
+  ORDER BY q.ticket_number ASC
+  LIMIT 1;
+
+  SELECT COUNT(*)::integer INTO v_ahead
+  FROM public.queue_tickets q
+  WHERE q.business_id = p_business_id
+    AND q.queue_date = p_queue_date
+    AND q.status = 'waiting'
+    AND q.ticket_number < p_ticket_number;
+
+  RETURN QUERY
+  SELECT q.ticket_label, q.status, q.ticket_number,
+         v_serving_label, v_ahead
+  FROM public.queue_tickets q
+  WHERE q.business_id = p_business_id
+    AND q.queue_date = p_queue_date
+    AND q.status IN ('waiting', 'called', 'in_service')
+  ORDER BY q.ticket_number ASC;
+END;
+$$;
+
+-- get_booking_by_token — fetch a booking by its token (no auth required)
+CREATE OR REPLACE FUNCTION public.get_booking_by_token(p_token UUID)
+RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT jsonb_build_object(
+    'id', b.id,
+    'business_id', b.business_id,
+    'client_name', b.client_name,
+    'client_phone', b.client_phone,
+    'date', b.date::text,
+    'start_time', b.start_time::text,
+    'end_time', b.end_time::text,
+    'status', b.status::text,
+    'notes', b.notes,
+    'booking_token', b.booking_token,
+    'created_at', b.created_at,
+    'services', CASE WHEN s.id IS NOT NULL THEN jsonb_build_object('name', s.name) ELSE NULL END,
+    'businesses', CASE WHEN biz.id IS NOT NULL THEN jsonb_build_object('name', biz.name, 'address', biz.address, 'phone', biz.phone) ELSE NULL END
+  )
+  FROM public.bookings b
+  LEFT JOIN public.services s ON s.id = b.service_id
+  LEFT JOIN public.businesses biz ON biz.id = b.business_id
+  WHERE b.booking_token = p_token;
+$$;
+
+-- cancel_booking_by_token — cancel a booking using its token (no auth required)
+CREATE OR REPLACE FUNCTION public.cancel_booking_by_token(
+  p_booking_id UUID,
+  p_token UUID
+)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_count integer;
+BEGIN
+  UPDATE public.bookings
+  SET status = 'cancelled'
+  WHERE id = p_booking_id
+    AND booking_token = p_token
+    AND status IN ('pending', 'confirmed');
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count > 0;
+END;
+$$;
+
 GRANT EXECUTE ON FUNCTION public.get_queue_ticket(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_business_queue(UUID, DATE) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_completed_ticket_stats(UUID, UUID) TO anon, authenticated;
@@ -792,7 +956,7 @@ RETURNS TABLE (
   description TEXT,
   message_template TEXT,
   variables TEXT[]
-) LANGUAGE sql STABLE AS $$
+) LANGUAGE sql STABLE SET search_path = 'public' AS $$
   VALUES
     (
       'booking_new'::TEXT,

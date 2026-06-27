@@ -73,7 +73,7 @@ const DashboardBookings = () => {
 
     const { data, error } = await query;
 
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) { console.error("fetchBookings:", error); toast({ title: "Erreur", description: "Impossible de charger les réservations.", variant: "destructive" }); }
     setBookings(data || []);
     setInitialLoading(false);
   };
@@ -149,9 +149,10 @@ const DashboardBookings = () => {
   }, [business]);
 
   const updateStatus = async (id: string, status: "pending" | "confirmed" | "arrived" | "in_service" | "completed" | "cancelled" | "no_show") => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    const { error } = await supabase.from("bookings").update({ status }).eq("business_id", business.id).eq("id", id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("updateStatus:", error);
+      toast({ title: "Erreur", description: "Impossible de mettre à jour la réservation.", variant: "destructive" });
     } else {
       fetchBookings();
       // When confirming a booking, send WhatsApp to client
@@ -222,6 +223,7 @@ const DashboardBookings = () => {
     if (!business || !validateNewBooking()) return;
     setLoading(true);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const service = services.find((s: any) => s.id === newBooking.service_id);
     const durationMin = service?.duration_minutes || 30;
     const [h, m] = newBooking.start_time.split(":").map(Number);
@@ -243,7 +245,8 @@ const DashboardBookings = () => {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      console.error("createBooking:", error);
+      toast({ title: "Erreur", description: "Impossible de créer la réservation.", variant: "destructive" });
     } else {
       toast({ title: "Réservation créée" });
       setShowNewBooking(false);
@@ -260,6 +263,7 @@ const DashboardBookings = () => {
     return true;
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sendWhatsApp = (b: any) => {
     if (!business) return;
     const url = buildBookingConfirmationUrl(

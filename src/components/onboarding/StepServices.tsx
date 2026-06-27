@@ -74,8 +74,10 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
       if (error) throw error;
 
       onComplete(slug);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      console.error("onboarding add services failed:", err);
+      toast({ title: "Erreur", description: "Impossible d'ajouter les services.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

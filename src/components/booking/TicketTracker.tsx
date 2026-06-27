@@ -68,12 +68,13 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   };
 
   const fetchHistoricalData = useCallback(async (bizId: string, servId: string | null) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .rpc("get_completed_ticket_stats", {
         p_business_id: bizId,
         p_service_id: servId ?? undefined,
       });
 
+    if (error) { console.error("fetchHistoricalData:", error); return; }
     if (data && data.length > 0) {
       setAvgWaitTime(data[0].avg_wait_minutes > 0 ? data[0].avg_wait_minutes : null);
       setStaffCount(data[0].staff_count);
@@ -81,13 +82,14 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   }, []);
 
   const refreshQueueContext = async (bizId: string, qDate: string, ticketNumber: number) => {
-    const { data: queueData } = await supabase
+    const { data: queueData, error: queueError } = await supabase
       .rpc("get_queue_context", {
         p_business_id: bizId,
         p_queue_date: qDate,
         p_ticket_number: ticketNumber,
       });
 
+    if (queueError) { console.error("refreshQueueContext:", queueError); return; }
     if (!queueData) return;
     const cs = queueData.length > 0 ? queueData[0].current_serving_label : null;
     setCurrentServing(cs);
@@ -130,9 +132,10 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const refetchAll = useCallback(async () => {
     if (!businessIdRef.current || !queueDateRef.current || !ticket) return;
     setIsOffline(false);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .rpc("get_queue_ticket", { p_ticket_id: ticketId })
       .single();
+    if (error) { console.error("refetchAll:", error); return; }
     if (!data) return;
     const t: TicketData = {
       ticket_label: data.ticket_label,

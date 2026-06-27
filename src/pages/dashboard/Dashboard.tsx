@@ -70,7 +70,9 @@ const Dashboard = () => {
       }
       setBookings(bookingsRes.data || []);
       const tickets = queueRes.data || [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setQueueCount(tickets.filter((t: any) => t.status === "waiting").length);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setQueueTickets(tickets.filter((t: any) => t.status === "waiting").slice(0, 3));
       setPendingCount(pendingRes.count || 0);
       setLoading(false);
