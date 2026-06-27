@@ -9,7 +9,6 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X, GripVertical, Scissors } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -100,7 +99,6 @@ const DashboardServices = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Services</h2>
@@ -195,7 +193,6 @@ const DashboardServices = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 };
 

@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarDays, Users2, TrendingUp, AlertCircle, Plus, Copy, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import type { Booking, QueueTicket } from "@/types";
 
@@ -130,7 +129,6 @@ const Dashboard = () => {
   ];
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         {loading ? (
           <>
@@ -276,7 +274,6 @@ const Dashboard = () => {
           </>
         )}
       </div>
-    </DashboardLayout>
   );
 };
 

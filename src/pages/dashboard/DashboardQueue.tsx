@@ -8,7 +8,6 @@ import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { buildQueueCalledUrl } from "@/lib/whatsapp";
 import { Plus, Tv, Users2 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import type { QueueTicket, Service } from "@/types";
 import QueueWaitingList from "./queue/QueueWaitingList";
 import QueueServingList from "./queue/QueueServingList";
@@ -213,7 +212,6 @@ const DashboardQueue = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-0">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -327,7 +325,6 @@ const DashboardQueue = () => {
           onSubmit={addToQueue}
         />
       </div>
-    </DashboardLayout>
   );
 };
 

@@ -48,6 +48,8 @@ const categoryLabels: Record<string, string> = {
   other: "Autre",
 };
 
+import { Suspense } from "react";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { business } = useBusinessInfo();
@@ -235,9 +237,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Page content */}
         <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
-          <div className="max-w-[1100px]">
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="h-6 w-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin"></div></div>}>
             {children}
-          </div>
+          </Suspense>
         </main>
 
         {/* Mobile bottom nav */}

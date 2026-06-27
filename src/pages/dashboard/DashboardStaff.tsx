@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Plus, UserCheck } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import type { StaffMember } from "@/types";
 import StaffRow from "./staff/StaffRow";
 import AddStaffForm from "./staff/AddStaffForm";
@@ -179,7 +178,6 @@ const DashboardStaff = () => {
   const editingMember = editStaffId ? staff.find((s) => s.id === editStaffId) : null;
 
   return (
-    <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Equipe</h2>
@@ -226,7 +224,6 @@ const DashboardStaff = () => {
           onSave={saveServiceAssignment}
         />
       </div>
-    </DashboardLayout>
   );
 };
 

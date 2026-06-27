@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { toast } from "@/hooks/use-toast";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MetricCards from "@/components/dashboard/analytics/MetricCards";
 import BookingsChart from "@/components/dashboard/analytics/BookingsChart";
 import QueueChart from "@/components/dashboard/analytics/QueueChart";
@@ -258,7 +257,6 @@ const DashboardAnalytics = () => {
   ];
 
   return (
-    <DashboardLayout>
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Analytiques</h2>
@@ -320,7 +318,6 @@ const DashboardAnalytics = () => {
           </>
         )}
       </div>
-    </DashboardLayout>
   );
 };
 

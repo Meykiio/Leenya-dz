@@ -7,7 +7,6 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Plus, CalendarDays } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl, buildBookingCancelledUrl } from "@/lib/whatsapp";
 import type { Booking, Service, StaffMember, Business, NewBookingForm } from "@/types";
 import BookingFilters from "./bookings/BookingFilters";
@@ -278,7 +277,6 @@ const DashboardBookings = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Réservations</h2>
@@ -361,7 +359,6 @@ const DashboardBookings = () => {
           onSubmit={createBooking}
         />
       </div>
-    </DashboardLayout>
   );
 };
 

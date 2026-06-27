@@ -3,9 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy-loaded pages for code splitting
@@ -61,14 +62,16 @@ const App = () => (
                       {/* Client routes */}
                       <Route path="/mes-reservations" element={<ProtectedRoute allowedRoles={["client"]}><MyBookings /></ProtectedRoute>} />
 
-                      {/* Owner dashboard routes */}
-                      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["owner"]}><Dashboard /></ProtectedRoute>} />
-                      <Route path="/dashboard/bookings" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardBookings /></ProtectedRoute>} />
-                      <Route path="/dashboard/queue" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardQueue /></ProtectedRoute>} />
-                      <Route path="/dashboard/services" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardServices /></ProtectedRoute>} />
-                      <Route path="/dashboard/staff" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardStaff /></ProtectedRoute>} />
-                      <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardSettings /></ProtectedRoute>} />
-                      <Route path="/dashboard/analytics" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardAnalytics /></ProtectedRoute>} />
+                      {/* Owner dashboard routes — layout route keeps DashboardLayout + sidebar mounted */}
+                      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardLayout><Outlet /></DashboardLayout></ProtectedRoute>}>
+                        <Route index element={<Dashboard />} />
+                        <Route path="bookings" element={<DashboardBookings />} />
+                        <Route path="queue" element={<DashboardQueue />} />
+                        <Route path="services" element={<DashboardServices />} />
+                        <Route path="staff" element={<DashboardStaff />} />
+                        <Route path="settings" element={<DashboardSettings />} />
+                        <Route path="analytics" element={<DashboardAnalytics />} />
+                      </Route>
 
                       {/* Staff routes */}
                       <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff", "owner"]}><StaffView /></ProtectedRoute>} />

@@ -1,5 +1,4 @@
 import { useBusinessInfo } from "@/hooks/use-business-info";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import BusinessInfoTab from "@/components/dashboard/settings/BusinessInfoTab";
@@ -15,17 +14,14 @@ const DashboardSettings = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
         <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-96" />
         </div>
-      </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
       <div className="space-y-4 max-w-3xl">
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">Paramètres</h2>
 
@@ -71,7 +67,6 @@ const DashboardSettings = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
   );
 };
 
