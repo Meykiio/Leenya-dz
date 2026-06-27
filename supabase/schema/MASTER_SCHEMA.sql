@@ -10,7 +10,9 @@
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
+-- NOTE: Per-function EXECUTE granted explicitly below.
+-- DO NOT use GRANT ALL ON ALL FUNCTIONS — it would bypass SECURITY DEFINER restrictions.
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
 
 -- ============================================================
 -- EXTENSIONS
@@ -590,6 +592,20 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.insert_services(UUID, JSONB) TO authenticated;
 
+-- Public RPCs (Phase 2a — anon can call, no PII returned)
+GRANT EXECUTE ON FUNCTION public.get_queue_ticket(UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_business_queue(UUID, DATE) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_completed_ticket_stats(UUID, UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_queue_context(UUID, DATE, INTEGER) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_booking_by_token(UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cancel_booking_by_token(UUID, UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authenticated;
+
+-- Authenticated-only RPCs
+GRANT EXECUTE ON FUNCTION public.get_user_role(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_monthly_booking_count(UUID) TO authenticated;
+
 -- -----------------------------------------------------------
 -- check_plan_booking_limit — enforces free-plan 30-booking monthly cap
 -- -----------------------------------------------------------
@@ -650,6 +666,118 @@ BEGIN
     RAISE EXCEPTION 'Le membre du personnel n''appartient pas à ce commerce';
   END IF;
 
+  RETURN NEW;
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- check_business_hours — validates booking is within operating hours
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_business_hours()
+RETURNS TRIGGER LANGUAGE plpgsql
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_day_of_week integer;
+  v_opens_at time;
+  v_closes_at time;
+  v_is_closed boolean;
+BEGIN
+  v_day_of_week := EXTRACT(DOW FROM NEW.date::timestamp)::integer;
+  SELECT opens_at, closes_at, is_closed
+  INTO v_opens_at, v_closes_at, v_is_closed
+  FROM public.business_hours
+  WHERE business_id = NEW.business_id AND day_of_week = v_day_of_week;
+  IF v_opens_at IS NULL OR v_is_closed THEN
+    RAISE EXCEPTION 'Business is closed on this day.' USING HINT = 'business_hours';
+  END IF;
+  IF NEW.start_time < v_opens_at THEN
+    RAISE EXCEPTION 'Booking time is before opening time.' USING HINT = 'business_hours';
+  END IF;
+  IF NEW.end_time > v_closes_at THEN
+    RAISE EXCEPTION 'Booking time exceeds closing time.' USING HINT = 'business_hours';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- check_past_booking — prevents creating bookings in the past
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_past_booking()
+RETURNS TRIGGER LANGUAGE plpgsql
+SET search_path = 'public'
+AS $$
+BEGIN
+  IF (NEW.date < CURRENT_DATE) OR (NEW.date = CURRENT_DATE AND NEW.start_time <= CURRENT_TIME) THEN
+    RAISE EXCEPTION 'Cannot create a booking in the past.' USING HINT = 'past_booking';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- check_queue_ticket_state_transition — enforces queue_ticket state machine
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_queue_ticket_state_transition()
+RETURNS TRIGGER LANGUAGE plpgsql
+SET search_path = 'public'
+AS $$
+BEGIN
+  IF OLD.status = NEW.status THEN RETURN NEW; END IF;
+  CASE OLD.status
+    WHEN 'waiting' THEN
+      IF NEW.status NOT IN ('called', 'completed', 'cancelled', 'no_show') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'called' THEN
+      IF NEW.status NOT IN ('in_service', 'waiting', 'cancelled', 'no_show') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'in_service' THEN
+      IF NEW.status NOT IN ('completed', 'cancelled', 'no_show') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'completed', 'cancelled', 'no_show' THEN
+      RAISE EXCEPTION 'Status % is terminal and cannot be changed.', OLD.status USING HINT = 'state_machine';
+    ELSE
+      RAISE EXCEPTION 'Unknown source status: %', OLD.status USING HINT = 'state_machine';
+  END CASE;
+  RETURN NEW;
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- check_booking_state_transition — enforces booking state machine
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_booking_state_transition()
+RETURNS TRIGGER LANGUAGE plpgsql
+SET search_path = 'public'
+AS $$
+BEGIN
+  IF OLD.status = NEW.status THEN RETURN NEW; END IF;
+  CASE OLD.status
+    WHEN 'pending' THEN
+      IF NEW.status NOT IN ('confirmed', 'cancelled', 'no_show') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'confirmed' THEN
+      IF NEW.status NOT IN ('arrived', 'cancelled', 'no_show') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'arrived' THEN
+      IF NEW.status NOT IN ('in_service', 'cancelled', 'no_show') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'in_service' THEN
+      IF NEW.status NOT IN ('completed', 'cancelled') THEN
+        RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
+      END IF;
+    WHEN 'completed', 'cancelled', 'no_show' THEN
+      RAISE EXCEPTION 'Status % is terminal and cannot be changed.', OLD.status USING HINT = 'state_machine';
+    ELSE
+      RAISE EXCEPTION 'Unknown source status: %', OLD.status USING HINT = 'state_machine';
+  END CASE;
   RETURN NEW;
 END;
 $$;
@@ -799,6 +927,30 @@ DROP TRIGGER IF EXISTS check_booking_service_business_trigger ON public.bookings
 CREATE TRIGGER check_booking_service_business_trigger
   BEFORE INSERT ON public.bookings
   FOR EACH ROW EXECUTE FUNCTION public.check_booking_service_business();
+
+-- Business hours validation
+DROP TRIGGER IF EXISTS check_business_hours_trigger ON public.bookings;
+CREATE TRIGGER check_business_hours_trigger
+  BEFORE INSERT ON public.bookings
+  FOR EACH ROW EXECUTE FUNCTION public.check_business_hours();
+
+-- Past booking prevention
+DROP TRIGGER IF EXISTS check_past_booking_trigger ON public.bookings;
+CREATE TRIGGER check_past_booking_trigger
+  BEFORE INSERT ON public.bookings
+  FOR EACH ROW EXECUTE FUNCTION public.check_past_booking();
+
+-- Queue ticket state machine
+DROP TRIGGER IF EXISTS check_queue_ticket_state_transition_trigger ON public.queue_tickets;
+CREATE TRIGGER check_queue_ticket_state_transition_trigger
+  BEFORE UPDATE OF status ON public.queue_tickets
+  FOR EACH ROW EXECUTE FUNCTION public.check_queue_ticket_state_transition();
+
+-- Booking state machine
+DROP TRIGGER IF EXISTS check_booking_state_transition_trigger ON public.bookings;
+CREATE TRIGGER check_booking_state_transition_trigger
+  BEFORE UPDATE OF status ON public.bookings
+  FOR EACH ROW EXECUTE FUNCTION public.check_booking_state_transition();
 
 -- ============================================================
 -- RLS POLICIES
@@ -965,7 +1117,9 @@ CREATE POLICY "Staff can view business bookings" ON public.bookings
     EXISTS (
       SELECT 1 FROM public.staff_members sm
       JOIN public.businesses b ON b.id = sm.business_id
-      WHERE sm.profile_id = auth.uid() AND b.id = business_id
+      WHERE sm.profile_id = auth.uid()
+      AND b.id = business_id
+      AND (bookings.staff_member_id IS NULL OR bookings.staff_member_id = sm.id)
     )
   );
 
@@ -974,7 +1128,9 @@ CREATE POLICY "Staff can update business bookings" ON public.bookings
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM public.staff_members sm
-      WHERE sm.profile_id = auth.uid() AND sm.business_id = bookings.business_id
+      WHERE sm.profile_id = auth.uid()
+      AND sm.business_id = bookings.business_id
+      AND (bookings.staff_member_id IS NULL OR bookings.staff_member_id = sm.id)
     )
   );
 
@@ -1032,7 +1188,9 @@ CREATE POLICY "Staff can view business queue" ON public.queue_tickets
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM public.staff_members sm
-      WHERE sm.profile_id = auth.uid() AND sm.business_id = queue_tickets.business_id
+      WHERE sm.profile_id = auth.uid()
+      AND sm.business_id = queue_tickets.business_id
+      AND (queue_tickets.staff_member_id IS NULL OR queue_tickets.staff_member_id = sm.id)
     )
   );
 
@@ -1041,7 +1199,9 @@ CREATE POLICY "Staff can update business queue" ON public.queue_tickets
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM public.staff_members sm
-      WHERE sm.profile_id = auth.uid() AND sm.business_id = queue_tickets.business_id
+      WHERE sm.profile_id = auth.uid()
+      AND sm.business_id = queue_tickets.business_id
+      AND (queue_tickets.staff_member_id IS NULL OR queue_tickets.staff_member_id = sm.id)
     )
   );
 
@@ -1159,10 +1319,8 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('business-assets', 'business-assets', true)
 ON CONFLICT (id) DO NOTHING;
 
-DROP POLICY IF EXISTS "Public can view business assets" ON storage.objects;
-CREATE POLICY "Public can view business assets"
-ON storage.objects FOR SELECT TO anon, authenticated
-USING (bucket_id = 'business-assets');
+-- H-010 FIXED: Removed public SELECT policy on storage.objects.
+-- Public URLs still work without listing permission.
 
 -- Fixed: uses ANY(foldername(name)) so it works at any folder depth
 DROP POLICY IF EXISTS "Owners can upload business assets" ON storage.objects;

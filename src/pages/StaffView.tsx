@@ -21,6 +21,7 @@ type Tab = "queue" | "bookings";
 const StaffView = () => {
   const { user, signOut } = useAuth();
   const [business, setBusiness] = useState<Pick<Business, "id" | "name" | "slug"> | null>(null);
+  const [staffMemberId, setStaffMemberId] = useState<string | null>(null);
   const [tickets, setTickets] = useState<QueueTicket[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,7 @@ const StaffView = () => {
     if (!user) return;
     supabase
       .from("staff_members")
-      .select("business_id, businesses(id, name, slug)")
+      .select("id, business_id, businesses(id, name, slug)")
       .eq("profile_id", user.id)
       .eq("is_active", true)
       .limit(1)
@@ -44,7 +45,10 @@ const StaffView = () => {
           setLoading(false);
           return;
         }
-        if (data) setBusiness(data.businesses);
+        if (data) {
+          setBusiness(data.businesses);
+          setStaffMemberId(data.id);
+        }
         else {
           setAccessDenied(true);
           setLoading(false);
@@ -53,34 +57,36 @@ const StaffView = () => {
   }, [user]);
 
   const fetchTickets = useCallback(async () => {
-    if (!business) return;
+    if (!business || !staffMemberId) return;
     const { data, error } = await supabase
       .from("queue_tickets")
       .select("*, services(name)")
       .eq("business_id", business.id)
       .eq("queue_date", today)
       .in("status", ["waiting", "called", "in_service"])
+      .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("ticket_number");
 
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     setTickets(data || []);
     setLoading(false);
-  }, [business, today]);
+  }, [business, staffMemberId, today]);
 
   const fetchBookings = useCallback(async () => {
-    if (!business) return;
+    if (!business || !staffMemberId) return;
     const { data, error } = await supabase
       .from("bookings")
       .select("*, services(name), staff_members(display_name)")
       .eq("business_id", business.id)
       .eq("date", today)
       .in("status", ["pending", "confirmed", "arrived", "in_service"])
+      .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("start_time");
 
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     setBookings(data || []);
     setLoading(false);
-  }, [business, today]);
+  }, [business, staffMemberId, today]);
 
   useEffect(() => {
     if (!business) return;
