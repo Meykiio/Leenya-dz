@@ -1,13 +1,19 @@
+/** Re-exported authentication types */
 export type { Profile, UserRole } from "./auth";
+/** Re-exported business types */
 export type { Business, Service, BusinessHour, BusinessTab } from "./business";
+/** Re-exported staff types */
 export type { StaffMember, StaffService } from "./staff";
+/** Re-exported booking types */
 export type {
   Booking, QueueTicket, Review, QueueCounter,
   NewBookingForm, NewQueueTicketForm, BookingFilters,
 } from "./booking";
 
+/** Category of user-submitted feedback */
 export type FeedbackCategory = "bug" | "feature" | "general";
 
+/** User-submitted feedback entry with optional business/email/page context */
 export interface Feedback {
   id: string;
   business_id?: string;

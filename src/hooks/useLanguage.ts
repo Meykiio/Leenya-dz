@@ -4,6 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 const RTL_LANGS = ["ar"];
 
+/**
+ * Hook to manage app language and text direction (LTR/RTL).
+ * Detects the current language from i18n, provides a setter that persists
+ * the preference to the user's profile via Supabase, and updates
+ * `document.documentElement` lang/dir attributes.
+ *
+ * @returns Current language code, direction ("ltr" | "rtl"), and setLanguage function
+ */
 export function useLanguage() {
   const { i18n } = useTranslation();
 

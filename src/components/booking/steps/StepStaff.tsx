@@ -17,6 +17,7 @@ interface Props {
   onContinue: () => void;
 }
 
+/** @description Booking step for staff member selection — shows staff list with avatars and a "no preference" option for auto-assignment. */
 export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBack, onContinue }: Props) {
   return (
     <motion.div key="staff" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>

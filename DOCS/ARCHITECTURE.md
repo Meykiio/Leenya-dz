@@ -8,11 +8,14 @@
 |---|---|---|
 | Framework | React 18 + TypeScript | Vite, not CRA |
 | Routing | React Router v6 | Declarative routes, `createBrowserRouter` |
-| Styling | Tailwind CSS v3 + shadcn/ui | Utility-first, Radix-based components |
+| Styling | Tailwind CSS v3 + shadcn/ui | Utility-first, Radix-based components, `rtl:` variant |
 | Backend | Supabase (Postgres) | Auth, DB, Storage, Realtime |
 | State | React context + hooks | No Redux/Zustand |
 | Animations | framer-motion | Page/component transitions |
 | Charts | Recharts | Analytics dashboard |
+| i18n | react-i18next | 6 namespaces × 3 languages (fr/ar/en), ~590 keys |
+| Monitoring | Sentry | `@sentry/react` + `@sentry/vite-plugin` |
+| Testing | Vitest + Playwright | Unit tests (vitest), E2E (Playwright) |
 
 ---
 

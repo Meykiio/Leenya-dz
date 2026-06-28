@@ -1,3 +1,4 @@
+/** A staff member working at a business */
 export interface StaffMember {
   id: string;
   business_id: string;
@@ -8,6 +9,7 @@ export interface StaffMember {
   accepts_bookings: boolean;
 }
 
+/** Many-to-many link between a staff member and a service they provide */
 export interface StaffService {
   id: string;
   staff_member_id: string;

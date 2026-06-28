@@ -34,6 +34,7 @@ function isToday(date: Date) {
   return date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
 }
 
+/** @description Booking step for date and time selection — shows available dates and dynamically generated time slots based on business hours and existing bookings. */
 export default function StepDateTime({
   dates, selectedDate, selectedTime, onSelectDate, onSelectTime,
   onBack, onContinue, businessHours, loadingSlots, slots, hasStaffStep,

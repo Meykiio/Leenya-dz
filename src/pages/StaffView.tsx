@@ -19,6 +19,11 @@ import type { BookingStatus } from "@/integrations/supabase/types";
 
 type Tab = "queue" | "bookings";
 
+/**
+ * Staff view — live dashboard for staff members to manage queue tickets and day bookings.
+ * Supports calling tickets, updating booking statuses, sending WhatsApp notifications.
+ * @returns The staff view page JSX
+ */
 const StaffView = () => {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();

@@ -200,19 +200,21 @@
 - **User story:** As a business owner, I can view, edit, reset, and preview WhatsApp message templates sent to clients.
 - **Files:**
   - `src/pages/dashboard/SettingsWhatsApp.tsx` — Template list with edit/preview/reset, initialization
+  - `src/pages/dashboard/whatsapp/TemplateEditDialog.tsx` — Edit dialog with variable badges
+  - `src/pages/dashboard/whatsapp/TemplatePreviewDialog.tsx` — Preview with sample data compilation
   - `src/hooks/useWhatsAppTemplates.ts` — CRUD operations, compilation, initialization
   - `src/lib/whatsapp/` — Default templates (7 types), URL builders, message builders
-- **Notes:** 7 template types: booking_new, booking_accepted, booking_cancelled, booking_reminder, queue_called, queue_joined, booking_completed. Edit dialog shows available variables as badges. Preview compiles with sample data. Reset restores defaults (delete + re-insert). Variable insertion uses string replacement for Postgres array format (potential bug). Console.log statements have been removed.
+- **Notes:** 7 template types: booking_new, booking_accepted, booking_cancelled, booking_reminder, queue_called, queue_joined, booking_completed. Edit dialog shows available variables as badges. Preview compiles with sample data. Reset restores defaults (delete + re-insert). Variable insertion uses string replacement for Postgres array format (potential bug).
 
 ---
 
 ## Staff View
 
 - **Status:** Done
-- **User story:** As a staff member, I can view today's queue and manage ticket statuses (call, complete, no-show) from a simplified interface.
+- **User story:** As a staff member, I can view today's queue and bookings, manage ticket statuses (call, complete, no-show), and send WhatsApp messages from a simplified interface.
 - **Files:**
-  - `src/pages/StaffView.tsx` — Staff interface with queue stats, serving section, waiting list
-- **Notes:** Staff identity linked via `staff_members.profile_id` → `auth.uid()`. Shows stats cards (waiting, serving). "In service" cards get accent border. `called_at` conflict detection prevents double-calling. Sign out button in header.
+  - `src/pages/StaffView.tsx` — Staff interface with tabbed view (Queue + Bookings), queue stats, serving section, waiting list
+- **Notes:** Identity linked via `staff_members.profile_id` → `auth.uid()`. Shows stats cards (waiting, serving). "In service" cards get accent border. `called_at` conflict detection prevents double-calling. WhatsApp call notification on "call". Sign out button in header.
 
 ---
 
@@ -280,14 +282,20 @@
 
 ---
 
-## Subscription Plan Display
+## Subscription Plan Display & Enforcement
 
-- **Status:** Done (display only)
-- **User story:** As a business owner, I can see available subscription plans and their features.
+- **Status:** Done (display + server-side enforcement)
+- **User story:** As a business owner, I can see available subscription plans, their features, usage progress, and trial status. Plans are enforced server-side.
 - **Files:**
   - `src/components/landing/PricingSection.tsx` — Landing page pricing cards
-  - `src/components/dashboard/settings/SubscriptionTab.tsx` — Settings subscription tab
-- **Notes:** Three plans displayed: Gratuit (0 DZD), Pro (2,990 DZD/mo), Business (5,990 DZD/mo). **No payment processing.** Free tier's 30-booking limit is referenced in UI only. No server-side enforcement exists for any plan.
+  - `src/components/dashboard/settings/SubscriptionTab.tsx` — Settings subscription tab with real-time counts
+  - `supabase/schema/MASTER_SCHEMA.sql` — `check_business_limits` + `check_staff_plan_limit` triggers
+- **Notes:**
+  - **Plans:** Gratuit (0 DZD, 100 bookings/300 queue/3 staff), Pro (2,990 DZD/mo, 500/1000/7), Business (5,990 DZD/mo, 2000/2000/unlimited)
+  - **Server-side enforcement:** `check_business_limits` trigger blocks INSERT when plan limit reached. `check_staff_plan_limit` blocks staff creation. Both skip during 30-day trial (`trial_ends_at` column).
+  - **No payment processing** — plans are enforced but no way to upgrade yet (Pro shows "Coming soon")
+  - **Staff limit frontend enforcement:** Add button disabled when at limit with i18n message
+  - **Real-time subscriptions** on SubscriptionTab re-fetch counts on booking/queue changes
 
 ---
 
@@ -296,14 +304,14 @@
 - **Status:** Partially built
 - **User story:** As a developer, I can run tests to verify core business logic.
 - **Files:**
-  - `src/test/setup.ts` — Test environment setup (jsdom)
+  - `src/test/setup.ts` — Test environment setup (jsdom + vitest)
   - `src/test/example.test.ts` — Placeholder test
   - `src/test/slugify.test.ts` — Slug generation tests
   - `src/test/timeSlots.test.ts` — Time slot generation tests
   - `src/test/queueSystem.test.ts` — Queue system logic tests (likely RPC/function tests)
   - `src/test/bookingOverlap.test.ts` — Booking overlap detection tests
   - `src/test/rateLimiting.test.ts` — Rate limiting tests
-- **Notes:** Tests exist but coverage is minimal. Some test files may be testing database functions via Supabase client (integration tests that require a live DB).
+- **Notes:** Tests exist but coverage is minimal. Some test files may be testing database functions via Supabase client (integration tests that require a live DB). Run via `npx vitest run`.
 
 ---
 
@@ -312,7 +320,6 @@
 - **Status:** Done (database level)
 - **User story:** Queue ticket numbers reset daily and are unique per business per day.
 - **Files:**
-  - `SCHEMA.sql` — `generate_ticket_number()` function with `ON CONFLICT` UPSERT
   - `supabase/schema/MASTER_SCHEMA.sql` — `generate_ticket_number()` function definition
 - **Notes:** Implemented as a PostgreSQL function. Atomic via `INSERT ... ON CONFLICT DO UPDATE`. Counter date uses `CURRENT_DATE`.
 
@@ -323,8 +330,8 @@
 - **Status:** Done (database level)
 - **User story:** Two clients cannot book the same staff member at the same time.
 - **Files:**
-  - `SCHEMA.sql` — `check_booking_overlap()` trigger function with advisory lock
-- **Notes:** Uses `pg_advisory_xact_lock()` hashed from business_id + date + start_time + staff_member_id to prevent race conditions. Skips check for cancelled/no_show statuses.
+  - `supabase/schema/MASTER_SCHEMA.sql` — `check_booking_overlap()` trigger function with advisory lock
+- **Notes:** Uses `pg_advisory_xact_lock()` hashed from business_id + date + start_time + staff_member_id to prevent race conditions. Skips check for cancelled/no_show statuses. Supporting index `idx_bookings_overlap_check` added in Phase 3b.
 
 ---
 
@@ -333,5 +340,5 @@
 - **Status:** Done (database level)
 - **User story:** A phone number cannot make more than 10 bookings/tickets in 10 minutes.
 - **Files:**
-  - `SCHEMA.sql` — `check_insert_rate_limit()` trigger function (shared between bookings and queue_tickets)
-- **Notes:** Counts both bookings AND queue_tickets combined for the same phone. Returns "Trop de demandes" error in French.
+  - `supabase/schema/MASTER_SCHEMA.sql` — `check_insert_rate_limit()` trigger function (shared between bookings and queue_tickets)
+- **Notes:** Counts both bookings AND queue_tickets combined for the same phone. Uses `pg_advisory_xact_lock()` (Phase 3b) to serialize per-phone checks. Returns "Trop de demandes" error in French.

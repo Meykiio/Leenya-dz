@@ -39,6 +39,12 @@ function getPrevRange(r: Range) {
   return { start: prevStart, end: prevEnd };
 }
 
+/**
+ * Dashboard analytics — business intelligence with time-range filtering.
+ * Shows metric cards, booking/queue charts, peak hours, popular services,
+ * staff performance, and a combined booking+queue history table.
+ * @returns The analytics page JSX
+ */
 const DashboardAnalytics = () => {
   const { t } = useTranslation();
   const { business } = useBusinessInfo();

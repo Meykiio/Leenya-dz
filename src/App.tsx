@@ -36,12 +36,23 @@ const DashboardFeedback = React.lazy(() => import("@/pages/dashboard/DashboardFe
 
 const queryClient = new QueryClient();
 
+/** Spinner shown as a Suspense fallback while lazy-loaded page chunks load. */
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
     <div className="h-8 w-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
+/**
+ * Root application component.
+ * Sets up:
+ * - Error boundaries at multiple nesting levels
+ * - React Query client provider
+ * - Auth provider (Supabase session + role)
+ * - Tooltip provider and toast/sonner toasters
+ * - React Router with lazy-loaded public, client, owner dashboard, staff, and display routes
+ * - Public business pages (/:slug) must be placed last to avoid catch-all conflicts
+ */
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>

@@ -230,6 +230,11 @@ function FloatingQueueDots() {
   );
 }
 
+/**
+ * 404 page — animated glitch-style error page with queue-themed mini-games.
+ * Logs the missing path in dev and displays translation-driven stuck phrases.
+ * @returns The 404 page JSX
+ */
 const NotFound = () => {
   const { t } = useTranslation();
   const location = useLocation();

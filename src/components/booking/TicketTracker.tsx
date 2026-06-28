@@ -40,6 +40,7 @@ interface TicketData {
 
 const CACHE_PREFIX = "leenya_ticket_";
 
+/** @description Real-time queue ticket tracker that displays ticket status, position ahead, estimated wait time, and live updates via Supabase Realtime subscription with offline-aware caching. */
 export default function TicketTracker({ ticketId, businessName, serviceName, onBack }: Props) {
   const { t } = useTranslation();
   const [ticket, setTicket] = useState<TicketData | null>(null);

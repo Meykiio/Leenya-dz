@@ -25,6 +25,11 @@ const statusColors: Record<string, string> = {
   no_show: "bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border-default)]",
 };
 
+/**
+ * Dashboard bookings — full booking management with filtering (upcoming/by date),
+ * status updates, approval flow, new booking creation, and WhatsApp communication.
+ * @returns The bookings management page JSX
+ */
 const DashboardBookings = () => {
   const { t } = useTranslation();
   const { business } = useBusinessInfo();

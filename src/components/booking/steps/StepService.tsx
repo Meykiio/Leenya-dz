@@ -17,6 +17,7 @@ interface Props {
   loadingStaff: boolean;
 }
 
+/** @description Booking step for service selection — lists available services with duration and price, enables proceeding once a service is chosen. */
 export default function StepService({ services, selectedService, onSelect, onContinue, loadingStaff }: Props) {
   return (
     <motion.div key="service" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>

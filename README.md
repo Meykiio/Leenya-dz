@@ -6,14 +6,16 @@
 
 ## Fonctionnalités
 
-- **Page publique** — Les clients voient les infos du commerce, les horaires, et choisissent entre prendre un rendez-vous ou rejoindre la file d'attente.
-- **Rendez-vous en ligne** — Sélection du service, du membre du personnel (optionnel), date/créneau, coordonnées. Lien WhatsApp de confirmation.
-- **File d'attente** — Ticket en temps réel avec position, estimation d'attente, statut (en attente → appelé → en cours → terminé).
-- **Tableau de bord propriétaire** — Vue d'ensemble, gestion des réservations (filtres, Accept/Refuse, actions WhatsApp), gestion de la file en temps réel, CRUD services/personnel, paramètres, analytiques.
-- **Personnel** — Vue simplifiée de la file avec actions Appeler/Compléter/No-show.
-- **Modèles WhatsApp** — 7 types de messages personnalisables (confirmation, rappel, acceptation, etc.).
-- **Écran TV** — Affichage plein écran de la file d'attente pour la salle d'attente.
-- **Page client** — Historique des réservations, annulation, avis.
+- **🌐 i18n multilingue** — Français, Arabe, Anglais. ~590 clés par langue. Interface RTL pour l'arabe.
+- **Page publique** — Infos du commerce, horaires, réservation ou file d'attente.
+- **Rendez-vous en ligne** — Service, personnel (optionnel), créneau, confirmation WhatsApp.
+- **File d'attente** — Ticket en temps réel, position, ETA, statut.
+- **Tableau de bord propriétaire** — Réservations (filtres, Accept/Refuse, WhatsApp), file en temps réel, CRUD services/personnel, paramètres, analytiques.
+- **Abonnements** — 3 paliers (Gratuit/Pro/Business) avec limites appliquées côté serveur + période d'essai de 30 jours.
+- **Personnel** — Vue simplifiée avec connexion email/mot de passe.
+- **Modèles WhatsApp** — 7 types personnalisables.
+- **Écran TV** — Affichage plein écran de la file d'attente.
+- **Page client** — Historique, annulation, avis.
 
 ---
 
@@ -27,6 +29,10 @@
 | Formulaires | React Hook Form + Zod |
 | Graphiques | Recharts |
 | Animations | Framer Motion |
+| i18n | react-i18next (6 namespaces × 3 langues) |
+| Monitoring | Sentry |
+| Tests | Vitest (unitaires) + Playwright (E2E) |
+| CI/CD | GitHub Actions |
 | Polices | Sora, JetBrains Mono, IBM Plex Sans Arabic |
 
 ---
@@ -85,7 +91,7 @@ VITE_SUPABASE_PROJECT_ID=<ref-projet>
 
 ### Base de données
 
-Exécutez `supabase/schema/MASTER_SCHEMA.sql` dans l'éditeur SQL de votre projet Supabase. Ce fichier contient toutes les tables, index, politiques RLS, triggers et fonctions — c'est la source de vérité unique.
+Exécutez `supabase/schema/MASTER_SCHEMA.sql` dans l'éditeur SQL de votre projet Supabase. Ce fichier contient toutes les tables, index, politiques RLS, triggers et fonctions — source de vérité unique.
 
 ### Développement
 
@@ -93,9 +99,34 @@ Exécutez `supabase/schema/MASTER_SCHEMA.sql` dans l'éditeur SQL de votre proje
 npm run dev          # Serveur de développement (http://localhost:5173)
 npm run build        # Build de production
 npx tsc --noEmit     # Vérification TypeScript uniquement
+npx vitest run       # Tests unitaires
+npx playwright test  # Tests E2E
 ```
 
 ---
+
+## Documentation
+
+Toute la documentation du projet se trouve dans le dossier `DOCS/` :
+
+| Fichier | Contenu |
+|---------|---------|
+| `AI_CONTEXT.md` | Vue d'ensemble complète pour IA — fichier map, DB, design, sessions |
+| `ARCHITECTURE.md` | Stack, structure, data flow, auth, routing, schéma |
+| `CLAUDE.md` | Onboarding rapide pour nouveaux développeurs/IA |
+| `DESIGN.md` | Design system couleurs, typographie, spacing, composants |
+| `ENVIRONMENT.md` | Setup, variables d'env, checklist Supabase |
+| `FEATURES.md` | Toutes les fonctionnalités — statut, fichiers, notes |
+| `NEXT.md` | Prochaines étapes par priorité (P0 → P5) |
+| `PROJECT_STATUS.md` | % achèvement par domaine, flows, tech debt |
+| `SYSTEM_INSTRUCTIONS.md` | Conventions, règles, build, DB, AI behavior |
+
+---
+
+## Contact
+
+Support WhatsApp : configurable via `VITE_SUPPORT_PHONE` (fallback `213770000000`)
+Email : sifeddine.meb96@gmail.com
 
 ## Licence
 

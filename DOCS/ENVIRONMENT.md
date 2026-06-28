@@ -31,27 +31,54 @@ Complete guide for setting up Leenya in any environment.
 - **Format**: Alphanumeric string (e.g., `oqsxrnvfleaajeulyfnb`)
 - **Required**: Yes
 
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_SUPABASE_URL` | ✅ Yes | Supabase REST API URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | ✅ Yes | Anon/public key from Supabase API settings |
+| `VITE_SUPABASE_PROJECT_ID` | ✅ Yes | Project reference ID (e.g., `oqsxrnvfleaajeulyfnb`) |
+| `VITE_SENTRY_DSN` | ❌ No | Sentry DSN for error monitoring (skipped if absent) |
+| `VITE_SUPPORT_PHONE` | ❌ No | WhatsApp support number (falls back to `213770000000`) |
+
 ## Supabase Configuration Checklist
 
 - [x] Auth: Email/password sign-up enabled
-- [ ] Auth: Phone OTP — **Disabled/Removed**. No Twilio configured. Phone tab deleted from LoginForm.
-- [x] Auth: Email confirmation — **Currently ON in Supabase Dashboard**. Frontend handles both states (auto-login when OFF).
-- [ ] **⚠️ Phase 2b:** Enable leaked password protection (HaveIBeenPwned check) in Supabase Auth settings
+- [ ] Auth: Phone OTP — **Disabled/Removed**. No Twilio configured.
+- [x] Auth: Email confirmation — **Currently ON in Supabase Dashboard**. Frontend handles both states.
+- [ ] **⚠️ Enable leaked password protection (HaveIBeenPwned)** in Supabase Auth settings
 - [x] Storage: `business-assets` bucket created (public)
-- [ ] **⚠️ Phase 2b:** Tighten storage bucket — remove public SELECT policy (files still accessible via public URLs)
+- [ ] **⚠️ Tighten storage bucket** — remove public SELECT policy
 - [x] Realtime: Enabled on `bookings` and `queue_tickets` tables
-- [x] RLS: Enabled on ALL tables (⚠️ PERMISSIVE mode — RESTRICTIVE is Phase 2b)
+- [x] RLS: Enabled on ALL tables (⚠️ PERMISSIVE mode)
 - [ ] Edge Functions: None deployed currently
 
 ### Phase 2a Security Changes
 - Anon direct table access revoked on `queue_tickets` and `bookings` — public data access via parameterized RPCs only
 - SECURITY DEFINER EXECUTE restricted: anon can call exactly 7 public RPCs, not the full function list
 
+## Additional Services
+
+| Service | Config | Notes |
+|---|---|---|
+| Sentry | `VITE_SENTRY_DSN` env var | Init in `src/main.tsx`, config in `src/lib/sentry.ts`. Skipped if DSN absent. |
+| Playwright | `e2e/` directory | E2E tests: `npx playwright test`. CI runs via `.github/workflows/e2e.yml`. |
+| CI/CD | `.github/workflows/ci.yml` | Runs eslint + tsc + vitest + build on PR/push. |
+
+## i18n / Translation Notes
+
+- 6 translation namespaces × 3 languages (fr/ar/en) in `public/locales/`
+- Default language: French (Algeria) via `src/i18n/index.ts`
+- To add a new language: create `public/locales/{lang}/` with all 6 namespace JSON files, add to `supportedLngs` in `src/i18n/index.ts`
+- Arabic uses RTL layout (`dir="rtl"`) — mirrored Tailwind classes via `rtl:` variant in `tailwind.config.ts`
+
 ## Local Development Notes
 
 - `src/integrations/supabase/client.ts` and `types.ts` are auto-generated — never edit them.
-- DB schema is managed via `supabase/schema/MASTER_SCHEMA.sql` — run manually against your Supabase project.
-- `.env` file is committed to repo (contains real anon key — public by design but should be gitignored). ⚠️ Phase 2b: purge from git history with BFG.
+- DB schema is managed via `supabase/schema/MASTER_SCHEMA.sql` — run manually in Supabase SQL Editor.
+- `.env` file is committed to repo (contains real anon key — public by design). ⚠️ Should be in `.gitignore`.
+- Build: `npm run build` (tsc + vite), Dev: `npm run dev`, Test: `npx vitest run`, E2E: `npx playwright test`
+- Supabase MCP connected via OAuth for database inspection (uses linked project from `.env`).
 
 ## Common Setup Errors
 

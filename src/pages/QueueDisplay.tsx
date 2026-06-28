@@ -58,6 +58,11 @@ function playChime() {
   });
 }
 
+/**
+ * Queue TV display — full-screen real-time queue board for waiting rooms.
+ * Shows the currently served ticket and upcoming tickets with audio chime on update.
+ * @returns The queue display page JSX
+ */
 export default function QueueDisplay() {
   const { t } = useTranslation();
   const { slug } = useParams();

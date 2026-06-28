@@ -21,6 +21,7 @@ const actionTypes = {
 
 let count = 0;
 
+/** Generate a unique, monotonically increasing toast ID. */
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER;
   return count.toString();
@@ -52,6 +53,7 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
+/** Schedule a toast for removal after TOAST_REMOVE_DELAY. */
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return;
@@ -134,6 +136,16 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
+/**
+ * Show a toast notification. Returns an object with `id`, `dismiss`, and `update`.
+ *
+ * @param props - Toast properties (title, description, variant, action, etc.)
+ * @returns Object containing the toast id and dismiss/update functions
+ *
+ * @example
+ * toast({ title: "Saved", description: "Changes saved successfully." })
+ * const { dismiss } = toast({ title: "Undo", action: ... })
+ */
 function toast({ ...props }: Toast) {
   const id = genId();
 
@@ -163,6 +175,10 @@ function toast({ ...props }: Toast) {
   };
 }
 
+/**
+ * Hook to access the current toast state and show/dismiss toasts.
+ * Re-renders the component when toasts change.
+ */
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 

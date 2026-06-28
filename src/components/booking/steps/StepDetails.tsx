@@ -33,6 +33,7 @@ interface Props {
   submitting: boolean;
 }
 
+/** @description Booking step that collects client name, phone, and optional note, shows a summary of the selected service/date/staff, and submits the booking. */
 export default function StepDetails({
   onBack, name, phone, note, phoneError,
   onNameChange, onPhoneChange, onNoteChange,

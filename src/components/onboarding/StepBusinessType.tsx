@@ -20,6 +20,7 @@ const categories: { value: BusinessCategory; labelKey: string; emoji: string }[]
   { value: "other", labelKey: "auth:onboarding.type.other", emoji: "📦" },
 ];
 
+/** @description Onboarding step that lets the owner select their business category (beauty salon, barbershop, dental, clinic, etc.) from a grid of options. */
 const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeProps) => {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<BusinessCategory | undefined>(defaultCategory || "beauty_salon");

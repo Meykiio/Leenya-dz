@@ -43,6 +43,7 @@ const allNav = [...mainNav, ...secondaryNav];
 
 import { Suspense } from "react";
 
+/** @description Owner dashboard shell with responsive sidebar navigation, mobile drawer, bottom nav, live queue/pending badges, user profile, and copy-business-link action. */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { business } = useBusinessInfo();

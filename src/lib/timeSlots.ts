@@ -33,11 +33,13 @@ interface ExistingBooking {
   end_time: string;
 }
 
+/** Convert "HH:MM" string to total minutes since midnight. */
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 }
 
+/** Convert total minutes since midnight to "HH:MM" format. */
 function minutesToTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

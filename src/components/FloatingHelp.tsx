@@ -2,6 +2,7 @@ import { MessageCircle } from "lucide-react";
 
 const SUPPORT_PHONE = import.meta.env.VITE_SUPPORT_PHONE || "213770000000";
 
+/** @description Fixed-position floating WhatsApp help button displayed at the bottom-right corner linking to support. */
 export default function FloatingHelp() {
 
   return (

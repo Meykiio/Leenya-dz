@@ -23,6 +23,11 @@ const statusBadgeClasses: Record<string, string> = {
   no_show: "badge-no-show",
 };
 
+/**
+ * Dashboard overview — shows today's stats (bookings, queue, revenue, pending),
+ * a greeting, quick-action buttons, and preview lists for today's bookings and queue.
+ * @returns The dashboard overview page JSX
+ */
 const Dashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuth();

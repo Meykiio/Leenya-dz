@@ -32,12 +32,15 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 | Queue flow (walk-in) | `src/components/booking/QueueFlow.tsx` |
 | Ticket tracker (client view) | `src/components/booking/TicketTracker.tsx` |
 | Business public page | `src/pages/BusinessPublic.tsx` |
-| WhatsApp message templates | `src/lib/whatsapp/` |
+| WhatsApp message templates | `src/lib/whatsapp/`, `src/hooks/useWhatsAppTemplates.ts` |
 | Time slot generation | `src/lib/timeSlots.ts` |
 | Slug generation | `src/lib/slugify.ts` |
 | Service suggestions by category | `src/lib/serviceSuggestions.ts` |
 | Wilaya list (58 wilayas) | `src/lib/wilayas.ts` |
 | Routing (all routes) | `src/App.tsx` |
+| i18n / translations | `src/i18n/index.ts` (6 namespaces × 3 languages, ~590 keys) |
+| RTL utility classes | Tailwind config `rtl:` variant, `ms-*`/`me-*` spacing |
+| Language switcher hook | `src/hooks/useLanguage.ts` |
 | Dashboard sidebar + layout | `src/components/dashboard/DashboardLayout.tsx` |
 | Auth context + role lookup | `src/contexts/AuthContext.tsx` |
 | Protected route guard | `src/components/auth/ProtectedRoute.tsx` |
@@ -49,15 +52,25 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 | Dashboard services CRUD | `src/pages/dashboard/DashboardServices.tsx` |
 | Dashboard staff CRUD | `src/pages/dashboard/DashboardStaff.tsx` |
 | Dashboard settings (all tabs) | `src/pages/dashboard/DashboardSettings.tsx` |
+| Dashboard feedback | `src/pages/dashboard/DashboardFeedback.tsx` |
 | Dashboard analytics | `src/pages/dashboard/DashboardAnalytics.tsx` |
-| Staff view (simplified) | `src/pages/StaffView.tsx` |
+| WhatsApp template mgmt | `src/pages/dashboard/SettingsWhatsApp.tsx` |
+| Staff view (tabbed: queue + bookings) | `src/pages/StaffView.tsx` |
 | TV queue display | `src/pages/QueueDisplay.tsx` |
 | Booking tracker (by token) | `src/pages/BookingTrack.tsx` |
 | Client bookings history | `src/pages/MyBookings.tsx` |
+| Public queue page | `src/pages/QueuePublic.tsx` |
 | Landing page | `src/pages/Landing.tsx` |
+| Legal pages (TOS + Privacy) | `src/pages/TermsOfService.tsx`, `src/pages/PrivacyPolicy.tsx` |
+| Error boundary | `src/components/ErrorBoundary.tsx` |
+| Floating help button | `src/components/FloatingHelp.tsx` |
 | Design tokens (CSS variables) | `src/index.css` |
 | Tailwind config (theme) | `tailwind.config.ts` |
 | Database schema (authoritative) | `supabase/schema/MASTER_SCHEMA.sql` |
+| Unit tests | `src/test/` (vi test + jsdom) |
+| E2E tests | `e2e/` (Playwright) |
+| CI/CD | `.github/workflows/ci.yml` + `e2e.yml` |
+| Monitoring | `src/lib/sentry.ts` (Sentry, guarded by `VITE_SENTRY_DSN`) |
 
 ---
 
@@ -157,10 +170,10 @@ user_roles.user_id → auth.users.id
 
 ### Product Gaps
 1. No automated SMS/WhatsApp notifications — only manual wa.me URL links
-2. No payment processing — subscription plans displayed but not enforced server-side
+2. No payment processing — subscription plans enforced server-side but no payment gateway
 3. No staff-specific schedules — all staff share business hours
 4. No break time / lunch hour support in business hours
-5. French only — Arabic fields exist in schema (`name_ar`) but unused in UI
+5. French is default — Arabic RTL is 95% done but not user-selectable as primary UI
 6. No hard DELETE on bookings or tickets — only status changes
 7. No queue capacity limits
 8. Single location per owner only
@@ -200,24 +213,54 @@ user_roles.user_id → auth.users.id
 - **Runtime retest:** 3/3 direct table queries blocked for anon. RPCs functional. No PII exposed.
 - **Final score:** 3.1/10 — DO NOT SHIP (improved from 3.4 after fixes, ratings held pending full Phase 2b)
 
-### Session 5 (2026-06-28)
-- **Phase 3d pricing limits (final):** Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
-- **Legal pages:** TermsOfService + PrivacyPolicy (Algerian Law 18-07), routes before /:slug catch-all
+### Phase 3d — Final Pricing Limits & Polish (2026-06-28)
+- **Final pricing limits (Algerian market):** Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
+- **Legal pages:** TermsOfService + PrivacyPolicy (Algerian Law 18-07), routes before `/:slug` catch-all
 - **Footer:** Instagram removed, email → sifeddine.meb96@gmail.com
-- **Missing i18n keys:** subscription upgrade, WhatsApp init, 404 (20 keys), common buttons fixed
+- **Missing i18n keys:** subscription upgrade, WhatsApp init, 404 (20 keys), common buttons fixed — ~590 keys per locale now
 - **Navbar:** "Reviews" → "Approach"
-- **404 route:** dashboard catch-all `<Route path="*" element={<NotFound />} />`
-- **RTL polish:** ~20 items across 18 files (dialog, toast, dashboard, breadcrumb, carousel, calendar, pagination, navigation-menu, alert, select, testimonials, how-it-works, CTA, WhatsApp, all arrow icons). All 35+ components now RTL-patched.
+- **RTL polish:** ~20 items across 18 files. All 35+ components now RTL-patched (dialog, toast, dashboard, breadcrumb, carousel, calendar, pagination, navigation-menu, alert, select, testimonials, how-it-works, CTA, WhatsApp, all arrow icons)
 - **Back-to-top button:** new component, appears after 400px scroll
-- **Demo components:** accent color (var(--accent) → bg-accent), i18n (20 new keys), equal min-height
-- **Testimonials:** 3 new messages ("Your time matters", "A modern Algeria", "Grow different") across EN/FR/AR
-- **HowItWorks step circles:** bg-accent/10 → bg-accent, text-accent → text-white
-- **SubscriptionTab bug fix:** RPC returns array — was using whole array as object (showed /100 instead of 0/100). Now extracts countsData[0].
-- **SubscriptionTab real-time:** Added Supabase channel subscriptions for bookings + queue_tickets to re-fetch counts on change
-- **Staff limit frontend enforcement:** Fetches business plan, STAFF_LIMITS (free=3/pro=7/business=Infinity), disables add button when at limit. i18n keys in EN/FR/AR
-- **Table layout fix:** Changed grid from auto auto to 120px minmax(300px,1fr) for STATUS/ACTIONS columns. Each BookingRow was separate grid, auto caused per-row widths.
-- **bg-[var(--accent)] → bg-accent across 8 files:** Root cause — --accent is raw HSL (260 97% 61%), bg-[var(--accent)] generates invalid CSS. Fixes invisible white-on-white tab buttons in BookingFilters + Analytics history tabs. Also fixed in PricingSection, Dashboard pulse dots, DashboardQueue.
+- **Demo components:** accent color fix, i18n (20 new keys), equal min-height
+- **Testimonials:** 3 new messages across EN/FR/AR
+- **HowItWorks step circles:** opacity fix
+- **SubscriptionTab:** Fixed RPC array bug (showed /100 instead of 0/100). Real-time subscriptions for booking+queue counts. Staff limit frontend enforcement with i18n
+- **Table layout fix:** BookingRow columns consistent width
+- **bg-[var(--accent)] → bg-accent:** Fixed invalid CSS across 8 files (BookingFilters, Analytics, PricingSection, etc.)
+- **Database cleanup:** All data wiped (development/test entries removed)
 - **Build:** tsc + build pass zero errors
+
+### Phase 3c — 1-Month Trial & Honest Limits (2026-06-28)
+- **`trial_ends_at`** column on businesses — 30-day trial skip for all limits
+- **`check_business_limits`** trigger — enforces booking/queue/staff caps per plan
+- **`check_staff_plan_limit`** trigger — staff count enforcement
+- **`get_monthly_business_counts`** RPC — returns booking + queue + staff counts
+- **SubscriptionTab rewrite** — trial countdown + 2 progress bars
+- **Landing page** — Pro "Coming soon" in all 3 locales
+
+### Phase 3b — Concurrency & Production Readiness (2026-06-27)
+- Database indexes added (`idx_bookings_overlap_check`, `idx_queue_tickets_business_date_ticket`, `idx_bookings_staff_date`, `idx_queue_tickets_staff_date`)
+- Advisory locks for rate limiting and plan enforcement
+- Optimistic locking via `.eq("status", currentStatus)` on all status transitions
+- Analytics pagination via `.range(0, 1000)`
+- Playwright smoke tests for 6 public pages
+
+### Phase 3a — Staff Auth & EWT (2026-06-27)
+- **Staff auth login:** `create_staff_user` RPC works end-to-end. BCrypt cost 10, all auth.users columns correct, duplicate email handled.
+- **EWT formula improved:** Historical 30-day window, staff count divisor, fallback, stored in DB, WhatsApp URL param
+- **QueueDisplay sound:** Singleton AudioContext, click-to-unlock overlay, muted hint
+- **Staff delete:** Trash icon + AlertDialog confirmation
+- **AddStaffForm** wrapped in `<form>` (fixes console warning)
+- **Onboarding auth guard** redirects to /login if not authenticated
+
+### Phase 2d — Security Hardening (2026-06-27)
+- **Security audit:** `FINAL_AUDIT.md` — score 7.5/10
+- **Sentry monitoring** integrated (`@sentry/react` + `@sentry/vite-plugin`)
+- **CI/CD pipelines** (`.github/workflows/ci.yml` + `e2e.yml`)
+- **CSP headers** for dev + production
+- **Playwright E2E tests** (3 tests: booking track, queue display, staff view)
+- **RLS integration tests** (`supabase/tests/rls_policies.sql`)
+- **Bug fixes:** CSP WebSocket, StaffView state machine, WhatsApp 404
 
 ### Session 2 (2026-06-26)
 - **File splits completed:** All 6 remaining large files split into domain subdirectories (queue/, staff/, bookings/, steps/)

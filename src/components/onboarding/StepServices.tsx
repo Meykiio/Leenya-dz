@@ -25,6 +25,7 @@ interface ServiceItem extends ServiceSuggestion {
 let idCounter = 0;
 const makeId = () => `local-${++idCounter}`;
 
+/** @description Onboarding step for adding services — shows category-based suggestions and allows custom service creation, then inserts them via Supabase RPC. */
 const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepServicesProps) => {
   const { t } = useTranslation();
   const [services, setServices] = useState<ServiceItem[]>([]);

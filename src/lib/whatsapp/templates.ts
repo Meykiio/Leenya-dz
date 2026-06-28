@@ -1,3 +1,10 @@
+/**
+ * Returns the default set of WhatsApp message templates.
+ * Each template has a unique key, name, description, message template with
+ * variable placeholders (e.g., {client_name}), and the list of expected variables.
+ *
+ * @returns Array of default WhatsApp template definitions
+ */
 export function getDefaultTemplates() {
   return [
     {

@@ -1,3 +1,10 @@
+/**
+ * Normalize a phone number to international format (Algeria +213).
+ * Strips non-digit characters; prepends 213 if number starts with 0.
+ *
+ * @param phone - Raw phone number (e.g., "0551 23 45 67")
+ * @returns Cleaned number starting with "213" (e.g., "213551234567")
+ */
 export function cleanPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("0")) return `213${digits.slice(1)}`;
@@ -5,6 +12,7 @@ export function cleanPhone(phone: string): string {
   return `213${digits}`;
 }
 
+/** Build a WhatsApp deep link (wa.me) with an optional phone and encoded message text. */
 function buildWaUrl(phone: string | null, text: string): string {
   const encoded = encodeURIComponent(text);
   if (phone) {
@@ -13,6 +21,10 @@ function buildWaUrl(phone: string | null, text: string): string {
   return `https://wa.me/?text=${encoded}`;
 }
 
+/**
+ * Build a WhatsApp URL with a booking confirmation message for the client.
+ * Includes business name, date, time, service, address, and booking reference.
+ */
 export function buildBookingConfirmationUrl(
   phone: string,
   businessName: string,
@@ -33,6 +45,10 @@ export function buildBookingConfirmationUrl(
   return buildWaUrl(phone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL with a reminder message for an upcoming appointment.
+ * Includes business name, time, service, address, and business phone for cancellations.
+ */
 export function buildReminderUrl(
   phone: string,
   businessName: string,
@@ -50,6 +66,10 @@ export function buildReminderUrl(
   return buildWaUrl(phone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL with a queue ticket confirmation for the client.
+ * Includes ticket label, business name, service, and estimated wait time.
+ */
 export function buildQueueTicketUrl(
   phone: string | null,
   businessName: string,
@@ -66,6 +86,9 @@ export function buildQueueTicketUrl(
   return buildWaUrl(phone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL with a booking confirmation that includes a tracking/cancellation link.
+ */
 export function buildBookingTrackingUrl(
   phone: string | null,
   businessName: string,
@@ -85,6 +108,10 @@ export function buildBookingTrackingUrl(
   return buildWaUrl(phone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL notifying the business of a new booking request.
+ * Includes client name, phone, date, time, and service.
+ */
 export function buildBookingNotificationForBusinessUrl(
   businessPhone: string,
   clientName: string,
@@ -105,6 +132,10 @@ export function buildBookingNotificationForBusinessUrl(
   return buildWaUrl(businessPhone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL informing the client that their booking was accepted.
+ * Includes business name, date, time, service, and address.
+ */
 export function buildBookingAcceptedUrl(
   clientPhone: string,
   businessName: string,
@@ -125,6 +156,10 @@ export function buildBookingAcceptedUrl(
   return buildWaUrl(clientPhone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL notifying the client that their booking was cancelled.
+ * Includes business name, date, time, and service.
+ */
 export function buildBookingCancelledUrl(
   clientPhone: string,
   businessName: string,
@@ -143,6 +178,10 @@ export function buildBookingCancelledUrl(
   return buildWaUrl(clientPhone, lines.join("\n"));
 }
 
+/**
+ * Build a WhatsApp URL notifying the client that their queue ticket is being called.
+ * Includes ticket label, business name, and service.
+ */
 export function buildQueueCalledUrl(
   clientPhone: string,
   businessName: string,

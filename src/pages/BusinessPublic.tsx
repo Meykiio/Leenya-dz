@@ -45,6 +45,11 @@ interface Review {
   created_at: string | null;
 }
 
+/**
+ * Public business page — displays a business's profile, services, and booking/queue flows.
+ * Uses the URL slug to fetch business data and shows appointment or walk-in tabs.
+ * @returns The public business page JSX
+ */
 const BusinessPublic = () => {
   const { t } = useTranslation();
   const { slug } = useParams();

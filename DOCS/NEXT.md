@@ -1,6 +1,7 @@
 # Next Steps — Leenya
 
-**Target:** Path to closed beta / first paying customer.
+**Target:** Path to first real user / production launch.
+**Last updated:** 2026-06-28 (Phase 3d complete)
 
 ---
 
@@ -26,11 +27,9 @@ Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit`
 
 **What:** Set the `VITE_SUPPORT_PHONE` env variable in deployment (Vercel/Netlify) to the actual support WhatsApp number. No code changes needed.
 
-### Seed staff-service assignments for existing businesses
+### Database cleanup — all data wiped
 
-**Why:** Any business created before this session has staff with zero service assignments. Staff step will be skipped silently until owner manually assigns via dashboard.
-
-**What:** Write a one-off SQL script that for each `staff_members` row, inserts into `staff_services` all services from the same business.
+**Status: DONE.** All development/test data cleared from production database. Business ready for fresh real-user onboarding.
 
 ### ✅ Doctor audit completed — Phase 2a release blockers fixed
 
@@ -38,15 +37,15 @@ Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit`
 
 ### ✅ i18n / Translation layer completed
 
-**Status: DONE.** react-i18next with 6 namespaces × 3 languages. All ~60+ components use `t()` calls. Language switcher in navbar.
+**Status: DONE.** react-i18next with 6 namespaces × 3 languages. All ~60+ components use `t()` calls. ~590 keys per locale. Language switcher in navbar.
 
-### ✅ Arabic RTL — critical components patched
+### ✅ Arabic RTL — all components patched
 
-**Status: DONE.** 15+ UI components patched (dialog, switch, sheet, toast, carousel, calendar, dropdown, context-menu, sidebar, floating help, hero, pricing, filters). ~20 low-severity items remain.
+**Status: DONE (95%).** All 35+ components RTL-patched. All arrow icons flipped. Toast/dialog/sheet/carousel/calendar/navigation-menu fully RTL-aware. ~5% of edge-case padding/margins may still need tuning.
 
 ### ✅ Hardcoded French removed from all dashboard components
 
-**Status: DONE.** 9 components fixed (AddToQueueDialog, NewBookingSlideOver, AddStaffForm, StaffRow, ServiceAssignmentDialog, TemplatePreview/Edit dialogs, QueueWaitingList, AccountTab, DashboardLayout).
+**Status: DONE.** All dashboard components use `t()` calls. No hardcoded strings remain.
 
 ---
 

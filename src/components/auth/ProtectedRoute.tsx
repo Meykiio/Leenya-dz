@@ -6,6 +6,7 @@ interface ProtectedRouteProps {
   allowedRoles: ("owner" | "staff" | "client")[];
 }
 
+/** @description Route guard that redirects unauthenticated users to /login, users without a role to /onboarding, and users without the required role to their appropriate area. */
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
 

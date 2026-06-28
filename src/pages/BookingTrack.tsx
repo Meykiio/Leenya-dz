@@ -12,6 +12,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+/**
+ * Booking tracker — allows customers to view and cancel their booking via a secure token.
+ * Fetches booking details by token RPC and displays status, time, and location.
+ * @returns The booking tracking page JSX
+ */
 const BookingTrack = () => {
   const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();

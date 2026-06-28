@@ -2,6 +2,7 @@ import type { BookingStatus, QueueStatus } from "@/integrations/supabase/types";
 import type { Service, Business } from "./business";
 import type { StaffMember } from "./staff";
 
+/** A scheduled appointment at a business */
 export interface Booking {
   id: string;
   business_id: string;
@@ -23,6 +24,7 @@ export interface Booking {
   businesses?: Pick<Business, "name"> | null;
 }
 
+/** A walk-in queue ticket for a business */
 export interface QueueTicket {
   id: string;
   business_id: string;
@@ -44,6 +46,7 @@ export interface QueueTicket {
   staff_members?: Pick<StaffMember, "display_name"> | null;
 }
 
+/** A client-submitted review and rating for a business */
 export interface Review {
   id: string;
   business_id: string;
@@ -54,6 +57,7 @@ export interface Review {
   created_at: string;
 }
 
+/** Daily counter tracking the last issued queue ticket number */
 export interface QueueCounter {
   id: string;
   business_id: string;
@@ -61,6 +65,7 @@ export interface QueueCounter {
   last_number: number;
 }
 
+/** Form payload for creating a new booking */
 export interface NewBookingForm {
   client_name: string;
   client_phone: string;
@@ -71,6 +76,7 @@ export interface NewBookingForm {
   notes: string;
 }
 
+/** Form payload for joining a walk-in queue */
 export interface NewQueueTicketForm {
   name: string;
   phone: string;
@@ -78,6 +84,7 @@ export interface NewQueueTicketForm {
   staff_member_id?: string;
 }
 
+/** Filters used to query bookings by date, status, or search term */
 export interface BookingFilters {
   date: Date;
   status: string;

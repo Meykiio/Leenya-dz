@@ -11,6 +11,7 @@ interface StepNameProps {
   onNext: (name: string) => void;
 }
 
+/** @description Onboarding step that captures the owner's full name, upserts the user profile and assigns the owner role via Supabase RPCs. */
 const StepName = ({ defaultName, onNext }: StepNameProps) => {
   const { t } = useTranslation();
   const [name, setName] = useState(defaultName);

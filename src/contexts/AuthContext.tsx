@@ -2,8 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+/** User role within the app: business owner, staff member, or client. */
 type AppRole = "owner" | "staff" | "client" | null;
 
+/** Shape of the authentication context exposed to consumers. */
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -13,6 +15,11 @@ interface AuthContextType {
   refreshRole: () => Promise<void>;
 }
 
+/**
+ * React context for authentication state and actions.
+ * Provides session, user, role, loading state, signOut, and refreshRole.
+ * Use the {@link useAuth} hook to consume this context.
+ */
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
@@ -23,8 +30,18 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 // eslint-disable-next-line react-refresh/only-export-components
+/**
+ * Hook to access the AuthContext.
+ * Returns the current session, user, role, loading state, signOut, and refreshRole.
+ * Must be used within an AuthProvider.
+ */
 export const useAuth = () => useContext(AuthContext);
 
+/**
+ * AuthProvider wraps the app and manages authentication state via Supabase.
+ * Listens to auth state changes, fetches the user's role on login,
+ * and exposes session, user, role, and auth actions to children.
+ */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -32,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [sessionReady, setSessionReady] = useState(false);
   const [roleReady, setRoleReady] = useState(false);
 
+  /** Fetch the user's app role from the database via RPC. */
   const fetchRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -88,6 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  /** Sign the user out, clear session, user, and role from state. */
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -95,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRole(null);
   };
 
+  /** Re-fetch the user's role from the database (e.g., after a role change). */
   const refreshRole = async () => {
     if (!user) return;
     setRoleReady(false);

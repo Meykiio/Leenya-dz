@@ -15,6 +15,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+/**
+ * Dashboard services — CRUD interface for managing business services.
+ * Supports inline editing, toggling active state, deletion with conflict handling.
+ * @returns The services management page JSX
+ */
 const DashboardServices = () => {
   const { t } = useTranslation();
   const { business } = useBusinessInfo();

@@ -14,6 +14,11 @@ import QueueWaitingList from "./queue/QueueWaitingList";
 import QueueServingList from "./queue/QueueServingList";
 import AddToQueueDialog from "./queue/AddToQueueDialog";
 
+/**
+ * Dashboard queue — live queue management with waiting and serving lists,
+ * ticket call/complete/no-show actions, adding clients, and a display-mode link.
+ * @returns The queue management page JSX
+ */
 const DashboardQueue = () => {
   const { t } = useTranslation();
   const { business } = useBusinessInfo();

@@ -12,80 +12,28 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 
 ## Key Files
 
-### Core App Structure
+### Core Files
+
+See `DOCS/AI_CONTEXT.md` → File Map for the complete reference. Key files:
 
 | File | Purpose |
 |---|---|
-| `src/App.tsx` | Routes |
-| `src/main.tsx` | Entry point |
+| `src/App.tsx` | Routes (public + protected + dashboard) |
+| `src/main.tsx` | Entry point, Sentry init |
 | `src/contexts/AuthContext.tsx` | Auth state (session + role) |
-| `src/integrations/supabase/client.ts` | Supabase client (do not modify) |
-| `src/integrations/supabase/types.ts` | Generated DB types (do not modify) |
-| `src/types/index.ts` | App-specific interfaces (re-exports from `types/booking.ts`, `types/business.ts`, `types/staff.ts`, `types/auth.ts`) |
-| `.env.example` | Environment variables |
-
-### Auth
-
-| File | Purpose |
-|---|---|
-| `src/components/auth/LoginForm.tsx` | Login/signup (email only) |
-| `src/components/auth/ForgotPassword.tsx` | Password reset request |
-| `src/components/auth/ProtectedRoute.tsx` | Route guard by role |
-| `src/pages/ResetPassword.tsx` | New password form after email link |
-
-### Booking & Queue
-
-| File | Purpose |
-|---|---|
-| `src/components/booking/AppointmentFlow.tsx` | Multi-step booking (5 steps when staff assigned) |
-| `src/components/booking/QueueFlow.tsx` | Walk-in queue flow |
-| `src/components/booking/TicketTracker.tsx` | Real-time queue position tracker |
-| `src/lib/timeSlots.ts` | Time slot generation + overlap filtering |
-| `src/lib/whatsapp/templates.ts` | Default WhatsApp template definitions (7 types) |
-| `src/lib/whatsapp/index.ts` | Message builders (booking accepted, queue called, etc.) + re-exports |
-| `src/lib/whatsapp/urls.ts` | WhatsApp URL link generators |
-
-### Dashboard (Owner)
-
-| File | Purpose |
-|---|---|
-| `src/hooks/use-business-info.ts` | Business info fetcher (used by all dashboard pages) |
-| `src/pages/dashboard/Dashboard.tsx` | Overview with metrics |
-| `src/pages/dashboard/DashboardBookings.tsx` | Booking management |
-| `src/pages/dashboard/DashboardQueue.tsx` | Queue management |
-| `src/pages/dashboard/DashboardServices.tsx` | Service CRUD |
-| `src/pages/dashboard/DashboardStaff.tsx` | Staff CRUD with avatars + service assignment |
-| `src/pages/dashboard/DashboardSettings.tsx` | Settings tabs container |
-| `src/pages/dashboard/DashboardAnalytics.tsx` | Analytics |
-| `src/pages/dashboard/SettingsWhatsApp.tsx` | WhatsApp template management |
-
-### Public Pages
-
-| File | Purpose |
-|---|---|
-| `src/pages/BusinessPublic.tsx` | Public business page (`/:slug`) |
-| `src/pages/Landing.tsx` | Marketing landing page |
-| `src/pages/BookingTrack.tsx` | Anonymous booking tracking |
-| `src/pages/MyBookings.tsx` | Client booking history |
-| `src/pages/StaffView.tsx` | Staff queue + bookings (tabbed view) |
-| `src/pages/QueueDisplay.tsx` | TV display mode |
-| `src/pages/NotFound.tsx` | 404 page |
-
-### Other
-
-| File | Purpose |
-|---|---|
-| `src/components/FloatingHelp.tsx` | WhatsApp help button (env var VITE_SUPPORT_PHONE) |
-| `src/components/onboarding/OnboardingWizard.tsx` | 4-step wizard |
-| `src/hooks/useWhatsAppTemplates.ts` | Template CRUD + compilation |
-| `supabase/schema/MASTER_SCHEMA.sql` | Complete consolidated schema + `create_staff_user` RPC (idempotent, single source of truth) |
+| `src/types/index.ts` | App interfaces (re-exports from domain files) |
+| `src/i18n/index.ts` | i18n config (6 namespaces × 3 languages) |
+| `src/lib/sentry.ts` | Sentry monitoring init |
+| `src/components/ErrorBoundary.tsx` | Error boundary component |
+| `supabase/schema/MASTER_SCHEMA.sql` | Authoritative DB schema (idempotent) |
 
 ---
 
 ## Critical Conventions
 
 ### Code Style
-- **No comments.** Do NOT add comments to any file. Code should be self-documenting.
+- **JSDoc/** TSDoc comments on public exports and complex logic only — never on trivial getters or obvious code. Use `/** */` for functions/components/types.
+- **No inline comments** for obvious code (e.g., `// fetch data` above a supabase call). Reserve comments for explaining *why* something is done, not *what* it does.
 - **No console.log** — removed from all production files.
 - **No emoji** — not added to code or text in the UI.
 - Use existing shadcn/ui components from `src/components/ui/` — never add new packages.
@@ -115,7 +63,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 
 ---
 
-## Current Features (Verified State as of 2026-06-26)
+## Current Features (Verified State as of 2026-06-28 — Phase 3d)
 
 1. **Landing page** — Static marketing sections, CTA to login. No DB queries.
 2. **Email/password auth** — Login, signup, forgot/reset password. Session handled by AuthContext. Supports both email-confirmation-on and auto-login modes.
@@ -136,21 +84,26 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 
 ---
 
-## Priority Tasks (from NEXT.md — truncated, see full list there)
+## Priority Tasks (from NEXT.md — see full list there)
 
 ### P0 — Before First Real User
 1. Set `VITE_SUPPORT_PHONE` in production env
-2. Seed staff-service assignments for existing businesses (SQL script ready)
+2. Verify Supabase email confirmation setting (currently ON)
 
 ### P1 — High Priority
 3. Add step indicator UI in AppointmentFlow
 4. Verify ResetPassword email flow
 5. Loading skeletons for slow pages
-6. Extract shared avatar utilities to `src/lib/utils.ts`
 
-### P2 — Monetization
-7. Payment processing integration
-8. Arabic RTL support
+### P2 — Security Hardening
+6. RLS PERMISSIVE → RESTRICTIVE
+7. Fix blanket grants → per-table
+8. Storage bucket public listing
+9. Enable leaked password protection
+10. Fix 17 queries missing business_id scope
+
+### P3 — Monetization
+11. Payment processing integration
 
 ---
 

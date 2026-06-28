@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import ForgotPassword from "./ForgotPassword";
 
+/** @description Email/password login and sign-up form with forgot-password flow, post-auth role-based redirection, and i18n support. */
 const LoginForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();

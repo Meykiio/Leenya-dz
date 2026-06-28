@@ -10,6 +10,11 @@ import SubscriptionTab from "@/components/dashboard/settings/SubscriptionTab";
 import SettingsWhatsApp from "./SettingsWhatsApp";
 import { Building2, Clock, CalendarCog, UserCog, Sparkles, MessageCircle } from "lucide-react";
 
+/**
+ * Dashboard settings — tabbed page for business info, hours, booking preferences,
+ * WhatsApp integration, account settings, and subscription management.
+ * @returns The settings page JSX
+ */
 const DashboardSettings = () => {
   const { t } = useTranslation();
   const { business, loading } = useBusinessInfo();

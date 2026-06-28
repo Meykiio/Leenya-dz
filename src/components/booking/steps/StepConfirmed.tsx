@@ -22,6 +22,7 @@ interface Props {
   onCopyLink: () => void;
 }
 
+/** @description Booking confirmation step shown after successful submission — displays booking summary, tracking link, Google Calendar, and WhatsApp share actions. */
 export default function StepConfirmed({
   bookingId, selectedService, selectedDate, selectedTime,
   businessName, trackingUrl, googleCalUrl, shareToBusinessUrl, whatsappShareUrl,

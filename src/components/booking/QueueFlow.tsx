@@ -29,6 +29,7 @@ interface Props {
   services: Service[];
 }
 
+/** @description Live virtual queue flow allowing clients to select a service, optionally choose staff, join the queue, and receive a ticket with real-time position tracking. */
 export default function QueueFlow({ businessId, businessName, services }: Props) {
   const { t } = useTranslation();
   const [waitingCount, setWaitingCount] = useState(0);

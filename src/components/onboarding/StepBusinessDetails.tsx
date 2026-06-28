@@ -19,6 +19,7 @@ interface StepBusinessDetailsProps {
   onBack: () => void;
 }
 
+/** @description Onboarding step that collects business name, phone, address, and wilaya, creates the business record and default hours via Supabase RPC. */
 const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusinessDetailsProps) => {
   const { t } = useTranslation();
   const [businessName, setBusinessName] = useState(defaultData?.businessName || "");

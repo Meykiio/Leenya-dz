@@ -11,6 +11,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+/** @description React error boundary that catches render errors and displays a fallback UI with a dev-mode error detail panel and a reset-action button. */
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);

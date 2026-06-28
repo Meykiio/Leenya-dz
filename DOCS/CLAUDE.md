@@ -28,8 +28,27 @@ Read these 4 files in order:
 
 - `src/integrations/supabase/client.ts` — auto-generated
 - `src/integrations/supabase/types.ts` — auto-generated
-- `src/components/ui/` — shadcn/ui components (Radix-based)
+- `src/components/ui/` — shadcn/ui components (Radix-based, ~50 files)
 - Any shadcn/ui config files (`components.json`, `tailwind.config.ts`)
+- `.env` — contains real secrets
+- `supabase/config.toml` — CLI-managed
+
+## i18n Quick Start
+
+- **react-i18next** with 6 namespaces × 3 languages (fr/ar/en)
+- Default: French (Algeria)
+- Key files: `src/i18n/index.ts`, `src/hooks/useLanguage.ts`
+- Language switcher in navbar (landing) and footer (other pages)
+- RTL: `dir="rtl"` on `<html>`, mirrored Tailwind classes (`ms-*`/`me-*`)
+- All ~590 keys per locale in `public/locales/{lang}/{namespace}.json`
+
+## Key Pages Added Recently
+
+| Route | Component | Notes |
+|---|---|---|
+| `/terms` | TermsOfService | Legal, before /:slug |
+| `/privacy` | PrivacyPolicy | Legal, before /:slug |
+| `/queue/:slug` | QueuePublic | Public queue view |
 
 ## Key paths for new features
 
@@ -51,26 +70,28 @@ npm run dev      # Dev server
 npx tsc --noEmit # Type-check only
 ```
 
-## What was just done (last session)
+## What was just done (last 3 sessions)
 
-- Staff auth login: `create_staff_user` RPC works end-to-end (owner creates email/password account → staff logs in → redirected to /staff)
-  - All 36 auth.users columns set correctly (instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, etc.)
-  - bcrypt cost 10, provider_id=UUID, confirmation_token='', duplicate email handled
-  - Multiple debugging iterations via Supabase MCP (database inspection, password verification)
-- EWT formula improved: historical wait times (30-day window), staff count divisor, fallback, stored in DB, WhatsApp URL waitTime param
-- QueueDisplay sound: singleton AudioContext, click-to-unlock, muted hint
-- Staff delete: trash icon + AlertDialog confirmation
-- AddStaffForm wrapped in `<form>` (fixes console warning)
-- Onboarding auth guard: redirects to /login if not authenticated
-- MCP setup: Supabase remote MCP via OAuth for database inspection
-- Full docs update for this session
+### Phase 3d — Final Pricing Limits & Polish (2026-06-28)
+- **Pricing:** Final Algerian market limits: Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
+- **Legal pages:** TermsOfService + PrivacyPolicy (Algerian Law 18-07)
+- **i18n:** All missing keys added (~590 total per locale). 20 new keys in demo components.
+- **RTL polish:** ~20 items across 18 files. All 35+ components patched. All arrow icons flipped.
+- **SubscriptionTab:** Fixed RPC array bug. Real-time subscription for counts. Staff limit frontend enforcement.
+- **Bugfixes:** `bg-[var(--accent)]` → `bg-accent` across 8 files (invalid CSS). BookingRow column widths fixed.
+- **Database cleanup:** All data wiped (no test/dev entries remain)
+- **Build:** `npm run build` & `npx tsc --noEmit` pass zero errors.
 
-## What was just done (Phase 2d)
+### Phase 3c — 1-Month Trial & Honest Limits (2026-06-28)
+- **trial_ends_at** column, **check_business_limits** + **check_staff_plan_limit** triggers, **get_monthly_business_counts** RPC.
+- **SubscriptionTab** rewrite with trial countdown + 2 progress bars.
+- **Landing page** Pro shows "Coming soon" in all 3 locales.
 
-- **Security audit complete:** `FINAL_AUDIT.md` — score 7.5/10. All critical + high items fixed.
-- **Sentry monitoring** integrated (`@sentry/react` + `@sentry/vite-plugin`)
-- **CI/CD** pipelines created (`.github/workflows/ci.yml` + `e2e.yml`)
-- **CSP headers** configured for dev and production
-- **Playwright E2E** tests added (`e2e/`)
-- **RLS integration tests** added (`supabase/tests/rls_policies.sql`)
-- **Bug fixes:** CSP WebSocket `wss://` fix, StaffView state machine split, WhatsApp 404 fix
+### Phase 3b — Concurrency & Production Readiness (2026-06-27)
+- Database indexes, advisory locks, optimistic locking, analytics pagination.
+
+### Phase 3a — Staff Auth & EWT (2026-06-27)
+- Staff auth login, EWT formula, QueueDisplay sound, staff delete, onboarding auth guard.
+
+### Phase 2d — Security Hardening (2026-06-27)
+- Sentry monitoring, CI/CD, CSP headers, Playwright E2E, RLS tests.

@@ -1,5 +1,6 @@
 import type { BusinessCategory } from "@/integrations/supabase/types";
 
+/** A business registered on the platform */
 export interface Business {
   id: string;
   owner_id: string;
@@ -20,6 +21,7 @@ export interface Business {
   created_at: string;
 }
 
+/** A service offered by a business (e.g. haircut, consultation) */
 export interface Service {
   id: string;
   business_id: string;
@@ -32,6 +34,7 @@ export interface Service {
   is_active: boolean;
 }
 
+/** Operating hours for a business on a specific day of the week */
 export interface BusinessHour {
   id?: string;
   business_id: string;
@@ -41,4 +44,5 @@ export interface BusinessHour {
   is_closed: boolean;
 }
 
+/** Active tab in the business detail view: appointment booking or queue */
 export type BusinessTab = "appointment" | "queue";

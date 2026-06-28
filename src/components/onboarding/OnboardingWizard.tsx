@@ -23,6 +23,7 @@ export interface OnboardingData {
   businessId: string;
 }
 
+/** @description Multi-step onboarding wizard that collects owner name, business category, business details, and services, then creates the business profile via Supabase RPCs. */
 const OnboardingWizard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();

@@ -27,6 +27,11 @@ const STAFF_LIMITS: Record<string, number> = {
   business: Infinity,
 };
 
+/**
+ * Dashboard staff — manage team members with add/edit/toggle/delete,
+ * avatar upload, service assignment dialog, and plan-based limits.
+ * @returns The staff management page JSX
+ */
 const DashboardStaff = () => {
   const { t } = useTranslation();
   const { business } = useBusinessInfo();

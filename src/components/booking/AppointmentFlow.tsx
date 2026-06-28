@@ -41,6 +41,7 @@ interface Props {
 
 type Step = "service" | "staff" | "datetime" | "details" | "confirmed";
 
+/** @description Multi-step appointment booking flow guiding users through service selection, staff selection, date/time picking, contact details, and confirmation with WhatsApp / Google Calendar actions. */
 export default function AppointmentFlow({ businessId, businessName, services, businessHours, advanceBookingDays }: Props) {
   const { t } = useTranslation();
   const [step, setStep] = useState<Step>("service");
