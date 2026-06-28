@@ -17,7 +17,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using Leenya ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. Leenya is operated by Sifedine Meberbeche and is provided for businesses and individuals in Algeria.
+              By accessing or using Leenya ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. Leenya is operated by Sifeddine Mebarki and is provided for businesses and individuals in Algeria.
             </p>
           </section>
 

@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">1. Who We Are</h2>
             <p>
-              Leenya is operated by Sifedine Meberbeche. We provide a booking and queue management platform for Algerian service businesses. This policy explains how we collect, use, and protect your personal data.
+              Leenya is operated by Sifeddine Mebarki. We provide a booking and queue management platform for Algerian service businesses. This policy explains how we collect, use, and protect your personal data.
             </p>
           </section>
 
@@ -129,7 +129,7 @@ export default function PrivacyPolicy() {
               For any questions, concerns, or to exercise your data rights, contact:
             </p>
             <p className="mt-2">
-              Sifedine Meberbeche<br />
+              Sifeddine Mebarki<br />
               Email: <a href="mailto:sifeddine.meb96@gmail.com" className="text-[var(--accent)] hover:underline">sifeddine.meb96@gmail.com</a><br />
               WhatsApp: <a href="https://wa.me/213542883297" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">+213 542 88 32 97</a><br />
               Algeria
