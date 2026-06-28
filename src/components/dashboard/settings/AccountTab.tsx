@@ -49,7 +49,7 @@ export default function AccountTab() {
     };
     
     fetchProfile();
-  }, [user]);
+  }, [user, t]);
 
   const saveProfile = async () => {
     if (!user) return;

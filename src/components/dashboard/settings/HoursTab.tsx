@@ -58,7 +58,7 @@ export default function HoursTab({ businessId }: { businessId: string }) {
     };
     
     fetchHours();
-  }, [businessId]);
+  }, [businessId, t]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateDay = (index: number, field: keyof DayHours, value: any) => {

@@ -45,7 +45,7 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
     };
     
     fetchPrefs();
-  }, [businessId]);
+  }, [businessId, t]);
 
   const save = async () => {
     setLoading(true);

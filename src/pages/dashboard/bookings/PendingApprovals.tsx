@@ -37,6 +37,7 @@ export default function PendingApprovals({ businessId, onStatusChange, onAccept,
     setLoading(false);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchPending(); }, [businessId]);
 
   const handleAccept = async (id: string) => {

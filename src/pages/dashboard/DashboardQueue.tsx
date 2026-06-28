@@ -46,7 +46,7 @@ const DashboardQueue = () => {
     }
     setTickets(data || []);
     setInitialLoading(false);
-  }, [business, today]);
+  }, [business, today, t]);
 
   useEffect(() => {
     if (!business) return;
@@ -96,7 +96,7 @@ const DashboardQueue = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [business, fetchTickets]);
+  }, [business, fetchTickets, t]);
 
   const waiting = tickets.filter((t) => t.status === "waiting");
   const serving = tickets.filter((t) => t.status === "called" || t.status === "in_service");

@@ -99,7 +99,7 @@ const DashboardAnalytics = () => {
     };
 
     fetchData();
-  }, [business, range]);
+  }, [business, range, t]);
 
   const totalBookings = bookings.length;
   const prevTotal = prevBookings.length;
@@ -199,7 +199,7 @@ const DashboardAnalytics = () => {
       map[ticket.service_id].tickets++;
     });
     return Object.values(map).sort((a, b) => (b.bookings + b.tickets) - (a.bookings + a.tickets));
-  }, [bookings, queueTickets]);
+  }, [bookings, queueTickets, t]);
 
   const staffStats = useMemo(() => {
     const map: Record<string, { name: string; bookings: number; tickets: number }> = {};
@@ -219,7 +219,7 @@ const DashboardAnalytics = () => {
       if (name) stat.name = name;
     });
     return Object.values(map).sort((a, b) => (b.bookings + b.tickets) - (a.bookings + a.tickets));
-  }, [bookings, queueTickets, staff]);
+  }, [bookings, queueTickets, staff, t]);
 
   const tableRows = useMemo(() => {
     const bookingRows = bookings.map((b) => ({

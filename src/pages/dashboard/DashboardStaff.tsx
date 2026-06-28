@@ -108,7 +108,9 @@ const DashboardStaff = () => {
     setStaff((prev) => prev.map((s) => ({ ...s, services: staffSvcMap[s.id] || [] })));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchStaff(); fetchServices(); }, [business]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (staff.length > 0) loadServiceAssignments(); }, [staff.length]);
 
   const addStaff = async (name: string, email?: string, password?: string) => {

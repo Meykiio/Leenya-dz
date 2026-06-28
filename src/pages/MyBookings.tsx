@@ -51,6 +51,7 @@ export default function MyBookings() {
     setLoading(false);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchBookings(); }, [user]);
 
   const cancelBooking = async (id: string) => {

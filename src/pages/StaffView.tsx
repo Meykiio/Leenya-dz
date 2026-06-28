@@ -72,7 +72,7 @@ const StaffView = () => {
     if (error) { console.error("fetchTickets:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.loadQueueError"), variant: "destructive" }); }
     setTickets(data || []);
     setLoading(false);
-  }, [business, staffMemberId, today]);
+  }, [business, staffMemberId, today, t]);
 
   const fetchBookings = useCallback(async () => {
     if (!business || !staffMemberId) return;
@@ -88,7 +88,7 @@ const StaffView = () => {
     if (error) { console.error("fetchBookings:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.loadBookingsError"), variant: "destructive" }); }
     setBookings(data || []);
     setLoading(false);
-  }, [business, staffMemberId, today]);
+  }, [business, staffMemberId, today, t]);
 
   useEffect(() => {
     if (!business) return;

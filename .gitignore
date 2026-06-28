@@ -40,3 +40,5 @@ supabase/query_*.sql
 
 # Vite temp files
 *.timestamp-*.mjs
+
+.vercel

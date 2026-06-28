@@ -79,7 +79,7 @@ const Dashboard = () => {
     };
 
     fetchAll();
-  }, [business, today]);
+  }, [business, today, t]);
 
   const revenue = bookings
     .filter((b) => b.status !== "cancelled" && b.status !== "no_show")

@@ -130,6 +130,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId, today, selectedService]);
 
   useEffect(() => {

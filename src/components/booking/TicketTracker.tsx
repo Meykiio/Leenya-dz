@@ -129,6 +129,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
         });
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId, fetchHistoricalData]);
 
   const refetchAll = useCallback(async () => {
@@ -158,6 +159,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       t.ticket_number
     );
     if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId, ticket, refreshQueueContext]);
 
   useEffect(() => {
@@ -178,7 +180,8 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       });
 
     return () => { supabase.removeChannel(channel); };
-  }, [ticketId, businessIdRef.current, refetchAll]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId, refetchAll]);
 
   const handleCancel = async () => {
     const { error } = await supabase

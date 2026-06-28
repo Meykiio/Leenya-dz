@@ -39,6 +39,7 @@ const DashboardServices = () => {
     setLoading(false);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchServices(); }, [business]);
 
   const openNew = () => {

@@ -130,13 +130,15 @@ const DashboardBookings = () => {
     };
 
     fetchStaticData();
-  }, [business]);
+  }, [business, t]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!business) return;
     fetchBookings();
   }, [business, selectedDate, filterMode]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!business) return;
     const channel = supabase
