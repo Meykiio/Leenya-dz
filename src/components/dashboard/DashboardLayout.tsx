@@ -151,13 +151,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo area */}
-      <div className="px-3 pt-3 pb-3">
-        <h1 className="text-[15px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">Leenya</h1>
-        {business && (
-          <p className="text-xs text-[var(--text-tertiary)] truncate max-w-[180px] mt-0.5">
-            {business.name}
-          </p>
-        )}
+      <div className="px-3 pt-3 pb-3 flex items-center gap-2">
+        <img src="/logo.svg" alt="Leenya" className="size-7 shrink-0" />
+        <div className="min-w-0">
+          <h1 className="text-[15px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">Leenya</h1>
+          {business && (
+            <p className="text-xs text-[var(--text-tertiary)] truncate max-w-[140px] mt-0.5">
+              {business.name}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Divider */}
