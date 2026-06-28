@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,7 @@ interface Review {
 }
 
 const BusinessPublic = () => {
+  const { t } = useTranslation();
   const { slug } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -149,8 +151,8 @@ const BusinessPublic = () => {
         <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 flex items-center justify-center px-6 text-center">
           <div className="space-y-2">
             <p className="text-4xl">🚫</p>
-            <h1 className="text-xl font-bold text-foreground">Ce salon est temporairement fermé</h1>
-            <p className="text-sm text-muted-foreground">Veuillez réessayer plus tard.</p>
+            <h1 className="text-xl font-bold text-foreground">{t("booking:businessPublic.closedTitle")}</h1>
+            <p className="text-sm text-muted-foreground">{t("booking:businessPublic.closedSubtitle")}</p>
           </div>
         </div>
       </div>
@@ -202,7 +204,7 @@ const BusinessPublic = () => {
                         : "text-muted-foreground border-transparent hover:text-foreground/70"
                     }`}
                   >
-                    Rendez-vous
+                    {t("booking:businessPublic.tabAppointment")}
                   </button>
                 )}
                 {showQueue && (
@@ -214,7 +216,7 @@ const BusinessPublic = () => {
                         : "text-muted-foreground border-transparent hover:text-foreground/70"
                     }`}
                   >
-                    File d'attente
+                    {t("booking:businessPublic.tabQueue")}
                   </button>
                 )}
               </div>
@@ -224,15 +226,14 @@ const BusinessPublic = () => {
             {activeTab === "appointment" && (
               <div className="px-5 pt-3 pb-1">
                 <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
-                  Choisissez un service, un creneau, et envoyez votre demande.
-                  Le salon confirmera votre reservation sous peu.
+                  {t("booking:businessPublic.infoAppointment")}
                 </div>
               </div>
             )}
             {activeTab === "queue" && (
               <div className="px-5 pt-3 pb-1">
                 <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
-                  Choisissez un service, prenez un ticket, et attendez votre tour en direct.
+                  {t("booking:businessPublic.infoQueue")}
                 </div>
               </div>
             )}

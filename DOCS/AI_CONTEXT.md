@@ -1,6 +1,6 @@
 # Leenya — AI Context File
 
-Last updated: 2026-06-27
+Last updated: 2026-06-28
 
 ## Project in One Paragraph
 
@@ -200,6 +200,25 @@ user_roles.user_id → auth.users.id
 - **Runtime retest:** 3/3 direct table queries blocked for anon. RPCs functional. No PII exposed.
 - **Final score:** 3.1/10 — DO NOT SHIP (improved from 3.4 after fixes, ratings held pending full Phase 2b)
 
+### Session 5 (2026-06-28)
+- **Phase 3d pricing limits (final):** Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
+- **Legal pages:** TermsOfService + PrivacyPolicy (Algerian Law 18-07), routes before /:slug catch-all
+- **Footer:** Instagram removed, email → sifeddine.meb96@gmail.com
+- **Missing i18n keys:** subscription upgrade, WhatsApp init, 404 (20 keys), common buttons fixed
+- **Navbar:** "Reviews" → "Approach"
+- **404 route:** dashboard catch-all `<Route path="*" element={<NotFound />} />`
+- **RTL polish:** ~20 items across 18 files (dialog, toast, dashboard, breadcrumb, carousel, calendar, pagination, navigation-menu, alert, select, testimonials, how-it-works, CTA, WhatsApp, all arrow icons). All 35+ components now RTL-patched.
+- **Back-to-top button:** new component, appears after 400px scroll
+- **Demo components:** accent color (var(--accent) → bg-accent), i18n (20 new keys), equal min-height
+- **Testimonials:** 3 new messages ("Your time matters", "A modern Algeria", "Grow different") across EN/FR/AR
+- **HowItWorks step circles:** bg-accent/10 → bg-accent, text-accent → text-white
+- **SubscriptionTab bug fix:** RPC returns array — was using whole array as object (showed /100 instead of 0/100). Now extracts countsData[0].
+- **SubscriptionTab real-time:** Added Supabase channel subscriptions for bookings + queue_tickets to re-fetch counts on change
+- **Staff limit frontend enforcement:** Fetches business plan, STAFF_LIMITS (free=3/pro=7/business=Infinity), disables add button when at limit. i18n keys in EN/FR/AR
+- **Table layout fix:** Changed grid from auto auto to 120px minmax(300px,1fr) for STATUS/ACTIONS columns. Each BookingRow was separate grid, auto caused per-row widths.
+- **bg-[var(--accent)] → bg-accent across 8 files:** Root cause — --accent is raw HSL (260 97% 61%), bg-[var(--accent)] generates invalid CSS. Fixes invisible white-on-white tab buttons in BookingFilters + Analytics history tabs. Also fixed in PricingSection, Dashboard pulse dots, DashboardQueue.
+- **Build:** tsc + build pass zero errors
+
 ### Session 2 (2026-06-26)
 - **File splits completed:** All 6 remaining large files split into domain subdirectories (queue/, staff/, bookings/, steps/)
 - **Booking visibility:** PendingApprovals section, sidebar pending badge, dashboard pending stat, real-time booking subscription
@@ -225,7 +244,7 @@ user_roles.user_id → auth.users.id
 - [ ] Automated SMS reminders (Twilio integration)
 - [ ] Online payments (BaridiMob / CCP / Stripe)
 - [ ] Multi-location support
-- [ ] Arabic RTL interface
+- [ ] Arabic RTL interface (85% — 35+ components patched)
 - [ ] Enhanced PWA with offline queue tracking
 - [ ] Email notification templates
 - [ ] Staff-specific availability schedules

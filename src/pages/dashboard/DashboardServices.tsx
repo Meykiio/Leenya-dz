@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const DashboardServices = () => {
+  const { t } = useTranslation();
   const { business } = useBusinessInfo();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [services, setServices] = useState<any[]>([]);
@@ -32,7 +34,7 @@ const DashboardServices = () => {
       .eq("business_id", business.id)
       .order("display_order");
 
-    if (error) { console.error("fetchServices:", error); toast({ title: "Erreur", description: "Impossible de charger les services.", variant: "destructive" }); }
+    if (error) { console.error("fetchServices:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:services.errors.loadServices"), variant: "destructive" }); }
     setServices(data || []);
     setLoading(false);
   };
@@ -54,7 +56,7 @@ const DashboardServices = () => {
 
   const saveService = async () => {
     if (!business || !form.name.trim()) {
-      toast({ title: "Erreur", description: "Le nom du service est requis.", variant: "destructive" });
+      toast({ title: t("dashboard:labels.error"), description: t("dashboard:services.errors.nameRequired"), variant: "destructive" });
       return;
     }
 
@@ -63,16 +65,16 @@ const DashboardServices = () => {
         name: form.name.trim(), name_ar: form.name_ar.trim() || null,
         duration_minutes: form.duration_minutes, price_dzd: form.price_dzd, is_active: form.is_active,
       }).eq("business_id", business.id).eq("id", editing.id);
-      if (error) { console.error("saveService update:", error); toast({ title: "Erreur", description: "Impossible de modifier ce service.", variant: "destructive" }); return; }
-      toast({ title: "Service mis a jour" });
+      if (error) { console.error("saveService update:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:services.errors.updateService"), variant: "destructive" }); return; }
+      toast({ title: t("dashboard:services.updated") });
     } else {
       const { error } = await supabase.from("services").insert({
         business_id: business.id, name: form.name.trim(), name_ar: form.name_ar.trim() || null,
         duration_minutes: form.duration_minutes, price_dzd: form.price_dzd, is_active: form.is_active,
         display_order: services.length,
       });
-      if (error) { console.error("saveService insert:", error); toast({ title: "Erreur", description: "Impossible d'ajouter ce service.", variant: "destructive" }); return; }
-      toast({ title: "Service ajoute" });
+      if (error) { console.error("saveService insert:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:services.errors.addService"), variant: "destructive" }); return; }
+      toast({ title: t("dashboard:services.added") });
     }
     setShowForm(false);
     fetchServices();
@@ -82,27 +84,27 @@ const DashboardServices = () => {
     const { error } = await supabase.from("services").delete().eq("business_id", business.id).eq("id", id);
     if (error) {
       const msg = error.message.includes("foreign key") || error.message.includes("violates")
-        ? "Impossible de supprimer: ce service a des réservations existantes. Désactivez-le plutôt."
-        : "Impossible de supprimer ce service.";
+        ? t("dashboard:services.errors.deleteHasBookings")
+        : t("dashboard:services.errors.deleteService");
       console.error("deleteService:", error);
       toast({ title: "Erreur", description: msg, variant: "destructive" });
       return;
     }
-    toast({ title: "Service supprimé" });
+    toast({ title: t("dashboard:services.deleted") });
     fetchServices();
   };
 
   const toggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase.from("services").update({ is_active: !current }).eq("business_id", business.id).eq("id", id);
-    if (error) { console.error("toggleActive:", error); toast({ title: "Erreur", description: "Impossible de modifier ce service.", variant: "destructive" }); }
+    if (error) { console.error("toggleActive:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:services.errors.updateService"), variant: "destructive" }); }
     fetchServices();
   };
 
   return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Services</h2>
-          <Button size="sm" onClick={openNew} className="gap-1.5 text-xs"><Plus className="h-3.5 w-3.5" /> Ajouter un service</Button>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:services.title")}</h2>
+          <Button size="sm" onClick={openNew} className="gap-1.5 text-xs"><Plus className="h-3.5 w-3.5" /> {t("dashboard:services.add")}</Button>
         </div>
 
         {loading ? (
@@ -112,9 +114,9 @@ const DashboardServices = () => {
         ) : services.length === 0 ? (
           <div className="rounded-lg border border-[var(--border-default)] py-12 text-center">
             <Scissors className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-            <p className="text-sm text-[var(--text-tertiary)]">Aucun service configuré</p>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">Ajoutez vos services pour que les clients puissent réserver</p>
-            <Button onClick={openNew} variant="outline" size="sm" className="mt-3 text-xs">Ajouter un service</Button>
+            <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:services.empty")}</p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("dashboard:services.emptyDesc")}</p>
+            <Button onClick={openNew} variant="outline" size="sm" className="mt-3 text-xs">{t("dashboard:services.add")}</Button>
           </div>
         ) : (
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
@@ -141,12 +143,12 @@ const DashboardServices = () => {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Supprimer ce service?</AlertDialogTitle>
-                      <AlertDialogDescription>Le service "{s.name}" sera supprimé définitivement.</AlertDialogDescription>
+                      <AlertDialogTitle>{t("dashboard:services.deleteTitle")}</AlertDialogTitle>
+                      <AlertDialogDescription>{t("dashboard:services.deleteDesc", { serviceName: s.name })}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+                      <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common:buttons.delete")}</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -161,33 +163,33 @@ const DashboardServices = () => {
             <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
             <div className="relative w-full max-w-md rounded-xl bg-[var(--bg-base)] border border-[var(--border-default)] p-6 space-y-4" style={{ boxShadow: 'var(--shadow-lg)' }}>
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">{editing ? "Modifier le service" : "Nouveau service"}</h3>
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">{editing ? t("dashboard:services.edit") : t("dashboard:services.form.new")}</h3>
                 <button onClick={() => setShowForm(false)}><X className="h-4 w-4 text-[var(--text-tertiary)]" /></button>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Nom du service (Français) *</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Coupe et coiffure" className="h-8 text-sm" />
+                  <Label className="text-xs">{t("dashboard:services.form.nameFr")}</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("dashboard:services.form.namePlaceholder")} className="h-8 text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Nom en Arabe (optionnel)</Label>
+                  <Label className="text-xs">{t("dashboard:services.form.nameAr")}</Label>
                   <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} placeholder="قص الشعر" dir="rtl" className="font-arabic h-8 text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Durée: <span className="font-mono">{form.duration_minutes}</span> min</Label>
+                  <Label className="text-xs">{t("dashboard:services.form.duration")}: <span className="font-mono">{form.duration_minutes}</span> min</Label>
                   <Slider value={[form.duration_minutes]} onValueChange={([v]) => setForm({ ...form, duration_minutes: v })} min={15} max={180} step={15} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Prix (DZD)</Label>
+                  <Label className="text-xs">{t("dashboard:services.form.price")}</Label>
                   <Input type="number" value={form.price_dzd} onChange={(e) => setForm({ ...form, price_dzd: parseInt(e.target.value) || 0 })} className="h-8 text-sm" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs">Actif (visible publiquement)</Label>
+                  <Label className="text-xs">{t("dashboard:services.form.active")}</Label>
                   <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                 </div>
               </div>
               <Button onClick={saveService} disabled={!form.name.trim()} className="w-full h-8 text-sm">
-                {editing ? "Enregistrer" : "Ajouter"}
+                {editing ? t("dashboard:common.save") : t("dashboard:common.add")}
               </Button>
             </div>
           </div>

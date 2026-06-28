@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
@@ -8,14 +9,15 @@ interface StaffStat {
 }
 
 export default function StaffPerformance({ data }: { data: StaffStat[] }) {
+  const { t } = useTranslation();
   if (data.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Performance de l'equipe</CardTitle>
+          <CardTitle className="text-base">{t("dashboard:analytics.staffPerformance")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-[var(--text-tertiary)] text-center py-8">Aucune donnee pour cette periode</p>
+          <p className="text-sm text-[var(--text-tertiary)] text-center py-8">{t("dashboard:analytics.noData")}</p>
         </CardContent>
       </Card>
     );
@@ -24,7 +26,7 @@ export default function StaffPerformance({ data }: { data: StaffStat[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Performance de l'equipe</CardTitle>
+        <CardTitle className="text-base">{t("dashboard:analytics.staffPerformance")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">
@@ -47,8 +49,8 @@ export default function StaffPerformance({ data }: { data: StaffStat[] }) {
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="bookings" name="Reservations" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="tickets" name="Tickets file" fill="#B45309" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="bookings" name={t("dashboard:analytics.bookings")} fill="#7B39FC" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="tickets" name={t("dashboard:analytics.queueTickets")} fill="#4F8BFF" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

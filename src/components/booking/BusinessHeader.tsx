@@ -1,15 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  beauty_salon: "Salon de beauté",
-  barbershop: "Barbier",
-  clinic: "Clinique",
-  dental: "Dentiste",
-  physiotherapy: "Kinésithérapie",
-  veterinary: "Vétérinaire",
-  other: "Autre",
-};
 
 interface BusinessHeaderProps {
   business: {
@@ -27,6 +18,7 @@ interface BusinessHeaderProps {
 }
 
 export default function BusinessHeader({ business, avgRating, reviewCount, openStatus }: BusinessHeaderProps) {
+  const { t } = useTranslation();
   const initials = business.name
     .split(" ")
     .map((w) => w[0])
@@ -34,7 +26,17 @@ export default function BusinessHeader({ business, avgRating, reviewCount, openS
     .slice(0, 2)
     .toUpperCase();
 
-  const categoryLabel = business.category ? CATEGORY_LABELS[business.category] ?? business.category : null;
+  const categoryLabel = business.category
+    ? ({
+        beauty_salon: t("booking:businessPublic.category.beautySalon"),
+        barbershop: t("booking:businessPublic.category.barbershop"),
+        clinic: t("booking:businessPublic.category.clinic"),
+        dental: t("booking:businessPublic.category.dental"),
+        physiotherapy: t("booking:businessPublic.category.physiotherapy"),
+        veterinary: t("booking:businessPublic.category.veterinary"),
+        other: t("booking:businessPublic.category.other"),
+      } as Record<string, string>)[business.category] ?? business.category
+    : null;
   const locationParts = [categoryLabel, business.wilaya_name].filter(Boolean);
 
   return (
@@ -75,7 +77,7 @@ export default function BusinessHeader({ business, avgRating, reviewCount, openS
           {avgRating !== null && (
             <span className="text-[13px]">
               <span className="font-mono font-medium text-amber-500">★ {avgRating.toFixed(1)}</span>
-              <span className="text-muted-foreground"> · {reviewCount} avis</span>
+              <span className="text-muted-foreground"> · {t("booking:businessPublic.reviewCount", { count: reviewCount })}</span>
             </span>
           )}
 
@@ -88,10 +90,10 @@ export default function BusinessHeader({ business, avgRating, reviewCount, openS
               />
               {openStatus.isOpen ? (
                 <span>
-                  Ouvert{openStatus.closesAt ? ` · Ferme à ${openStatus.closesAt}` : ""}
+                  {t("booking:businessPublic.openStatus.open")}{openStatus.closesAt ? ` · ${t("booking:businessPublic.openStatus.closesAt", { time: openStatus.closesAt })}` : ""}
                 </span>
               ) : (
-                <span>Fermé</span>
+                <span>{t("booking:businessPublic.openStatus.closed")}</span>
               )}
             </span>
           )}

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,13 +24,13 @@ function slugify(text: string): string {
 }
 
 const categoryOptions = [
-  { value: "beauty_salon", label: "Salon de beauté" },
-  { value: "barbershop", label: "Barbershop" },
-  { value: "clinic", label: "Clinique" },
-  { value: "dental", label: "Dentiste" },
-  { value: "physiotherapy", label: "Kinésithérapie" },
-  { value: "veterinary", label: "Vétérinaire" },
-  { value: "other", label: "Autre" },
+  { value: "beauty_salon", labelKey: "dashboard:settings.business.category.beautySalon" },
+  { value: "barbershop", labelKey: "dashboard:settings.business.category.barbershop" },
+  { value: "clinic", labelKey: "dashboard:settings.business.category.clinic" },
+  { value: "dental", labelKey: "dashboard:settings.business.category.dental" },
+  { value: "physiotherapy", labelKey: "dashboard:settings.business.category.physiotherapy" },
+  { value: "veterinary", labelKey: "dashboard:settings.business.category.veterinary" },
+  { value: "other", labelKey: "dashboard:settings.business.category.other" },
 ];
 
 interface BusinessInfoTabProps {
@@ -37,6 +38,7 @@ interface BusinessInfoTabProps {
 }
 
 export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: "", description: "", phone: "", address: "",
     wilaya_code: "", wilaya_name: "", category: "other",
@@ -92,10 +94,10 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
     const ext = file.name.split(".").pop();
     const path = `${businessId}/${type}.${ext}`;
     const { error } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true });
-    if (error) { toast({ title: "Erreur upload", description: error.message, variant: "destructive" }); return; }
+    if (error) {       toast({ title: t("common:toast.error"), description: error.message, variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
     setForm((f) => ({ ...f, [`${type}_url`]: publicUrl }));
-    toast({ title: `${type === "logo" ? "Logo" : "Photo de couverture"} mis à jour` });
+    toast({ title: type === "logo" ? t("dashboard:settings.business.toast.logoUpdated") : t("dashboard:settings.business.toast.coverUpdated") });
   };
 
   const save = async () => {
@@ -113,28 +115,28 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
       logo_url: form.logo_url || null,
       cover_url: form.cover_url || null,
     }).eq("id", businessId);
-    if (error) { console.error("save business info:", error); toast({ title: "Erreur", description: "Impossible de mettre à jour les informations.", variant: "destructive" }); }
-    else toast({ title: "Informations enregistrées ✓" });
+    if (error) { console.error("save business info:", error); toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" }); }
+    else toast({ title: t("dashboard:settings.business.toast.saved") });
     setLoading(false);
   };
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(`${window.location.origin}/${form.slug}`);
-    toast({ title: "Lien copié!" });
+    toast({ title: t("dashboard:nav.linkCopied") });
   };
 
   return (
     <div className="space-y-4">
       {/* Public link */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Votre lien public</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.publicLink")}</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
             <div className="flex-1 rounded-md bg-muted px-3 py-2 font-mono text-sm text-primary truncate">
               {window.location.host}/{form.slug}
             </div>
             <Button variant="outline" size="sm" onClick={copyLink} className="gap-1 shrink-0">
-              <Copy className="h-3 w-3" /> Copier
+              <Copy className="h-3 w-3" /> {t("common:buttons.copy")}
             </Button>
           </div>
         </CardContent>
@@ -142,28 +144,28 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
 
       {/* Images */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Images</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.images")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Logo</Label>
+              <Label>{t("dashboard:settings.business.logo")}</Label>
               {form.logo_url && (
-                <img src={form.logo_url} alt="Logo" className="h-16 w-16 rounded-full object-cover border" />
+                <img src={form.logo_url} alt={t("dashboard:settings.business.logo")} className="h-16 w-16 rounded-full object-cover border" />
               )}
               <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
                 <Upload className="h-4 w-4" />
-                <span>Changer le logo</span>
+                <span>{t("dashboard:settings.business.changeLogo")}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "logo")} />
               </label>
             </div>
             <div className="space-y-2">
-              <Label>Photo de couverture</Label>
+              <Label>{t("dashboard:settings.business.cover")}</Label>
               {form.cover_url && (
-                <img src={form.cover_url} alt="Cover" className="h-20 w-full rounded-md object-cover border" />
+                <img src={form.cover_url} alt={t("dashboard:settings.business.cover")} className="h-20 w-full rounded-md object-cover border" />
               )}
               <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
                 <Upload className="h-4 w-4" />
-                <span>Changer la couverture</span>
+                <span>{t("dashboard:settings.business.changeCover")}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "cover")} />
               </label>
             </div>
@@ -173,14 +175,14 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
 
       {/* Business info */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Informations générales</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.general")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Nom de l'entreprise</Label>
+            <Label>{t("dashboard:settings.business.name")}</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>Slug (URL)</Label>
+            <Label>{t("dashboard:settings.business.slug")}</Label>
             <div className="relative">
               <Input
                 value={form.slug}
@@ -193,34 +195,34 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
               )}
             </div>
             {slugAvailable === false && (
-              <p className="text-xs text-destructive">Ce slug est déjà pris</p>
+              <p className="text-xs text-destructive">{t("dashboard:settings.business.error.slugTaken")}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label>Catégorie</Label>
+            <Label>{t("dashboard:settings.business.category")}</Label>
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {categoryOptions.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  <SelectItem key={c.value} value={c.value}>{t(c.labelKey)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Décrivez votre entreprise..." />
+            <Label>{t("dashboard:settings.business.description")}</Label>
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t("dashboard:settings.business.descriptionPlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label>Téléphone</Label>
+            <Label>{t("dashboard:settings.business.phone")}</Label>
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>Adresse</Label>
+            <Label>{t("dashboard:settings.business.address")}</Label>
             <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>Wilaya</Label>
+            <Label>{t("dashboard:settings.business.wilaya")}</Label>
             <Select
               value={form.wilaya_code}
               onValueChange={(v) => {
@@ -228,7 +230,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
                 setForm({ ...form, wilaya_code: v, wilaya_name: w?.name || "" });
               }}
             >
-              <SelectTrigger><SelectValue placeholder="Sélectionnez une wilaya" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("common:labels.selectWilaya")} /></SelectTrigger>
               <SelectContent>
                 {wilayas.map((w) => (
                   <SelectItem key={w.code} value={w.code}>{w.code} — {w.name}</SelectItem>
@@ -240,7 +242,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
       </Card>
 
       <Button onClick={save} disabled={loading || slugAvailable === false} className="w-full sm:w-auto">
-        {loading ? "Enregistrement..." : "Enregistrer les modifications"}
+        {loading ? t("common:buttons.saving") : t("dashboard:settings.business.save")}
       </Button>
     </div>
   );

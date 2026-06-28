@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function StaffRow({ member, onToggleActive, onToggleBookings, onUploadAvatar, onOpenServices, onDelete }: Props) {
+  const { t } = useTranslation("dashboard");
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
       <div className="relative shrink-0">
@@ -60,7 +62,7 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
               </Badge>
             ))
           ) : (
-            <span className="text-[10px] text-[var(--text-tertiary)]">Aucun service</span>
+            <span className="text-[10px] text-[var(--text-tertiary)]">{t("staff.badge.noService")}</span>
           )}
         </div>
       </div>
@@ -71,19 +73,19 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
           : "text-[var(--text-tertiary)] text-[11px]"
         }
       >
-        {member.is_active ? "Actif" : "Inactif"}
+        {member.is_active ? t("staff.toggle.active") : t("common:statuses.inactive")}
       </Badge>
       <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
         <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs gap-1" onClick={() => onOpenServices(member.id)}>
           <Wrench className="h-3 w-3" />
-          {member.services?.length || 0} services
+          {t("staff.badge.services", { count: member.services?.length || 0 })}
         </Button>
         <label className="flex items-center gap-1.5 cursor-pointer">
-          <span className="hidden sm:inline">Actif</span>
+          <span className="hidden sm:inline">{t("staff.toggle.active")}</span>
           <Switch checked={member.is_active} onCheckedChange={() => onToggleActive(member.id, member.is_active)} />
         </label>
         <label className="flex items-center gap-1.5 cursor-pointer">
-          <span className="hidden sm:inline">Reservations</span>
+          <span className="hidden sm:inline">{t("staff.toggle.bookings")}</span>
           <Switch checked={member.accepts_bookings} onCheckedChange={() => onToggleBookings(member.id, member.accepts_bookings)} />
         </label>
         <AlertDialog>
@@ -94,12 +96,12 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer ce membre?</AlertDialogTitle>
-              <AlertDialogDescription>{member.display_name} sera retiré de l'équipe. Les réservations et tickets associés ne seront pas supprimés.</AlertDialogDescription>
+              <AlertDialogTitle>{t("staff.deleteTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("staff.deleteDesc", { name: member.display_name })}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(member.id)} className="bg-destructive text-destructive-foreground">Supprimer</AlertDialogAction>
+              <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDelete(member.id)} className="bg-destructive text-destructive-foreground">{t("common:buttons.delete")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

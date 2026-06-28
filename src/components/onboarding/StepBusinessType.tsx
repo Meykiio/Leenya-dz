@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -10,26 +11,27 @@ interface StepBusinessTypeProps {
   onBack: () => void;
 }
 
-const categories: { value: BusinessCategory; label: string; emoji: string }[] = [
-  { value: "beauty_salon", label: "Salon de beauté", emoji: "💅" },
-  { value: "barbershop", label: "Barbershop", emoji: "✂️" },
-  { value: "dental", label: "Dentiste", emoji: "🦷" },
-  { value: "clinic", label: "Clinique / Cabinet", emoji: "🏥" },
-  { value: "physiotherapy", label: "Kinésithérapie", emoji: "💆" },
-  { value: "other", label: "Autre", emoji: "📦" },
+const categories: { value: BusinessCategory; labelKey: string; emoji: string }[] = [
+  { value: "beauty_salon", labelKey: "auth:onboarding.type.beautySalon", emoji: "💅" },
+  { value: "barbershop", labelKey: "auth:onboarding.type.barbershop", emoji: "✂️" },
+  { value: "dental", labelKey: "auth:onboarding.type.dental", emoji: "🦷" },
+  { value: "clinic", labelKey: "auth:onboarding.type.clinic", emoji: "🏥" },
+  { value: "physiotherapy", labelKey: "auth:onboarding.type.physiotherapy", emoji: "💆" },
+  { value: "other", labelKey: "auth:onboarding.type.other", emoji: "📦" },
 ];
 
 const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeProps) => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<BusinessCategory | undefined>(defaultCategory || "beauty_salon");
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-[20px] font-bold text-foreground tracking-tight">
-          Quel type d'entreprise gérez-vous ?
+          {t("auth:onboarding.businessTypeTitle")}
         </h2>
         <p className="text-[14px] text-muted-foreground mt-1.5">
-          Cela nous aide à personnaliser votre expérience
+          {t("auth:onboarding.businessTypeSubtitle")}
         </p>
       </div>
 
@@ -49,7 +51,7 @@ const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeP
             <span className={`text-[13px] font-medium ${
               selected === cat.value ? "text-primary" : "text-foreground"
             }`}>
-              {cat.label}
+              {t(cat.labelKey)}
             </span>
           </button>
         ))}
@@ -57,10 +59,10 @@ const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeP
 
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={onBack}>
-          ← Retour
+          ← {t("auth:onboarding.back")}
         </Button>
         <Button onClick={() => selected && onNext(selected)} disabled={!selected} className="px-8 h-[44px]">
-          Continuer →
+          {t("auth:onboarding.continue")} →
         </Button>
       </div>
     </div>

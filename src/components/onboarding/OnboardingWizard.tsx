@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import StepName from "./StepName";
@@ -22,11 +23,11 @@ export interface OnboardingData {
   businessId: string;
 }
 
-const STEPS = ["Votre nom", "Type d'activité", "Votre entreprise", "Vos services"];
-
 const OnboardingWizard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { refreshRole } = useAuth();
+  const STEPS = [t("auth:onboarding.stepName"), t("auth:onboarding.stepType"), t("auth:onboarding.stepBusiness"), t("auth:onboarding.stepServices")];
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Partial<OnboardingData>>({});
   const [showWelcome, setShowWelcome] = useState(false);
@@ -47,7 +48,7 @@ const OnboardingWizard = () => {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-[15px] font-bold text-foreground tracking-tight">Leenya</h1>
             <span className="text-[13px] text-muted-foreground">
-              Étape {step + 1} / {STEPS.length}
+              {t("auth:onboarding.stepIndicator", { current: step + 1, total: STEPS.length })}
             </span>
           </div>
 

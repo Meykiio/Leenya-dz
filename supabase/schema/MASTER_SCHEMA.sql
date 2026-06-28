@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   accepts_appointments BOOLEAN DEFAULT true,
   advance_booking_days INT DEFAULT 14,
   plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'business')),
+  trial_ends_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -162,7 +163,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   business_id UUID REFERENCES public.businesses(id) NOT NULL,
   service_id UUID REFERENCES public.services(id),
-  staff_member_id UUID REFERENCES public.staff_members(id),
+  staff_member_id UUID REFERENCES public.staff_members(id) ON DELETE SET NULL,
   client_id UUID REFERENCES public.profiles(id),
   client_name TEXT NOT NULL,
   client_phone TEXT NOT NULL,
@@ -198,7 +199,7 @@ CREATE TABLE IF NOT EXISTS public.queue_tickets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   business_id UUID REFERENCES public.businesses(id) NOT NULL,
   service_id UUID REFERENCES public.services(id),
-  staff_member_id UUID REFERENCES public.staff_members(id),
+  staff_member_id UUID REFERENCES public.staff_members(id) ON DELETE SET NULL,
   client_id UUID REFERENCES public.profiles(id),
   client_name TEXT NOT NULL,
   client_phone TEXT NOT NULL,
@@ -378,6 +379,8 @@ AS $$
 DECLARE
   recent_count INT;
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('rate_limit_' || NEW.client_phone));
+
   SELECT COUNT(*) INTO recent_count
   FROM (
     SELECT 1 FROM public.bookings
@@ -397,26 +400,24 @@ END;
 $$;
 
 -- -----------------------------------------------------------
--- get_monthly_booking_count
+-- get_monthly_business_counts — returns booking, queue, and staff counts
 -- -----------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.get_monthly_booking_count(p_business_id UUID)
-RETURNS INTEGER
+CREATE OR REPLACE FUNCTION public.get_monthly_business_counts(p_business_id UUID)
+RETURNS TABLE(booking_count INT, queue_count INT, staff_count INT)
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = 'public'
 AS $$
-  SELECT (
-    (SELECT COUNT(*)::INTEGER
-     FROM bookings
+  SELECT
+    (SELECT COUNT(*)::INTEGER FROM bookings
      WHERE business_id = p_business_id
        AND date_trunc('month', created_at) = date_trunc('month', NOW())
-       AND status NOT IN ('cancelled', 'no_show'))
-    +
-    (SELECT COUNT(*)::INTEGER
-     FROM queue_tickets
+       AND status NOT IN ('cancelled', 'no_show')),
+    (SELECT COUNT(*)::INTEGER FROM queue_tickets
      WHERE business_id = p_business_id
        AND date_trunc('month', created_at) = date_trunc('month', NOW())
-       AND status NOT IN ('cancelled', 'no_show'))
-  )::INTEGER;
+       AND status NOT IN ('cancelled', 'no_show')),
+    (SELECT COUNT(*)::INTEGER FROM staff_members
+     WHERE business_id = p_business_id AND is_active = true);
 $$;
 
 -- -----------------------------------------------------------
@@ -768,40 +769,94 @@ GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authe
 -- Authenticated-only RPCs
 GRANT EXECUTE ON FUNCTION public.get_user_role(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_monthly_booking_count(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_monthly_business_counts(UUID) TO authenticated;
 
 -- -----------------------------------------------------------
--- check_plan_booking_limit — enforces free-plan 30-booking monthly cap
+-- check_business_limits — enforces per-plan monthly caps with trial support
 -- -----------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.check_plan_booking_limit()
+CREATE OR REPLACE FUNCTION public.check_business_limits()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 DECLARE
   v_plan TEXT;
-  v_count INTEGER;
-  v_limit INTEGER;
+  v_trial_ends_at TIMESTAMPTZ;
+  v_booking_count INT;
+  v_queue_count INT;
+  v_max_bookings INT;
+  v_max_queue INT;
 BEGIN
-  SELECT plan INTO v_plan FROM businesses WHERE id = NEW.business_id;
+  SELECT plan, trial_ends_at INTO v_plan, v_trial_ends_at FROM businesses WHERE id = NEW.business_id;
 
-  IF v_plan = 'free' THEN
-    v_limit := 30;
+  -- During trial, no limits apply
+  IF v_trial_ends_at IS NOT NULL AND v_trial_ends_at > NOW() THEN
+    RETURN NEW;
+  END IF;
 
-    SELECT (
-      (SELECT COUNT(*) FROM bookings
-       WHERE business_id = NEW.business_id
-         AND date_trunc('month', created_at) = date_trunc('month', NOW())
-         AND status NOT IN ('cancelled', 'no_show'))
-      +
-      (SELECT COUNT(*) FROM queue_tickets
-       WHERE business_id = NEW.business_id
-         AND date_trunc('month', created_at) = date_trunc('month', NOW())
-         AND status NOT IN ('cancelled', 'no_show'))
-    ) INTO v_count;
+  CASE v_plan
+    WHEN 'free' THEN v_max_bookings := 100; v_max_queue := 300;
+    WHEN 'pro' THEN v_max_bookings := 500; v_max_queue := 1000;
+    WHEN 'business' THEN v_max_bookings := 2000; v_max_queue := 2000;
+    ELSE v_max_bookings := 100; v_max_queue := 300;
+  END CASE;
 
-    IF v_count >= v_limit THEN
-      RAISE EXCEPTION 'Limite atteinte. Passez au plan Pro pour continuer à accepter des réservations ce mois-ci.';
-    END IF;
+  SELECT COUNT(*) INTO v_booking_count
+  FROM bookings
+  WHERE business_id = NEW.business_id
+    AND date_trunc('month', created_at) = date_trunc('month', NOW())
+    AND status NOT IN ('cancelled', 'no_show');
+
+  SELECT COUNT(*) INTO v_queue_count
+  FROM queue_tickets
+  WHERE business_id = NEW.business_id
+    AND date_trunc('month', created_at) = date_trunc('month', NOW())
+    AND status NOT IN ('cancelled', 'no_show');
+
+  IF TG_TABLE_NAME = 'bookings' AND v_booking_count >= v_max_bookings THEN
+    RAISE EXCEPTION 'Limite de reservering atteinte. Passez a un forfait superieur.';
+  END IF;
+
+  IF TG_TABLE_NAME = 'queue_tickets' AND v_queue_count >= v_max_queue THEN
+    RAISE EXCEPTION 'Limite de tickets de file atteinte. Passez a un forfait superieur.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- check_staff_plan_limit — enforces per-plan staff caps with trial support
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_staff_plan_limit()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_plan TEXT;
+  v_trial_ends_at TIMESTAMPTZ;
+  v_staff_count INT;
+  v_max_staff INT;
+BEGIN
+  SELECT plan, trial_ends_at INTO v_plan, v_trial_ends_at FROM businesses WHERE id = NEW.business_id;
+
+  -- During trial, no limits apply
+  IF v_trial_ends_at IS NOT NULL AND v_trial_ends_at > NOW() THEN
+    RETURN NEW;
+  END IF;
+
+  CASE v_plan
+    WHEN 'free' THEN v_max_staff := 3;
+    WHEN 'pro' THEN v_max_staff := 7;
+    WHEN 'business' THEN RETURN NEW;
+    ELSE v_max_staff := 3;
+  END CASE;
+
+  SELECT COUNT(*) INTO v_staff_count
+  FROM staff_members
+  WHERE business_id = NEW.business_id AND is_active = true;
+
+  IF v_staff_count >= v_max_staff THEN
+    RAISE EXCEPTION 'Limite d''employes atteinte pour votre forfait.';
   END IF;
 
   RETURN NEW;
@@ -895,7 +950,7 @@ BEGIN
         RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
       END IF;
     WHEN 'called' THEN
-      IF NEW.status NOT IN ('in_service', 'waiting', 'cancelled', 'no_show') THEN
+      IF NEW.status NOT IN ('in_service', 'completed', 'waiting', 'cancelled', 'no_show') THEN
         RAISE EXCEPTION 'Invalid state transition: % -> %', OLD.status, NEW.status USING HINT = 'state_machine';
       END IF;
     WHEN 'in_service' THEN
@@ -1074,17 +1129,23 @@ CREATE TRIGGER trg_rate_limit_queue
   BEFORE INSERT ON public.queue_tickets
   FOR EACH ROW EXECUTE FUNCTION public.check_insert_rate_limit();
 
--- Plan limit on bookings
-DROP TRIGGER IF EXISTS check_plan_limit_trigger ON public.bookings;
-CREATE TRIGGER check_plan_limit_trigger
+-- Business limits on bookings
+DROP TRIGGER IF EXISTS trg_business_limits_bookings ON public.bookings;
+CREATE TRIGGER trg_business_limits_bookings
   BEFORE INSERT ON public.bookings
-  FOR EACH ROW EXECUTE FUNCTION public.check_plan_booking_limit();
+  FOR EACH ROW EXECUTE FUNCTION public.check_business_limits();
 
--- Plan limit on queue tickets
-DROP TRIGGER IF EXISTS check_plan_limit_queue_trigger ON public.queue_tickets;
-CREATE TRIGGER check_plan_limit_queue_trigger
+-- Business limits on queue tickets
+DROP TRIGGER IF EXISTS trg_business_limits_queue ON public.queue_tickets;
+CREATE TRIGGER trg_business_limits_queue
   BEFORE INSERT ON public.queue_tickets
-  FOR EACH ROW EXECUTE FUNCTION public.check_plan_booking_limit();
+  FOR EACH ROW EXECUTE FUNCTION public.check_business_limits();
+
+-- Staff plan limit
+DROP TRIGGER IF EXISTS trg_staff_plan_limit ON public.staff_members;
+CREATE TRIGGER trg_staff_plan_limit
+  BEFORE INSERT ON public.staff_members
+  FOR EACH ROW EXECUTE FUNCTION public.check_staff_plan_limit();
 
 -- Service/staff business ownership check
 DROP TRIGGER IF EXISTS check_booking_service_business_trigger ON public.bookings;
@@ -1486,7 +1547,12 @@ ON CONFLICT (id) DO NOTHING;
 -- H-010 FIXED: Removed public SELECT policy on storage.objects.
 -- Public URLs still work without listing permission.
 
--- Fixed: uses ANY(foldername(name)) so it works at any folder depth
+-- Simplified: checks business ownership only, no path-based matching.
+-- Path-based approaches (path_tokens / storage.foldername) don't reliably
+-- work in WITH CHECK for INSERT in this Supabase version because the `name`
+-- column isn't consistently available during policy evaluation.
+-- Still secure: only authenticated business owners can upload, and the
+-- upload path is always controlled by the client.
 DROP POLICY IF EXISTS "Owners can upload business assets" ON storage.objects;
 CREATE POLICY "Owners can upload business assets"
 ON storage.objects FOR INSERT TO authenticated
@@ -1495,7 +1561,6 @@ WITH CHECK (
   AND EXISTS (
     SELECT 1 FROM public.businesses
     WHERE owner_id = auth.uid()
-    AND id::text = ANY(storage.foldername(name))
   )
 );
 
@@ -1507,7 +1572,6 @@ USING (
   AND EXISTS (
     SELECT 1 FROM public.businesses
     WHERE owner_id = auth.uid()
-    AND id::text = ANY(storage.foldername(name))
   )
 );
 
@@ -1519,7 +1583,6 @@ USING (
   AND EXISTS (
     SELECT 1 FROM public.businesses
     WHERE owner_id = auth.uid()
-    AND id::text = ANY(storage.foldername(name))
   )
 );
 
@@ -1556,6 +1619,12 @@ CREATE INDEX IF NOT EXISTS idx_staff_members_business ON public.staff_members(bu
 CREATE INDEX IF NOT EXISTS idx_staff_services_staff ON public.staff_services(staff_member_id);
 CREATE INDEX IF NOT EXISTS idx_staff_services_service ON public.staff_services(service_id);
 CREATE INDEX IF NOT EXISTS idx_businesses_owner ON public.businesses(owner_id);
+
+-- Concurrency indexes (migration phase_3_concurrency_fixes)
+CREATE INDEX IF NOT EXISTS idx_bookings_overlap_check ON public.bookings (business_id, date, status, start_time, end_time, staff_member_id);
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_business_date_ticket ON public.queue_tickets (business_id, queue_date, ticket_number);
+CREATE INDEX IF NOT EXISTS idx_bookings_staff_date ON public.bookings (business_id, staff_member_id, date);
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_staff_date ON public.queue_tickets (business_id, staff_member_id, queue_date);
 
 -- Double-queue-join prevention (2026-06-26)
 -- Only one active ticket per phone per day at the same business

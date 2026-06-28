@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays, DollarSign, UserCheck, Star, Ticket, Clock } from "lucide-react";
 
@@ -28,17 +29,18 @@ export default function MetricCards({
   conversionRate, prevConversionRate, avgRating, reviewCount,
   totalQueueTickets, prevQueueTickets, avgWaitTime, prevAvgWaitTime,
 }: MetricCardsProps) {
+  const { t } = useTranslation();
   const metrics = [
     {
-      label: "Reservations",
+      label: t("dashboard:analytics.bookings"),
       value: totalBookings,
       change: pctChange(totalBookings, prevBookings),
       icon: CalendarDays,
-      color: "var(--primary)",
-      bgColor: "var(--primary)",
+      color: "#7B39FC",
+      bgColor: "#7B39FC",
     },
     {
-      label: "Revenus estimes",
+      label: t("dashboard:analytics.estimatedRevenue"),
       value: `${revenue.toLocaleString("fr-DZ")} DZD`,
       change: pctChange(revenue, prevRevenue),
       icon: DollarSign,
@@ -46,7 +48,7 @@ export default function MetricCards({
       bgColor: "var(--success)",
     },
     {
-      label: "Taux de conversion",
+      label: t("dashboard:analytics.conversionRate"),
       value: `${conversionRate.toFixed(0)}%`,
       change: pctChange(conversionRate, prevConversionRate),
       icon: UserCheck,
@@ -54,15 +56,15 @@ export default function MetricCards({
       bgColor: "var(--info)",
     },
     {
-      label: "Note moyenne",
+      label: t("dashboard:analytics.avgRating"),
       value: avgRating !== null ? `${avgRating.toFixed(1)}` : "—",
-      change: `${reviewCount} avis`,
+      change: t("dashboard:analytics.reviewCount", { count: reviewCount }),
       icon: Star,
       color: "var(--warning)",
       bgColor: "var(--warning)",
     },
     {
-      label: "Tickets file",
+      label: t("dashboard:analytics.queueTickets"),
       value: totalQueueTickets,
       change: pctChange(totalQueueTickets, prevQueueTickets),
       icon: Ticket,
@@ -70,7 +72,7 @@ export default function MetricCards({
       bgColor: "var(--accent)",
     },
     {
-      label: "Attente moyenne",
+      label: t("dashboard:analytics.avgWaitTime"),
       value: `${avgWaitTime} min`,
       change: pctChange(avgWaitTime, prevAvgWaitTime),
       icon: Clock,

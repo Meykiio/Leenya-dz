@@ -1,29 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    /* ── Custom tokens ── */
-    --bg-base: #FFFFFF;
-    --bg-subtle: #F9F9F8;
-    --bg-muted: #F3F3F2;
-    --bg-overlay: #EAEAE8;
+/* Geist font face — kept for dashboard compatibility */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-sans/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
 
-    --text-primary: #0C0C0A;
-    --text-secondary: #4A4A45;
-    --text-tertiary: #9A9A92;
-    --text-disabled: #C8C8C0;
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-sans/Geist-Italic[wght].woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono/GeistMono-Italic[wght].woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: italic;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  :root {
+    /* Prompt design tokens */
+    --font-display: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    --background: 0 0% 100%;
+    --foreground: 210 14% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 14% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 14% 17%;
+
+    --primary: 260 97% 61%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 184 5% 55%;
+
+    --accent: 260 97% 61%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 260 97% 61%;
+
+    --radius: 0.5rem;
+
+    /* Legacy custom tokens — kept for backward compat */
+    --accent-hsl: 260 97% 61%;
+    --accent-hex: #7B39FC;
+    --accent-hover: #6828E8;
+    --accent-light: #F3EAFF;
+    --accent-muted: #C084FC;
+
+    --bg-base: #FFFFFF;
+    --bg-subtle: #F8F9FA;
+    --bg-muted: #F1F3F5;
+    --bg-overlay: #E9ECEF;
+
+    --text-primary: #1A1D23;
+    --text-secondary: #495057;
+    --text-tertiary: #868E96;
+    --text-disabled: #ADB5BD;
     --text-inverse: #FFFFFF;
 
-    --border-subtle: #F0F0EE;
-    --border-default: #E5E5E2;
-    --border-strong: #CBCBC5;
-
-    --accent: #1A56DB;
-    --accent-hover: #1447C0;
-    --accent-light: #EBF2FF;
-    --accent-muted: #BFCFEF;
+    --border-subtle: #F1F3F5;
+    --border-default: #DEE2E6;
+    --border-strong: #CED4DA;
 
     --success: #187A4A;
     --success-bg: #EDFAF3;
@@ -41,10 +115,11 @@
     --info-bg: #EFF8FF;
     --info-border: #BAE0FD;
 
-    --shadow-xs: 0 1px 2px rgba(12,12,10,0.04);
-    --shadow-sm: 0 1px 3px rgba(12,12,10,0.06), 0 1px 2px rgba(12,12,10,0.04);
-    --shadow-md: 0 3px 8px rgba(12,12,10,0.06), 0 1px 3px rgba(12,12,10,0.04);
-    --shadow-lg: 0 8px 24px rgba(12,12,10,0.06), 0 2px 8px rgba(12,12,10,0.04);
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 3px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-dashboard: 0 25px 80px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06);
 
     --radius-xs: 3px;
     --radius-sm: 6px;
@@ -57,52 +132,22 @@
     --transition-base: 150ms ease;
     --transition-slow: 250ms ease;
 
-    /* ── shadcn/ui HSL tokens ── */
-    --background: 0 0% 100%;
-    --foreground: 60 5% 5%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 60 5% 5%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 60 5% 5%;
-
-    --primary: 221 79% 47%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 60 3% 96%;
-    --secondary-foreground: 60 3% 16%;
-
-    --muted: 60 3% 96%;
-    --muted-foreground: 60 2% 45%;
-
-    --accent-hsl: 221 79% 47%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 5 73% 44%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 60 3% 90%;
-    --input: 60 3% 90%;
-    --ring: 221 79% 47%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 60 3% 97%;
-    --sidebar-foreground: 60 5% 5%;
-    --sidebar-primary: 221 79% 47%;
+    /* shadcn sidebar tokens */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 210 14% 17%;
+    --sidebar-primary: 260 97% 61%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 60 3% 96%;
-    --sidebar-accent-foreground: 60 5% 5%;
-    --sidebar-border: 60 3% 90%;
-    --sidebar-ring: 221 79% 47%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 210 14% 17%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 260 97% 61%;
   }
 
   .dark {
     --bg-base: #0C0C0A;
-    --bg-subtle: #161614;
-    --bg-muted: #1E1E1C;
-    --bg-overlay: #2A2A27;
+    --bg-subtle: #141412;
+    --bg-muted: #1C1C1A;
+    --bg-overlay: #282826;
 
     --text-primary: #F5F5F3;
     --text-secondary: #A8A8A2;
@@ -110,9 +155,9 @@
     --text-disabled: #4A4A45;
     --text-inverse: #0C0C0A;
 
-    --border-subtle: #1E1E1C;
-    --border-default: #2A2A27;
-    --border-strong: #3A3A36;
+    --border-subtle: #1C1C1A;
+    --border-default: #282826;
+    --border-strong: #383836;
 
     --background: 60 5% 5%;
     --foreground: 60 3% 96%;
@@ -123,7 +168,7 @@
     --popover: 60 5% 8%;
     --popover-foreground: 60 3% 96%;
 
-    --primary: 221 79% 55%;
+    --primary: 260 97% 61%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 60 3% 12%;
@@ -132,24 +177,20 @@
     --muted: 60 3% 12%;
     --muted-foreground: 60 2% 55%;
 
-    --accent-hsl: 221 79% 55%;
+    --accent: 260 97% 75%;
     --accent-foreground: 0 0% 100%;
+    --accent-hsl: 260 97% 75%;
+    --accent-hex: #B794F4;
+    --accent-hover: #7B39FC;
+    --accent-light: #2D1B4E;
+    --accent-muted: #553C7B;
 
     --destructive: 5 73% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 60 3% 16%;
     --input: 60 3% 16%;
-    --ring: 221 79% 55%;
-
-    --sidebar-background: 60 5% 5%;
-    --sidebar-foreground: 60 3% 96%;
-    --sidebar-primary: 221 79% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 60 3% 12%;
-    --sidebar-accent-foreground: 60 3% 96%;
-    --sidebar-border: 60 3% 16%;
-    --sidebar-ring: 221 79% 55%;
+    --ring: 260 97% 75%;
   }
 }
 
@@ -161,7 +202,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-body);
     font-size: 15px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -175,7 +216,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid hsl(var(--accent));
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
@@ -189,15 +230,64 @@
 }
 
 /* STATUS BADGE TOKENS */
-.badge-waiting    { background: #EBF2FF; border-color: #BFCFEF; color: #1447C0; }
+.badge-waiting    { background: #F3EAFF; border-color: #D4B8FF; color: #7B39FC; }
 .badge-confirmed  { background: #EDFAF3; border-color: #A8E4C4; color: #155F38; }
 .badge-in-service { background: #FEF9EC; border-color: #F5D990; color: #92400E; }
-.badge-completed  { background: #F9F9F8; border-color: #E5E5E2; color: #4A4A45; }
+.badge-completed  { background: #F1F3F5; border-color: #DEE2E6; color: #495057; }
 .badge-cancelled  { background: #FEF1F0; border-color: #F9BCBA; color: #9B1C12; }
-.badge-no-show    { background: #F9F9F8; border-color: #E5E5E2; color: #9A9A92; }
+.badge-no-show    { background: #F1F3F5; border-color: #DEE2E6; color: #868E96; }
+
+/* marquee infinite scroll */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 
 @layer utilities {
   .font-mono {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  /* bg patterns */
+  .bg-dot-grid {
+    background-image:
+      radial-gradient(circle, rgba(123,57,252,0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .bg-dot-grid-lg {
+    background-image:
+      radial-gradient(circle, rgba(123,57,252,0.06) 1.5px, transparent 1.5px);
+    background-size: 40px 40px;
+  }
+
+  /* marquee */
+  .marquee-track {
+    display: flex;
+    gap: 1.5rem;
+    width: max-content;
+    animation: marquee 60s linear infinite;
+  }
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
+
+  /* card hover lift */
+  .card-hover {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+  }
+  .card-hover-lg:hover {
+    transform: translateY(-4px);
   }
 }

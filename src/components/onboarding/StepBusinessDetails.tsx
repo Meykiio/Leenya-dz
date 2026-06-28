@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ interface StepBusinessDetailsProps {
 }
 
 const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusinessDetailsProps) => {
+  const { t } = useTranslation();
   const [businessName, setBusinessName] = useState(defaultData?.businessName || "");
   const [businessPhone, setBusinessPhone] = useState(defaultData?.businessPhone || "");
   const [address, setAddress] = useState(defaultData?.address || "");
@@ -45,7 +47,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non authentifié");
+      if (!user) throw new Error(t("auth:onboarding.notAuthenticated"));
 
       const wilaya = wilayas.find((w) => w.code === wilayaCode)!;
 
@@ -76,7 +78,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("onboarding create business failed:", err);
-      toast({ title: "Erreur", description: "Impossible de créer votre commerce.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:onboarding.errorCreateBusiness"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -86,32 +88,32 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          Parlez-nous de votre entreprise
+          {t("auth:onboarding.businessDetailsTitle")}
         </h2>
         <p className="text-muted-foreground mt-2">
-          Ces informations seront visibles sur votre page publique
+          {t("auth:onboarding.businessDetailsSubtitle")}
         </p>
       </div>
 
       <div className="space-y-4 max-w-md mx-auto">
         <div className="space-y-2">
-          <Label htmlFor="bizName">Nom du salon / cabinet</Label>
+          <Label htmlFor="bizName">{t("auth:onboarding.businessNameLabel")}</Label>
           <Input
             id="bizName"
-            placeholder="Mon Salon de Beauté"
+            placeholder={t("auth:onboarding.businessNamePlaceholder")}
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
             required
           />
           {slug && (
             <p className="text-xs text-muted-foreground">
-              Votre lien Leenya: <span className="font-mono text-primary">leenya.dz/{slug}</span>
+              {t("auth:onboarding.yourLink")} <span className="font-mono text-primary">leenya.dz/{slug}</span>
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="bizPhone">Numéro de téléphone professionnel</Label>
+          <Label htmlFor="bizPhone">{t("auth:onboarding.phoneLabel")}</Label>
           <div className="flex gap-2">
             <div className="flex items-center gap-1.5 rounded-md border bg-muted px-3 text-sm text-muted-foreground shrink-0">
               🇩🇿 +213
@@ -119,7 +121,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
             <Input
               id="bizPhone"
               type="tel"
-              placeholder="5 XX XX XX XX"
+              placeholder={t("auth:onboarding.phonePlaceholder")}
               value={businessPhone}
               onChange={(e) => setBusinessPhone(e.target.value.replace(/\D/g, ""))}
               maxLength={10}
@@ -129,10 +131,10 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="address">Adresse</Label>
+          <Label htmlFor="address">{t("auth:onboarding.addressLabel")}</Label>
           <Input
             id="address"
-            placeholder="123 Rue de la Liberté"
+            placeholder={t("auth:onboarding.addressPlaceholder")}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             required
@@ -140,9 +142,9 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2 relative">
-          <Label>Wilaya</Label>
+          <Label>{t("auth:onboarding.wilayaLabel")}</Label>
           <Input
-            placeholder="Rechercher une wilaya..."
+            placeholder={t("auth:onboarding.wilayaPlaceholder")}
             value={showWilayaDropdown ? wilayaSearch : (selectedWilaya ? `${selectedWilaya.code} — ${selectedWilaya.name}` : "")}
             onChange={(e) => {
               setWilayaSearch(e.target.value);
@@ -180,10 +182,10 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
 
       <div className="flex justify-center gap-3">
         <Button variant="outline" type="button" onClick={onBack}>
-          ← Retour
+          ← {t("auth:onboarding.back")}
         </Button>
         <Button type="submit" disabled={!isValid || loading} className="px-8">
-          {loading ? "Enregistrement..." : "Continuer →"}
+          {loading ? t("common:buttons.saving") : t("auth:onboarding.continue") + " →"}
         </Button>
       </div>
     </form>

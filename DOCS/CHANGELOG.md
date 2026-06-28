@@ -2,6 +2,243 @@
 
 Dates are approximate, reconstructed from migration timestamps and documentation.
 
+## 2026-06-28 — Session 5: RTL Polish + Subscription fixes + Table layout
+
+### RTL Polish (~20 items across 18 files)
+- Dialog close button: `rtl:left-4 rtl:right-auto`
+- Toast: `rtl:space-x-reverse`, `rtl:pr-0 rtl:pl-8`, `rtl:data-[state=closed]:slide-out-to-left-full`
+- DashboardLayout sidebar: `rtl:lg:pr-[220px] rtl:lg:pl-0`
+- NewBookingSlideOver: `rtl:justify-start`, border `rtl:border-r rtl:border-l-0`
+- Breadcrumb ChevronRight: `rtl:scale-x-[-1]`
+- Calendar nav icons, Carousel prev/next, Pagination prev/next: `rtl:scale-x-[-1]` + padding flipped
+- NavigationMenu content: `rtl:right-0 rtl:left-auto`, slide animations flipped
+- Alert SVG icon: `rtl:right-4 rtl:left-auto`, padding `rtl:pr-7 rtl:pl-0`
+- Select checkmark: `rtl:right-2 rtl:left-auto`, item padding `rtl:pr-8 rtl:pl-2`
+- Dialog + Sheet footer: `rtl:space-x-reverse`
+- TestimonialsSection accent bar: `rtl:right-0 rtl:left-auto`
+- HowItWorks step badge: `rtl:-left-1 rtl:right-auto`
+- CtaBanner arrow: `rtl:ml-0 rtl:mr-1.5 rtl:scale-x-[-1]`
+- SettingsWhatsApp icon margins: `rtl:ml-2 rtl:mr-0` (3 instances)
+- Dashboard ArrowRight on "View all" / "Manage": `rtl:scale-x-[-1]`
+- Back button ArrowLeft across 8 pages + ArrowRight in QueueDemo/NotFound/carousel/calendar/pagination: `rtl:scale-x-[-1]`
+
+### Back-to-top button
+- `src/components/landing/BackToTop.tsx` — appears after 400px scroll, smooth scroll to top, RTL-positioned
+
+### Demo components rewritten
+- CalendarDemo, QueueDemo, DashboardDemo: `#7b39fc` → `hsl(var(--accent))` / `bg-accent` / `text-accent`
+- All text uses `t("landing:features.demo.*")` i18n calls — 20 new keys across EN/FR/AR
+- Equal height: `min-h-[260px] flex flex-col` on all three demos
+
+### Testimonials rewritten
+- 3 new messages: "Your time matters" (Clock), "A modern Algeria" (Heart), "Grow different" (Sparkles)
+- Subtitle: "Three beliefs that drive everything we build." Stat badges removed.
+
+### HowItWorks step circles
+- `bg-accent/10` → `bg-accent`, text `text-accent` → `text-white`
+
+### Subscription & staff fixes
+- **SubscriptionTab counts fix:** RPC returns array (`RETURNS TABLE`), code now extracts `countsData[0]` — was showing `/100` instead of `0/100`
+- **Real-time subscription:** Added Supabase channel subscriptions for `bookings` + `queue_tickets` to re-fetch counts on change
+- **Staff limit frontend enforcement:** Fetches business plan, computes max staff from `STAFF_LIMITS`, disables add button + shows limit message when at limit. i18n keys in EN/FR/AR
+
+### Table layout fix
+- Changed grid from `auto auto` to `120px minmax(300px,1fr)` for STATUS and ACTIONS columns
+- Each `BookingRow` was a separate CSS Grid, causing per-row column widths — now fixed minimums guarantee alignment
+
+### `bg-[var(--accent)]` → `bg-accent` across 8 files
+- **Root cause:** `--accent` is raw HSL values (`260 97% 61%`) without `hsl()` wrapper, so `bg-[var(--accent)]` generates invalid CSS
+- Affected files: BookingFilters.tsx, BookingHistoryTable.tsx, PricingSection.tsx, Dashboard.tsx, DashboardQueue.tsx
+- Fixes invisible white-on-white text on tab buttons in bookings filter + analytics history tabs
+
+---
+
+## 2026-06-28 — Phase 3d: Final Pricing Limits & Polish
+
+### Pricing Limits (Algerian Market)
+- Free tier adjusted to **100 bookings / 300 queue / 3 staff**
+- Pro tier: **500 bookings / 1000 queue / 7 staff**
+- Business: **2000 bookings / 2000 queue / unlimited staff**
+- `check_business_limits` and `check_staff_plan_limit` updated in DB + MASTER_SCHEMA.sql
+- Migration `phase_3d_pricing_limits_v2` applied to live Supabase
+- All 6 i18n files (EN/FR/AR × dashboard/landing) + SubscriptionTab.tsx LIMITS updated
+
+### Footer
+- Instagram icon/link removed
+- Email changed from `contact@leenya.dz` to `sifeddine.meb96@gmail.com`
+
+### Legal Pages
+- `TermsOfService.tsx` — 10 sections (Algerian Law 18-07, capped liability, contact)
+- `PrivacyPolicy.tsx` — 12 sections (data rights, 90-day deletion window, essential cookies only)
+- Routes added in `App.tsx` before `/:slug` catch-all
+- Footer links point to `/terms` and `/privacy`
+
+### Missing i18n Keys
+- Subscription: `upgradeToPro`, `upgradeDesc` added to all 3 dashboard.json
+- WhatsApp: `emptyDescription`, `empty`, `initialize`, `initializeConfirm` added
+- 404: 20 keys (`phrase1`–`phrase6`, `waiting`, `noAnswer`, `callNext`, `errorTitle`, etc.) added to all 3 landing.json
+- `DashboardServices.tsx` fixed: `t("dashboard:common.cancel")` → `t("common:buttons.cancel")`
+
+### Navbar & 404 Fixes
+- Navbar "Reviews" → "Approach" in HeroSection.tsx + all 3 landing.json
+- Dashboard catch-all route added so `/dashboard/404` renders NotFound
+- Hardcoded email in NotFound.tsx updated to `sifeddine.meb96@gmail.com`
+
+### RTL Polish (~20 items)
+- Back-to-top button added to landing page (`src/components/landing/BackToTop.tsx`)
+- Dialog close button: `rtl:left-4 rtl:right-auto`
+- Toast: `rtl:space-x-reverse`, `rtl:pr-0 rtl:pl-8`, `rtl:slide-out-to-left-full`
+- DashboardLayout: `lg:pl-[220px]` → `rtl:lg:pr-[220px] rtl:lg:pl-0`
+- NewBookingSlideOver: `rtl:justify-start`, border flip
+- Breadcrumb: `rtl:scale-x-[-1]`
+- Calendar/Carousel/Pagination icons: `rtl:scale-x-[-1]`
+- NavigationMenu: slide animations + position flipped
+- Alert/Select: icon positions flipped
+- TestimonialsSection accent bar, HowItWorks step badge, CtaBanner arrow, WhatsApp icons, Dashboard arrows
+- All back button `ArrowLeft` icons (8 pages) + forward `ArrowRight` icons (QueueDemo, NotFound) flipped
+
+### Demo Components
+- All 3 demos (Calendar, Queue, Dashboard) use `var(--accent)` instead of hardcoded `#7b39fc`
+- 20 new `features.demo.*` i18n keys for EN/FR/AR (day names, labels, statuses, wait times)
+- Equal height (`min-h-[260px]`) for consistent tab-switching view
+
+### Testimonials Section Rewrite
+- 3 new messages: "Your time matters", "A modern Algeria", "Grow different"
+- Professional, touching copy in all 3 languages
+- Icons: Clock → Heart → Sparkles
+- Stat badges removed, cleaner card layout
+
+### HowItWorks
+- Step number circles: `bg-accent/10` → `bg-accent`, text `text-accent` → `text-white`
+
+### Build
+- `npx tsc --noEmit` — zero errors
+- `npm run build` — zero errors
+
+---
+
+## 2026-06-28 — Phase 3c: 1-Month Trial & Honest Limits
+
+### Database — New Column
+- `businesses.trial_ends_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days'` — all new and existing businesses get 30-day trial
+
+### Database — New Functions (3)
+- `check_business_limits()` replaces `check_plan_booking_limit` — skips limits during trial, counts bookings and queue tickets separately with per-plan caps matching landing page: Free(50,100), Pro(300,500), Business(1000,1000)
+- `check_staff_plan_limit()` — enforces staff-per-plan limits with trial skip (Free max 1, Pro max 5, Business unlimited)
+- `get_monthly_business_counts()` replaces `get_monthly_booking_count` — returns `(booking_count, queue_count, staff_count)` in one RPC call
+
+### Database — Migration Applied
+- `phase_3c_trial_limits` — all functions, triggers, and column applied to live Supabase
+
+### Frontend — SubscriptionTab Rewrite
+- Reads `business.plan` and `trial_ends_at` from DB directly
+- Shows trial countdown card with purple gradient and `Clock` icon
+- Two usage progress bars (bookings + queue) using `get_monthly_business_counts` RPC
+- Pricing modal: Pro "Choose" button shows "Coming soon" (disabled)
+- Free card shows "Current" badge
+- New i18n keys: `planLabels.*`, `trialActive`, `trialDaysLeft`, `trialBadge`, `trialNote`, `queueThisMonth`, `pricingModal.comingSoon`
+
+### Frontend — Landing Page PricingSection
+- Pro CTA changed from "Free 14-day trial" to "Coming soon" in all 3 locales
+- Free plan shows subtitle "30-day free trial with full access"
+- Pro button is disabled with reduced opacity
+- All CTAs link to /login
+
+### i18n Updates
+- Dashboard feature keys renamed for honesty: `free30bookings`→`free50bookings`, `free100queue` new, `proUnlimitedBookings`→`pro300bookings`, `pro500queue` new
+- Landing page: `pricing.pro.cta` updated for all 3 locales
+- New subscription keys added for EN/FR/AR (trial, plan labels, queue counter)
+
+### MASTER_SCHEMA.sql Updated
+- `trial_ends_at` column, `check_business_limits`, `check_staff_plan_limit`, `get_monthly_business_counts`
+- Triggers updated to use new function names
+- Old function `check_plan_booking_limit` and `get_monthly_booking_count` removed
+
+### Build & Test
+- `npx tsc --noEmit` — zero errors
+- `npm run build` — zero errors
+
+---
+
+## 2026-06-28 — Phase 3b: Concurrency & Production Readiness
+
+### Database — New Indexes (4)
+- `idx_bookings_overlap_check` — covering index on `(business_id, date, status, start_time, end_time, staff_member_id)` for booking overlap trigger (was doing sequential scans on busy businesses)
+- `idx_queue_tickets_business_date_ticket` — covering index on `(business_id, queue_date, ticket_number)` for `ORDER BY ticket_number` in queue context queries
+- `idx_bookings_staff_date` — for staff-scoped booking queries
+- `idx_queue_tickets_staff_date` — for staff-scoped queue queries
+
+### Database — Advisory Locking (2 functions)
+- `check_insert_rate_limit` — added `pg_advisory_xact_lock(hashtext('rate_limit_' || NEW.client_phone))` to serialize concurrent requests from same phone. Previously could overshoot 10-request limit by 10x under high concurrency.
+- `check_plan_booking_limit` — added `pg_advisory_xact_lock(hashtext('plan_limit_' || NEW.business_id))` to serialize concurrent bookings for same business. Previously could overshoot 30-booking free-plan cap by 1-3 per month.
+
+### Frontend — Optimistic Locking (4 components)
+- `DashboardQueue.tsx` — `updateTicketStatus` now finds current ticket in state and adds `.eq("status", currentStatus)` to ALL status transitions, not just `waiting → called`. Prevents two staff from both clicking "Complete" on the same ticket.
+- `StaffView.tsx` — same optimistic locking for both `updateTicketStatus` and `updateBookingStatus`
+- `DashboardBookings.tsx` — `updateStatus` now finds current booking in state and adds `.eq("status", currentStatus)`. Prevents stale-client overwrites.
+
+### Frontend — Safer Insert Patterns (2 components)
+- `QueueFlow.tsx` — `.single()` → `.maybeSingle()` on ticket INSERT. Previously would throw unhandled rejection if trigger (rate limit, plan limit, state machine) rejected the insert.
+- `AppointmentFlow.tsx` — `.single()` → `.maybeSingle()` on booking INSERT. Same fix.
+
+### Frontend — Analytics Pagination
+- `DashboardAnalytics.tsx` — added `.range(0, 1000)` to all 5 high-volume queries (bookings, bookings-prev, queue, queue-prev, reviews). Prevents transferring MB of JSON for businesses with 10k+ monthly records.
+
+### Database Migration Applied
+- `phase_3_concurrency_fixes` — all indexes + function updates applied to live Supabase
+
+### Functional Testing
+- Playwright E2E smoke tests passed: landing page (18 buttons, 25 links), login (2 input fields), business public page (Boty name visible), queue display, queue public, 404 redirect
+- `npx tsc --noEmit` — zero errors
+- `npm run build` — zero errors, all chunks built successfully
+
+---
+
+## 2026-06-27 (late) — Phase 3: i18n, RTL, Hardcoded French Cleanup, Pricing Modal Redesign
+
+### i18n Infrastructure
+- **react-i18next** configured with 6 namespaces (common, landing, auth, dashboard, booking, staff) × 3 languages (EN, FR, AR)
+- Language detection via `localStorage` key + DB sync to `profiles.preferred_lang`
+- All ~60+ components across landing, auth, dashboard, booking, staff pages updated with `t()` calls
+- ~550 translation key-value pairs per language created across 18 JSON files
+- Language switcher (Globe icon) added to landing page navbar
+
+### Hardcoded French Cleanup (9 components)
+- `AddToQueueDialog.tsx` — full i18n conversion
+- `NewBookingSlideOver.tsx` — all form labels, placeholders, button text
+- `AddStaffForm.tsx` — title, labels, enable login toggle, buttons
+- `StaffRow.tsx` — status badges, toggle labels, services count, delete dialog
+- `ServiceAssignmentDialog.tsx` — description, empty state, save button
+- `TemplatePreviewDialog.tsx` / `TemplateEditDialog.tsx` — title, desc, buttons
+- `QueueWaitingList.tsx` — `"Service"` fallback → translated
+- `AccountTab.tsx` — language labels → `t("common:languages.*")`
+- `DashboardLayout.tsx` — removed unused dead `categoryLabels` object
+
+### Arabic RTL Support (15+ UI components)
+- `dialog.tsx` / `alert-dialog.tsx` — added `rtl:translate-x-1/2` for proper centering
+- `switch.tsx` — added `rtl:data-[state=checked]:-translate-x-5`
+- `sheet.tsx` — RTL-aware side animations, close button position, border swapping
+- `toast.tsx` — RTL-aware viewport positioning and close button
+- `carousel.tsx` — RTL-aware prev/next button positions
+- `calendar.tsx` — RTL-aware nav button positions
+- `dropdown-menu.tsx` / `context-menu.tsx` — RTL-aware check/radio icon positions
+- `PricingSection.tsx` — RTL-aware toggle animation and recommended badge
+- `BookingFilters.tsx` — RTL-aware search icon and padding
+- `FloatingHelp.tsx` — `rtl:left-4 rtl:right-auto`
+- `BottomCta.tsx` — `rtl:translate-x-1/2`
+- `DashboardLayout.tsx` — mobile sidebar `left-0`→`rtl:right-0`, close button, border swapping
+- `HeroSection.tsx` — mobile close button and language dropdown RTL-aware
+
+### Pricing Modal Redesign
+- `SubscriptionTab.tsx` — complete redesign: dark gradient background, spotlight effects, card hover scaling, purple accent for highlighted plan, feature check circles, responsive 3-column grid
+
+### New Translation Keys Added
+- `bookings.form.selectService`, `bookings.form.selectStaff`
+- `queue.form.selectService`, `queue.form.phonePlaceholder`
+- `settings.whatsapp.previewTitle/Desc/testSend/editTitle/Desc/templatePlaceholder`
+- `languages.english/french/arabic`, `buttons.choose`, `buttons.contact`
+- `settings.subscription.pricingModal.subtitle`
+
 ---
 
 ## 2026-06-27 (late) — Phase 2d: Sentry, CI/CD, CSP, Playwright E2E, RLS Tests, Bug Fixes

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ interface ForgotPasswordProps {
 }
 
 const ForgotPassword = ({ onBack }: ForgotPasswordProps) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -27,7 +29,7 @@ const ForgotPassword = ({ onBack }: ForgotPasswordProps) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({
-        title: "Erreur",
+        title: t("auth:forgotPassword.error"),
         description: err.message,
         variant: "destructive",
       });
@@ -40,10 +42,10 @@ const ForgotPassword = ({ onBack }: ForgotPasswordProps) => {
     <div className="w-full max-w-[400px] mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-[22px] font-bold text-foreground tracking-tight">
-          Mot de passe oublié
+          {t("auth:forgotPassword.title")}
         </h1>
         <p className="text-[14px] text-muted-foreground mt-2">
-          Entrez votre email pour recevoir un lien de réinitialisation
+          {t("auth:forgotPassword.subtitle")}
         </p>
       </div>
 
@@ -54,27 +56,27 @@ const ForgotPassword = ({ onBack }: ForgotPasswordProps) => {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <p className="text-[14px] text-foreground">
-              Email envoyé à <strong>{email}</strong>
+              {t("auth:forgotPassword.emailSent")} <strong>{email}</strong>
             </p>
             <p className="text-[13px] text-muted-foreground">
-              Vérifiez votre boîte de réception et suivez le lien.
+              {t("auth:forgotPassword.checkInbox")}
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reset-email" className="text-[13px]">Email</Label>
+              <Label htmlFor="reset-email" className="text-[13px]">{t("auth:forgotPassword.emailLabel")}</Label>
               <Input
                 id="reset-email"
                 type="email"
-                placeholder="votre@email.com"
+                placeholder={t("auth:forgotPassword.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <Button type="submit" className="w-full h-[44px]" disabled={loading}>
-              {loading ? "Envoi..." : "Envoyer le lien"}
+              {loading ? t("auth:forgotPassword.loading") : t("auth:forgotPassword.submit")}
             </Button>
           </form>
         )}
@@ -83,8 +85,8 @@ const ForgotPassword = ({ onBack }: ForgotPasswordProps) => {
           onClick={onBack}
           className="flex items-center gap-1 mx-auto mt-4 text-[13px] text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Retour à la connexion
+          <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" />
+          {t("auth:forgotPassword.backToLogin")}
         </button>
       </div>
     </div>

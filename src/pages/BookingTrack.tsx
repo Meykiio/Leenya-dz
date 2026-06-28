@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,17 +12,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: "En attente", variant: "secondary" },
-  confirmed: { label: "Confirmée", variant: "default" },
-  arrived: { label: "Arrivé(e)", variant: "default" },
-  in_service: { label: "En service", variant: "default" },
-  completed: { label: "Terminée", variant: "secondary" },
-  cancelled: { label: "Annulée", variant: "destructive" },
-  no_show: { label: "Absent(e)", variant: "destructive" },
-};
-
 const BookingTrack = () => {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [booking, setBooking] = useState<any>(null);
@@ -54,10 +46,10 @@ const BookingTrack = () => {
       });
 
     if (error || !success) {
-      toast({ title: "Erreur", description: "Impossible d'annuler la réservation.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
     } else {
       setBooking({ ...booking, status: "cancelled" });
-      toast({ title: "Réservation annulée" });
+      toast({ title: t("booking:bookingTrack.toast.cancelled") });
     }
     setCancelling(false);
   };
@@ -79,14 +71,23 @@ const BookingTrack = () => {
         <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 flex items-center justify-center p-6">
           <div className="text-center space-y-3">
             <XCircle className="h-10 w-10 text-muted-foreground/30 mx-auto" />
-            <p className="text-[14px] text-muted-foreground">Réservation introuvable.</p>
-            <Button variant="outline" size="sm" asChild><Link to="/">Retour à l'accueil</Link></Button>
+            <p className="text-[14px] text-muted-foreground">{t("booking:bookingTrack.notFound")}</p>
+            <Button variant="outline" size="sm" asChild><Link to="/">{t("booking:bookingTrack.backToHome")}</Link></Button>
           </div>
         </div>
       </div>
     );
   }
 
+  const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    pending: { label: t("common:statuses.pending"), variant: "secondary" },
+    confirmed: { label: t("common:statuses.confirmed"), variant: "default" },
+    arrived: { label: t("common:statuses.arrived"), variant: "default" },
+    in_service: { label: t("common:statuses.inProgress"), variant: "default" },
+    completed: { label: t("common:statuses.completed"), variant: "secondary" },
+    cancelled: { label: t("common:statuses.cancelled"), variant: "destructive" },
+    no_show: { label: t("common:statuses.noShow"), variant: "destructive" },
+  };
   const status = statusLabels[booking.status] || statusLabels.pending;
   const canCancel = ["pending", "confirmed"].includes(booking.status);
 
@@ -96,9 +97,9 @@ const BookingTrack = () => {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background border-b border-border px-5 h-[50px] flex items-center gap-3">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5 rtl:scale-x-[-1]" />
           </Link>
-          <h1 className="text-[14px] font-semibold text-foreground">Ma réservation</h1>
+          <h1 className="text-[14px] font-semibold text-foreground">{t("booking:bookingTrack.title")}</h1>
         </div>
 
         <div className="p-5 space-y-5">
@@ -142,18 +143,18 @@ const BookingTrack = () => {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" className="w-full h-[44px] text-destructive border-destructive/20 hover:bg-destructive/5" disabled={cancelling}>
-                  {cancelling ? "Annulation..." : "Annuler ma réservation"}
+                  {cancelling ? t("booking:bookingTrack.cancelling") : t("booking:bookingTrack.cancel")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Annuler cette réservation ?</AlertDialogTitle>
-                  <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                  <AlertDialogTitle>{t("booking:bookingTrack.dialogTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("booking:bookingTrack.dialogDescription")}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Non</AlertDialogCancel>
+                  <AlertDialogCancel>{t("common:buttons.no")}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground">
-                    Oui, annuler
+                    {t("common:buttons.yes")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

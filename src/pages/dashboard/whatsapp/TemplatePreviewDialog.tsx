@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,13 +22,14 @@ export default function TemplatePreviewDialog({
   compiledMessage,
   onTestSend,
 }: Props) {
+  const { t } = useTranslation("dashboard");
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Apercu du message</DialogTitle>
+          <DialogTitle>{t("settings.whatsapp.previewTitle")}</DialogTitle>
           <DialogDescription>
-            Voici a quoi ressemblera le message avec des donnees de test.
+            {t("settings.whatsapp.previewDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -42,7 +44,7 @@ export default function TemplatePreviewDialog({
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onTestSend}>
                 <Send className="h-4 w-4 mr-2" />
-                Test d'envoi
+                {t("settings.whatsapp.testSend")}
               </Button>
               <Button variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-4 w-4" />

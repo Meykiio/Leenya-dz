@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +59,7 @@ function playChime() {
 }
 
 export default function QueueDisplay() {
+  const { t } = useTranslation();
   const { slug } = useParams();
   const [businessName, setBusinessName] = useState("");
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -189,7 +191,7 @@ export default function QueueDisplay() {
                   background: "#22C55E", display: "inline-block",
                 }}
               />
-              {waitingTickets.length} en attente
+              {t("booking:queueDisplay.waitingCount", { count: waitingTickets.length })}
             </motion.span>
           </div>
         )}
@@ -219,7 +221,7 @@ export default function QueueDisplay() {
               marginBottom: "16px",
             }}
           >
-            {servingTicket?.status === "called" ? "Nouvel appel" : "Ticket en cours"}
+            {servingTicket?.status === "called" ? t("booking:queueDisplay.currentTicket") : t("booking:queueDisplay.currentTicket")}
           </p>
 
           <AnimatePresence mode="wait">
@@ -254,7 +256,7 @@ export default function QueueDisplay() {
                     )}
                     {servingTicket.staff_name && (
                       <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.3)", marginTop: "4px" }}>
-                        avec {servingTicket.staff_name}
+                        {t("booking:queueDisplay.withStaff", { staffName: servingTicket.staff_name })}
                       </p>
                     )}
                   </div>
@@ -282,7 +284,7 @@ export default function QueueDisplay() {
                   ))}
                 </div>
                 <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>
-                  En attente de clients...
+                  {t("booking:queueDisplay.waitingForClients")}
                 </p>
               </motion.div>
             )}
@@ -304,7 +306,7 @@ export default function QueueDisplay() {
                 marginBottom: "12px",
               }}
             >
-              Prochains
+              {t("booking:queueDisplay.nextUp")}
             </p>
             <div style={{ display: "flex", gap: "10px" }}>
               <AnimatePresence mode="popLayout">
@@ -362,11 +364,11 @@ export default function QueueDisplay() {
             {clockStr}
           </p>
           <p style={{ fontSize: "11px", marginTop: "4px", color: "rgba(255,255,255,0.07)" }}>
-            propulse par leenya
+            {t("booking:queueDisplay.poweredBy")}
           </p>
           {!audioUnlocked && (
             <p style={{ fontSize: "10px", marginTop: "6px", color: "rgba(255,255,255,0.12)" }}>
-              cliquer pour activer le son
+              {t("booking:queueDisplay.clickToActivateSound")}
             </p>
           )}
         </div>

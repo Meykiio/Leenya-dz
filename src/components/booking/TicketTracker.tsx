@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, WifiOff } from "lucide-react";
@@ -40,6 +41,7 @@ interface TicketData {
 const CACHE_PREFIX = "leenya_ticket_";
 
 export default function TicketTracker({ ticketId, businessName, serviceName, onBack }: Props) {
+  const { t } = useTranslation();
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [currentServing, setCurrentServing] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState(0);
@@ -183,18 +185,18 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       .rpc("cancel_booking_by_token", { p_booking_id: "", p_token: "" });
 
     if (error) {
-      toast({ title: "Erreur", description: "Impossible d'annuler le ticket.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
     localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
-    toast({ title: "Ticket annule" });
+    toast({ title: t("booking:ticketTracker.toast.cancelled") });
     onBack();
   };
 
   const canCancel = false;
 
   if (!ticket) {
-    return <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Chargement...</div>;
+    return <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">{t("common:loading")}</div>;
   }
 
   if (ticket.status === "completed") return <TicketCompleted />;
@@ -213,7 +215,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
 
       {isOffline && (
         <div className="flex items-center gap-2 text-[12px] text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-4">
-          <WifiOff className="h-4 w-4" /> Reconnexion en cours...
+          <WifiOff className="h-4 w-4" /> {t("common:loading")}
         </div>
       )}
 
@@ -231,8 +233,8 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
             >
               <span style={{ color: 'var(--success)' }} className="text-xl">&#x2713;</span>
             </div>
-            <h2 className="text-[22px] font-bold text-foreground">C'est votre tour !</h2>
-            <p className="text-[14px] text-muted-foreground">Presentez-vous maintenant au salon</p>
+            <h2 className="text-[22px] font-bold text-foreground">{t("booking:ticketTracker.calledTitle")}</h2>
+            <p className="text-[14px] text-muted-foreground">{t("booking:ticketTracker.calledSubtitle")}</p>
           </motion.div>
         )}
       </AnimatePresence>

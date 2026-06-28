@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { toast } from "@/hooks/use-toast";
@@ -39,6 +40,7 @@ function getPrevRange(r: Range) {
 }
 
 const DashboardAnalytics = () => {
+  const { t } = useTranslation();
   const { business } = useBusinessInfo();
   const [range, setRange] = useState<Range>("month");
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -59,15 +61,17 @@ const DashboardAnalytics = () => {
     const fetchData = async () => {
       setLoading(true);
 
+      const MAX_ANALYTICS_ROWS = 1000;
+
       const [
         bRes, pRes, qRes, pqRes,
         rRes, sRes, stRes,
       ] = await Promise.all([
-        supabase.from("bookings").select("id, date, start_time, end_time, status, created_at, service_id, staff_member_id, services(name, price_dzd, duration_minutes), staff_members(display_name)").eq("business_id", business.id).gte("date", fmt(start)).lte("date", fmt(end)).order("date", { ascending: false }),
-        supabase.from("bookings").select("id, status, service_id, services(price_dzd)").eq("business_id", business.id).gte("date", fmt(prev.start)).lte("date", fmt(prev.end)),
-        supabase.from("queue_tickets").select("*, services(name)").eq("business_id", business.id).gte("queue_date", fmt(start)).lte("queue_date", fmt(end)).order("queue_date", { ascending: false }),
-        supabase.from("queue_tickets").select("id, status, service_id, called_at, completed_at").eq("business_id", business.id).gte("queue_date", fmt(prev.start)).lte("queue_date", fmt(prev.end)),
-        supabase.from("reviews").select("*").eq("business_id", business.id).gte("created_at", start.toISOString()).lte("created_at", end.toISOString()),
+        supabase.from("bookings").select("id, date, start_time, end_time, status, created_at, service_id, staff_member_id, services(name, price_dzd, duration_minutes), staff_members(display_name)").eq("business_id", business.id).gte("date", fmt(start)).lte("date", fmt(end)).order("date", { ascending: false }).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("bookings").select("id, status, service_id, services(price_dzd)").eq("business_id", business.id).gte("date", fmt(prev.start)).lte("date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("queue_tickets").select("*, services(name)").eq("business_id", business.id).gte("queue_date", fmt(start)).lte("queue_date", fmt(end)).order("queue_date", { ascending: false }).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("queue_tickets").select("id, status, service_id, called_at, completed_at").eq("business_id", business.id).gte("queue_date", fmt(prev.start)).lte("queue_date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("reviews").select("*").eq("business_id", business.id).gte("created_at", start.toISOString()).lte("created_at", end.toISOString()).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("services").select("id, name").eq("business_id", business.id),
         supabase.from("staff_members").select("id, display_name").eq("business_id", business.id),
       ]);
@@ -81,7 +85,7 @@ const DashboardAnalytics = () => {
       if (stRes.error && import.meta.env.DEV) console.error('[DashboardAnalytics] staff:', stRes.error.message);
 
       if (bRes.error || qRes.error) {
-        toast({ title: "Erreur", description: "Impossible de charger les donnees.", variant: "destructive" });
+        toast({ title: t("common:toast.error"), description: t("dashboard:analytics.loadError"), variant: "destructive" });
       }
 
       setBookings(bRes.data || []);
@@ -186,13 +190,13 @@ const DashboardAnalytics = () => {
     const map: Record<string, { name: string; bookings: number; tickets: number }> = {};
     bookings.forEach((b) => {
       if (!b.service_id) return;
-      if (!map[b.service_id]) map[b.service_id] = { name: b.services?.name || "Inconnu", bookings: 0, tickets: 0 };
+      if (!map[b.service_id]) map[b.service_id] = { name: b.services?.name || t("dashboard:analytics.unknown"), bookings: 0, tickets: 0 };
       map[b.service_id].bookings++;
     });
-    queueTickets.forEach((t) => {
-      if (!t.service_id) return;
-      if (!map[t.service_id]) map[t.service_id] = { name: t.services?.name || "Inconnu", bookings: 0, tickets: 0 };
-      map[t.service_id].tickets++;
+    queueTickets.forEach((ticket) => {
+      if (!ticket.service_id) return;
+      if (!map[ticket.service_id]) map[ticket.service_id] = { name: ticket.services?.name || t("dashboard:analytics.unknown"), bookings: 0, tickets: 0 };
+      map[ticket.service_id].tickets++;
     });
     return Object.values(map).sort((a, b) => (b.bookings + b.tickets) - (a.bookings + a.tickets));
   }, [bookings, queueTickets]);
@@ -201,13 +205,13 @@ const DashboardAnalytics = () => {
     const map: Record<string, { name: string; bookings: number; tickets: number }> = {};
     bookings.forEach((b) => {
       if (!b.staff_member_id) return;
-      if (!map[b.staff_member_id]) map[b.staff_member_id] = { name: b.staff_members?.display_name || "Inconnu", bookings: 0, tickets: 0 };
+      if (!map[b.staff_member_id]) map[b.staff_member_id] = { name: b.staff_members?.display_name || t("dashboard:analytics.unknown"), bookings: 0, tickets: 0 };
       map[b.staff_member_id].bookings++;
     });
-    queueTickets.forEach((t) => {
-      if (!t.staff_member_id) return;
-      if (!map[t.staff_member_id]) map[t.staff_member_id] = { name: "Inconnu", bookings: 0, tickets: 0 };
-      map[t.staff_member_id].tickets++;
+    queueTickets.forEach((ticket) => {
+      if (!ticket.staff_member_id) return;
+      if (!map[ticket.staff_member_id]) map[ticket.staff_member_id] = { name: t("dashboard:analytics.unknown"), bookings: 0, tickets: 0 };
+      map[ticket.staff_member_id].tickets++;
     });
     const staffNames = new Map(staff.map((s) => [s.id, s.display_name]));
     Object.entries(map).forEach(([id, stat]) => {
@@ -250,16 +254,16 @@ const DashboardAnalytics = () => {
     });
   }, [bookings, queueTickets]);
 
-  const rangeButtons: { key: Range; label: string }[] = [
-    { key: "week", label: "Cette semaine" },
-    { key: "month", label: "Ce mois" },
-    { key: "3months", label: "3 derniers mois" },
+  const rangeButtons: { key: Range; labelKey: string }[] = [
+    { key: "week", labelKey: "dashboard:analytics.week" },
+    { key: "month", labelKey: "dashboard:analytics.month" },
+    { key: "3months", labelKey: "dashboard:analytics.threeMonths" },
   ];
 
   return (
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Analytiques</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:analytics.pageTitle")}</h2>
           <div className="flex gap-0.5 bg-[var(--bg-muted)] rounded-lg p-0.5">
             {rangeButtons.map((r) => (
               <Button
@@ -269,7 +273,7 @@ const DashboardAnalytics = () => {
                 onClick={() => setRange(r.key)}
                 className="text-xs h-7"
               >
-                {r.label}
+                {t(r.labelKey)}
               </Button>
             ))}
           </div>

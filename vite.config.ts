@@ -22,10 +22,11 @@ export default defineConfig(({ mode }) => ({
       "Content-Security-Policy": [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline'",
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
         "img-src 'self' data: https://*.supabase.co",
-        "font-src 'self' data:",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "media-src 'self' https://d8jnt0lcm91z4.cloudfront.net",
         "frame-ancestors 'none'",
         "base-uri 'self'",
       ].join("; "),

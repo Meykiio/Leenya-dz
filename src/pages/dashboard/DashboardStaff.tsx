@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { Plus, UserCheck } from "lucide-react";
+import { Plus, UserCheck, Users } from "lucide-react";
 import type { StaffMember } from "@/types";
 import StaffRow from "./staff/StaffRow";
 import AddStaffForm from "./staff/AddStaffForm";
@@ -20,7 +21,14 @@ interface ServiceOption {
   name: string;
 }
 
+const STAFF_LIMITS: Record<string, number> = {
+  free: 3,
+  pro: 7,
+  business: Infinity,
+};
+
 const DashboardStaff = () => {
+  const { t } = useTranslation();
   const { business } = useBusinessInfo();
   const [staff, setStaff] = useState<StaffWithServices[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -28,6 +36,18 @@ const DashboardStaff = () => {
   const [services, setServices] = useState<ServiceOption[]>([]);
   const [editStaffId, setEditStaffId] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [plan, setPlan] = useState<string>("free");
+  const [staffCount, setStaffCount] = useState(0);
+
+  useEffect(() => {
+    if (!business) return;
+    supabase.from("businesses").select("plan").eq("id", business.id).single().then(({ data }) => {
+      if (data) setPlan(data.plan);
+    });
+  }, [business]);
+
+  const maxStaff = STAFF_LIMITS[plan] || STAFF_LIMITS.free;
+  const atLimit = staffCount >= maxStaff;
 
   const fetchStaff = async () => {
     if (!business) return;
@@ -36,8 +56,9 @@ const DashboardStaff = () => {
       .select("id, display_name, is_active, accepts_bookings, avatar_url")
       .eq("business_id", business.id)
       .order("display_name");
-    if (error) { console.error("fetchStaff:", error); toast({ title: "Erreur", description: "Impossible de charger l'équipe.", variant: "destructive" }); }
+    if (error) { console.error("fetchStaff:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.loadStaff"), variant: "destructive" }); }
     setStaff(data || []);
+    setStaffCount((data || []).filter((s) => s.is_active).length);
     setInitialLoading(false);
   };
 
@@ -99,7 +120,7 @@ const DashboardStaff = () => {
       .single();
     if (insertError) {
       console.error("addStaff:", insertError);
-      toast({ title: "Erreur", description: "Impossible d'ajouter le membre.", variant: "destructive" });
+      toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.addMember"), variant: "destructive" });
       return;
     }
     if (email && password) {
@@ -110,12 +131,12 @@ const DashboardStaff = () => {
       });
       if (rpcError) {
         console.error("create_staff_user rpc:", rpcError);
-        toast({ title: "Erreur", description: "Membre ajouté mais échec de création du compte.", variant: "destructive" });
+        toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.accountFailed"), variant: "destructive" });
       } else {
-        toast({ title: "Compte crée", description: "Le membre peut maintenant se connecter." });
+        toast({ title: t("dashboard:staff.accountCreated"), description: t("dashboard:staff.accountCreatedDesc") });
       }
     } else {
-      toast({ title: "Membre ajoute" });
+      toast({ title: t("dashboard:staff.memberAdded") });
     }
     fetchStaff();
   };
@@ -123,14 +144,14 @@ const DashboardStaff = () => {
   const toggleActive = async (id: string, current: boolean) => {
     if (!business) return;
     const { error } = await supabase.from("staff_members").update({ is_active: !current }).eq("business_id", business.id).eq("id", id);
-    if (error) { console.error("toggleActive:", error); toast({ title: "Erreur", description: "Impossible de modifier le membre.", variant: "destructive" }); }
+    if (error) { console.error("toggleActive:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.updateMember"), variant: "destructive" }); }
     fetchStaff();
   };
 
   const toggleBookings = async (id: string, current: boolean) => {
     if (!business) return;
     const { error } = await supabase.from("staff_members").update({ accepts_bookings: !current }).eq("business_id", business.id).eq("id", id);
-    if (error) { console.error("toggleBookings:", error); toast({ title: "Erreur", description: "Impossible de modifier le membre.", variant: "destructive" }); }
+    if (error) { console.error("toggleBookings:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.updateMember"), variant: "destructive" }); }
     fetchStaff();
   };
 
@@ -139,18 +160,18 @@ const DashboardStaff = () => {
     const ext = file.name.split(".").pop();
     const path = `staff-avatars/${business.id}/${staffId}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true });
-    if (uploadError) { console.error("uploadAvatar:", uploadError); toast({ title: "Erreur upload", description: "Impossible de télécharger l'image.", variant: "destructive" }); return; }
+    if (uploadError) { console.error("uploadAvatar:", uploadError); toast({ title: t("dashboard:labels.errorUpload"), description: t("dashboard:staff.errors.uploadImage"), variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
     const { error: updateError } = await supabase.from("staff_members").update({ avatar_url: publicUrl }).eq("business_id", business.id).eq("id", staffId);
-    if (updateError) { console.error("updateAvatar:", updateError); toast({ title: "Erreur", description: "Impossible de mettre à jour l'avatar.", variant: "destructive" }); return; }
-    toast({ title: "Avatar mis a jour" });
+    if (updateError) { console.error("updateAvatar:", updateError); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.updateAvatar"), variant: "destructive" }); return; }
+    toast({ title: t("dashboard:staff.avatarUpdated") });
     fetchStaff();
   };
 
   const deleteStaff = async (staffId: string) => {
     const { error } = await supabase.from("staff_members").delete().eq("business_id", business.id).eq("id", staffId);
-    if (error) { console.error("deleteStaff:", error); toast({ title: "Erreur", description: "Impossible de supprimer le membre.", variant: "destructive" }); }
-    else toast({ title: "Membre supprimé" });
+    if (error) { console.error("deleteStaff:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.deleteMember"), variant: "destructive" }); }
+    else toast({ title: t("dashboard:staff.memberDeleted") });
     fetchStaff();
   };
 
@@ -171,7 +192,7 @@ const DashboardStaff = () => {
     if (toAdd.length > 0) {
       await supabase.from("staff_services").insert(toAdd.map((service_id) => ({ staff_member_id: editStaffId, service_id })));
     }
-    toast({ title: "Services mis a jour" });
+    toast({ title: t("dashboard:staff.servicesUpdated") });
     loadServiceAssignments();
   };
 
@@ -180,11 +201,27 @@ const DashboardStaff = () => {
   return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Equipe</h2>
-          <Button size="sm" onClick={() => setShowForm(true)} className="gap-1.5 text-xs">
-            <Plus className="h-3.5 w-3.5" /> Ajouter un membre
-          </Button>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:staff.title")}</h2>
+          <div className="flex items-center gap-3">
+            {atLimit && maxStaff !== Infinity && (
+              <span className="text-xs text-muted-foreground">
+                {staffCount}/{maxStaff}
+              </span>
+            )}
+            <Button size="sm" onClick={() => setShowForm(true)} disabled={atLimit && maxStaff !== Infinity} className="gap-1.5 text-xs">
+              <Plus className="h-3.5 w-3.5" /> {t("dashboard:staff.add")}
+            </Button>
+          </div>
         </div>
+
+        {atLimit && maxStaff !== Infinity && (
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              {t("dashboard:staff.limitReached", { count: staffCount, max: maxStaff })}
+            </p>
+          </div>
+        )}
 
         {initialLoading ? (
           <div className="space-y-2">
@@ -193,9 +230,9 @@ const DashboardStaff = () => {
         ) : staff.length === 0 ? (
           <div className="rounded-lg border border-[var(--border-default)] py-12 text-center">
             <UserCheck className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-            <p className="text-sm text-[var(--text-tertiary)]">Aucun membre d'equipe</p>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">Ajoutez vos collaborateurs pour gerer les reservations</p>
-            <Button onClick={() => setShowForm(true)} variant="outline" size="sm" className="mt-3 text-xs">Ajouter un membre</Button>
+            <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:staff.empty")}</p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("dashboard:staff.emptyDesc")}</p>
+            <Button onClick={() => setShowForm(true)} disabled={atLimit && maxStaff !== Infinity} variant="outline" size="sm" className="mt-3 text-xs">{t("dashboard:staff.add")}</Button>
           </div>
         ) : (
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">

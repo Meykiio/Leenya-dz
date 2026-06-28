@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { X, Save, Wrench } from "lucide-react";
 
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function ServiceAssignmentDialog({ open, staffName, services, selectedIds, onClose, onSave }: Props) {
+  const { t } = useTranslation("dashboard");
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -44,10 +46,10 @@ export default function ServiceAssignmentDialog({ open, staffName, services, sel
           </h3>
           <button onClick={onClose}><X className="h-4 w-4 text-[var(--text-tertiary)]" /></button>
         </div>
-        <p className="text-xs text-[var(--text-tertiary)] -mt-2">Choisir les services de ce membre</p>
+        <p className="text-xs text-[var(--text-tertiary)] -mt-2">{t("staff.serviceDialog.title")}</p>
         <div className="space-y-2 max-h-52 overflow-y-auto">
           {services.length === 0 ? (
-            <p className="text-sm text-[var(--text-tertiary)]">Aucun service disponible</p>
+            <p className="text-sm text-[var(--text-tertiary)]">{t("staff.serviceDialog.empty")}</p>
           ) : (
             services.map((svc) => {
               const checked = selected.includes(svc.id);
@@ -74,7 +76,7 @@ export default function ServiceAssignmentDialog({ open, staffName, services, sel
         </div>
         <Button onClick={handleSave} disabled={saving} className="w-full h-8 text-sm gap-1.5">
           <Save className="h-3.5 w-3.5" />
-          {saving ? "Enregistrement..." : "Enregistrer"}
+          {saving ? t("common:buttons.saving") : t("common:buttons.save")}
         </Button>
       </div>
     </div>

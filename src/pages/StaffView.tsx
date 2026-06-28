@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import type { BookingStatus } from "@/integrations/supabase/types";
 type Tab = "queue" | "bookings";
 
 const StaffView = () => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const [business, setBusiness] = useState<Pick<Business, "id" | "name" | "slug"> | null>(null);
   const [staffMemberId, setStaffMemberId] = useState<string | null>(null);
@@ -67,7 +69,7 @@ const StaffView = () => {
       .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("ticket_number");
 
-    if (error) { console.error("fetchTickets:", error); toast({ title: "Erreur", description: "Impossible de charger la file.", variant: "destructive" }); }
+    if (error) { console.error("fetchTickets:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.loadQueueError"), variant: "destructive" }); }
     setTickets(data || []);
     setLoading(false);
   }, [business, staffMemberId, today]);
@@ -83,7 +85,7 @@ const StaffView = () => {
       .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("start_time");
 
-    if (error) { console.error("fetchBookings:", error); toast({ title: "Erreur", description: "Impossible de charger les réservations.", variant: "destructive" }); }
+    if (error) { console.error("fetchBookings:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.loadBookingsError"), variant: "destructive" }); }
     setBookings(data || []);
     setLoading(false);
   }, [business, staffMemberId, today]);
@@ -101,46 +103,64 @@ const StaffView = () => {
   }, [business, fetchTickets, fetchBookings]);
 
   const updateTicketStatus = async (id: string, status: string) => {
+    const ticket = tickets.find(t => t.id === id);
+    if (!ticket) return;
+    const currentStatus = ticket.status;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: any = { status };
     if (status === "called") updates.called_at = new Date().toISOString();
     if (status === "completed" || status === "no_show") updates.completed_at = new Date().toISOString();
 
-    let query = supabase.from("queue_tickets").update(updates).eq("business_id", business!.id).eq("id", id);
-    if (status === "called") {
-      query = query.eq("status", "waiting");
-    }
+    const { data, error } = await supabase
+      .from("queue_tickets")
+      .update(updates)
+      .eq("business_id", business!.id)
+      .eq("id", id)
+      .eq("status", currentStatus)
+      .select("client_phone, ticket_label");
 
-    const { data, error } = await query.select("client_phone, ticket_label");
     if (error) {
       console.error("updateTicketStatus:", error);
-      toast({ title: "Erreur", description: "Impossible de mettre à jour le ticket.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateTicketError"), variant: "destructive" });
       return;
     }
-    if (status === "called" && (!data || data.length === 0)) {
-      toast({ title: "Ticket déjà pris", description: "Un autre membre a déjà appelé ce ticket.", variant: "destructive" });
+    if (!data || data.length === 0) {
+      toast({ title: t("staff:staffView.toast.ticketTakenTitle"), description: t("staff:staffView.toast.ticketTakenDesc"), variant: "destructive" });
       fetchTickets();
       return;
     }
-    if (status === "called" && data && data.length > 0) {
-      const ticket = data[0];
-      const serviceName = tickets.find((t) => t.id === id)?.services?.name || "Service";
-      const url = buildQueueCalledUrl(ticket.client_phone, business!.name, ticket.ticket_label, serviceName);
+    if (status === "called") {
+      const ticketData = data[0];
+      const serviceName = ticket.services?.name || t("staff:staffView.serviceDefault");
+      const url = buildQueueCalledUrl(ticketData.client_phone, business!.name, ticketData.ticket_label, serviceName);
       window.open(url, "_blank");
     }
   };
 
   const updateBookingStatus = async (id: string, status: BookingStatus) => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("business_id", business!.id).eq("id", id);
+    const booking = bookings.find(b => b.id === id);
+    if (!booking) return;
+    const currentStatus = booking.status;
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status })
+      .eq("business_id", business!.id)
+      .eq("id", id)
+      .eq("status", currentStatus);
+
     if (error) {
       console.error("updateBookingStatus:", error);
-      toast({ title: "Erreur", description: "Impossible de mettre à jour la réservation.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateBookingError"), variant: "destructive" });
+      return;
     }
+    fetchBookings();
   };
 
   const sendBookingWhatsApp = (booking: Booking) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serviceName = (booking.services as any)?.name || "Service";
+    const serviceName = (booking.services as any)?.name || t("staff:staffView.serviceDefault");
     const url = buildBookingConfirmationUrl(
       booking.client_phone, business!.name, booking.date,
       booking.start_time.slice(0, 5), serviceName, null, booking.id
@@ -154,7 +174,7 @@ const StaffView = () => {
 
   const timeAgo = (dateStr: string) => {
     const mins = differenceInMinutes(new Date(), new Date(dateStr));
-    return mins < 1 ? "À l'instant" : `${mins} min`;
+    return mins < 1 ? t("staff:staffView.timeJustNow") : t("staff:staffView.timeMin", { mins });
   };
 
   if (!business) {
@@ -165,14 +185,14 @@ const StaffView = () => {
         ) : accessDenied ? (
           <div className="text-center space-y-3">
             <Users className="h-12 w-12 text-[var(--text-tertiary)] mx-auto" />
-            <p className="text-[var(--text-secondary)]">Accès refusé — aucun commerce associé à votre compte.</p>
-            <Button variant="outline" onClick={signOut}>Se déconnecter</Button>
+            <p className="text-[var(--text-secondary)]">{t("staff:staffView.accessDenied")}</p>
+            <Button variant="outline" onClick={signOut}>{t("staff:staffView.signOut")}</Button>
           </div>
         ) : (
           <div className="text-center space-y-3">
             <Users className="h-12 w-12 text-[var(--text-tertiary)] mx-auto" />
-            <p className="text-[var(--text-secondary)]">Aucun commerce associé à votre compte.</p>
-            <Button variant="outline" onClick={signOut}>Se déconnecter</Button>
+            <p className="text-[var(--text-secondary)]">{t("staff:staffView.noBusiness")}</p>
+            <Button variant="outline" onClick={signOut}>{t("staff:staffView.signOut")}</Button>
           </div>
         )}
       </div>
@@ -200,7 +220,7 @@ const StaffView = () => {
           }`}
         >
           <Ticket className="h-4 w-4" />
-          File d'attente
+          {t("staff:staffView.tabQueue")}
           {waiting.length > 0 && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{waiting.length}</Badge>
           )}
@@ -214,7 +234,7 @@ const StaffView = () => {
           }`}
         >
           <CalendarDays className="h-4 w-4" />
-          Réservations
+          {t("staff:staffView.tabBookings")}
           {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length > 0 && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
               {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length}
@@ -230,18 +250,18 @@ const StaffView = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 text-center">
                 <p className="text-2xl font-bold text-[var(--text-primary)]">{waiting.length}</p>
-                <p className="text-xs text-[var(--text-secondary)]">En attente</p>
+                <p className="text-xs text-[var(--text-secondary)]">{t("staff:staffView.statWaiting")}</p>
               </div>
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 text-center">
                 <p className="text-2xl font-bold text-[var(--text-primary)]">{called.length + inService.length}</p>
-                <p className="text-xs text-[var(--text-secondary)]">En service</p>
+                <p className="text-xs text-[var(--text-secondary)]">{t("staff:staffView.statInService")}</p>
               </div>
             </div>
 
             {/* Called — waiting to be served */}
             {called.length > 0 && (
               <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">Appelé(s)</h3>
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">{t("staff:staffView.sectionCalled")}</h3>
                 {called.map((t) => (
                   <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
                     <span className="font-mono text-lg font-bold text-[var(--accent)]">{t.ticket_label}</span>
@@ -251,7 +271,7 @@ const StaffView = () => {
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" onClick={() => updateTicketStatus(t.id, "in_service")} className="gap-1">
-                        <Play className="h-3 w-3" /> Commencer
+                        <Play className="h-3 w-3" /> {t("staff:staffView.buttonStart")}
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -277,7 +297,7 @@ const StaffView = () => {
             {/* Currently in service */}
             {inService.length > 0 && (
               <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">En cours</h3>
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">{t("staff:staffView.sectionInProgress")}</h3>
                 {inService.map((t) => (
                   <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
                     <span className="font-mono text-lg font-bold text-[var(--accent)]">{t.ticket_label}</span>
@@ -287,20 +307,20 @@ const StaffView = () => {
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" onClick={() => updateTicketStatus(t.id, "completed")} className="gap-1">
-                        <CheckCircle className="h-3 w-3" /> Terminer
+                        <CheckCircle className="h-3 w-3" /> {t("staff:staffView.buttonComplete")}
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-destructive">No-show</Button>
+                          <Button size="sm" variant="ghost" className="text-destructive">{t("staff:staffView.buttonNoShow")}</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Marquer comme no-show?</AlertDialogTitle>
-                            <AlertDialogDescription>Le client {t.client_name} sera marqué comme absent.</AlertDialogDescription>
+                            <AlertDialogTitle>{t("staff:staffView.dialogNoShowTitle")}</AlertDialogTitle>
+                            <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { clientName: t.client_name })}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>Confirmer</AlertDialogAction>
+                            <AlertDialogCancel>{t("staff:staffView.dialogCancel")}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>{t("staff:staffView.dialogConfirm")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -314,7 +334,7 @@ const StaffView = () => {
             <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)]">
               <div className="p-4 border-b border-[var(--border-subtle)]">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Ticket className="h-4 w-4" /> File d'attente ({waiting.length})
+                  <Ticket className="h-4 w-4" /> {t("staff:staffView.sectionQueue", { count: waiting.length })}
                 </h3>
               </div>
               <div className="p-4 space-y-2">
@@ -323,7 +343,7 @@ const StaffView = () => {
                 ) : waiting.length === 0 ? (
                   <div className="text-center py-8 space-y-2">
                     <Users className="h-8 w-8 text-[var(--text-tertiary)] mx-auto" />
-                    <p className="text-sm text-[var(--text-secondary)]">Aucun client en attente</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoClients")}</p>
                   </div>
                 ) : (
                   waiting.map((t) => (
@@ -331,27 +351,27 @@ const StaffView = () => {
                       <span className="font-mono text-lg font-bold text-[var(--accent)] shrink-0">{t.ticket_label}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
-                        <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"} • Depuis {timeAgo(t.created_at)}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"} • {t("staff:staffView.since")} {timeAgo(t.created_at)}</p>
                       </div>
                       <div className="flex gap-1">
                         <Button size="sm" onClick={() => updateTicketStatus(t.id, "called")} className="gap-1">
-                          <Play className="h-3 w-3" /> Appeler
+                          <Play className="h-3 w-3" /> {t("staff:staffView.buttonCall")}
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="ghost" className="text-destructive"><XCircle className="h-3 w-3" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Annuler ce ticket?</AlertDialogTitle>
-                              <AlertDialogDescription>Le ticket {t.ticket_label} de {t.client_name} sera annulé.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Non</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => updateTicketStatus(t.id, "cancelled")} className="bg-destructive text-destructive-foreground">Oui, annuler</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-destructive"><XCircle className="h-3 w-3" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t("staff:staffView.dialogCancelTicketTitle")}</AlertDialogTitle>
+                            <AlertDialogDescription>{t("staff:staffView.dialogCancelTicketDesc", { ticketLabel: t.ticket_label, clientName: t.client_name })}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "cancelled")} className="bg-destructive text-destructive-foreground">{t("staff:staffView.dialogYesCancel")}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       </div>
                     </div>
                   ))
@@ -365,15 +385,15 @@ const StaffView = () => {
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-3 text-center">
                 <p className="text-xl font-bold text-[var(--text-primary)]">{bookings.filter((b) => b.status === "pending").length}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">En attente</p>
+                <p className="text-[11px] text-[var(--text-secondary)]">{t("staff:staffView.statPending")}</p>
               </div>
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-3 text-center">
                 <p className="text-xl font-bold text-[var(--text-primary)]">{bookings.filter((b) => b.status === "confirmed").length}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">Confirmées</p>
+                <p className="text-[11px] text-[var(--text-secondary)]">{t("staff:staffView.statConfirmed")}</p>
               </div>
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-3 text-center">
                 <p className="text-xl font-bold text-[var(--text-primary)]">{bookings.filter((b) => b.status === "arrived" || b.status === "in_service").length}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">En cours</p>
+                <p className="text-[11px] text-[var(--text-secondary)]">{t("staff:staffView.statInProgress")}</p>
               </div>
             </div>
 
@@ -381,7 +401,7 @@ const StaffView = () => {
             <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)]">
               <div className="p-4 border-b border-[var(--border-subtle)]">
                 <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" /> Réservations du jour
+                  <CalendarDays className="h-4 w-4" /> {t("staff:staffView.sectionTodayBookings")}
                 </h3>
               </div>
               <div className="p-4 space-y-2">
@@ -390,7 +410,7 @@ const StaffView = () => {
                 ) : bookings.length === 0 ? (
                   <div className="text-center py-8 space-y-2">
                     <CalendarDays className="h-8 w-8 text-[var(--text-tertiary)] mx-auto" />
-                    <p className="text-sm text-[var(--text-secondary)]">Aucune réservation aujourd'hui</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoBookings")}</p>
                   </div>
                 ) : (
                   bookings.map((b) => (
@@ -415,9 +435,9 @@ const StaffView = () => {
                             "border-purple-300 text-purple-600"
                           }`}
                         >
-                          {b.status === "pending" ? "En attente" :
-                           b.status === "confirmed" ? "Confirmée" :
-                           b.status === "arrived" ? "Arrivé" : "En cours"}
+                          {b.status === "pending" ? t("staff:staffView.statusPending") :
+                           b.status === "confirmed" ? t("staff:staffView.statusConfirmed") :
+                           b.status === "arrived" ? t("staff:staffView.statusArrived") : t("staff:staffView.statusInProgress")}
                         </Badge>
                         <Button size="sm" variant="ghost" onClick={() => sendBookingWhatsApp(b)} className="h-7 w-7 p-0">
                           <MessageCircle className="h-3.5 w-3.5" />
@@ -426,37 +446,37 @@ const StaffView = () => {
                       <div className="flex gap-1 shrink-0">
                         {b.status === "pending" && (
                           <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "confirmed")} className="text-xs h-7 px-2">
-                            Accepter
+                            {t("staff:staffView.buttonAccept")}
                           </Button>
                         )}
                         {b.status === "confirmed" && (
                           <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "arrived")} className="text-xs h-7 px-2">
-                            Arrivé
+                            {t("staff:staffView.buttonArrived")}
                           </Button>
                         )}
                         {b.status === "arrived" && (
                           <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "in_service")} className="text-xs h-7 px-2">
-                            Commencer
+                            {t("staff:staffView.buttonStart")}
                           </Button>
                         )}
                         {b.status === "in_service" && (
                           <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "completed")} className="text-xs h-7 px-2">
-                            Terminer
+                            {t("staff:staffView.buttonComplete")}
                           </Button>
                         )}
                         {(b.status === "pending" || b.status === "confirmed") && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="ghost" className="text-destructive h-7 px-2 text-xs">Annuler</Button>
+                              <Button size="sm" variant="ghost" className="text-destructive h-7 px-2 text-xs">{t("staff:staffView.buttonCancel")}</Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Annuler cette réservation?</AlertDialogTitle>
-                                <AlertDialogDescription>{b.client_name} à {b.start_time.slice(0, 5)} sera annulée.</AlertDialogDescription>
+                                <AlertDialogTitle>{t("staff:staffView.dialogCancelBookingTitle")}</AlertDialogTitle>
+                                <AlertDialogDescription>{t("staff:staffView.dialogCancelBookingDesc", { clientName: b.client_name, time: b.start_time.slice(0, 5) })}</AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Non</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => updateBookingStatus(b.id, "cancelled")} className="bg-destructive text-destructive-foreground">Oui, annuler</AlertDialogAction>
+                                <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => updateBookingStatus(b.id, "cancelled")} className="bg-destructive text-destructive-foreground">{t("staff:staffView.dialogYesCancel")}</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>

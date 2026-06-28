@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { format, parseISO } from "date-fns";
@@ -11,10 +12,11 @@ interface BookingDay {
 }
 
 export default function BookingsChart({ data }: { data: BookingDay[] }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Reservations par jour</CardTitle>
+        <CardTitle className="text-base">{t("dashboard:analytics.bookingsPerDay")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">
@@ -38,9 +40,9 @@ export default function BookingsChart({ data }: { data: BookingDay[] }) {
                 labelFormatter={(v) => format(parseISO(v as string), "EEEE d MMM", { locale: fr })}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="completed" name="Terminees" fill="#187A4A" stackId="a" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="cancelled" name="Annulees" fill="hsl(var(--destructive))" stackId="a" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="noShow" name="No-show" fill="#A0A09C" stackId="a" radius={[0, 0, 4, 4]} />
+              <Bar dataKey="completed" name={t("dashboard:analytics.completed")} fill="#36BC8B" stackId="a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="cancelled" name={t("dashboard:analytics.cancelled")} fill="#EF5350" stackId="a" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="noShow" name={t("dashboard:analytics.noShow")} fill="#9CA3AF" stackId="a" radius={[0, 0, 4, 4]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessInfo } from "@/hooks/use-business-info";
@@ -22,19 +23,19 @@ const statusBadgeClasses: Record<string, string> = {
   no_show: "badge-no-show",
 };
 
-const statusLabels: Record<string, string> = {
-  pending: "En attente",
-  confirmed: "Confirmé",
-  arrived: "Arrivé",
-  in_service: "En service",
-  completed: "Terminé",
-  cancelled: "Annulé",
-  no_show: "No-show",
-};
-
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { business } = useBusinessInfo();
+  const statusLabels: Record<string, string> = {
+    pending: t("dashboard:bookings.status.pending"),
+    confirmed: t("dashboard:bookings.status.confirmed"),
+    arrived: t("dashboard:bookings.status.arrived"),
+    in_service: t("dashboard:bookings.status.inService"),
+    completed: t("dashboard:bookings.status.completed"),
+    cancelled: t("dashboard:bookings.status.cancelled"),
+    no_show: t("dashboard:bookings.status.noShow"),
+  };
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [queueCount, setQueueCount] = useState(0);
@@ -65,7 +66,7 @@ const Dashboard = () => {
       ]);
 
       if (bookingsRes.error || queueRes.error) {
-        setError("Impossible de charger les données.");
+        setError(t("dashboard:overview.error"));
       }
       setBookings(bookingsRes.data || []);
       const tickets = queueRes.data || [];
@@ -87,40 +88,40 @@ const Dashboard = () => {
   const noShows = bookings.filter((b) => b.status === "no_show").length;
   const noShowRate = bookings.length > 0 ? Math.round((noShows / bookings.length) * 100) : 0;
 
-  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utilisateur";
+  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("dashboard:overview.user");
 
   const copyLink = async () => {
     if (!business) return;
     await navigator.clipboard.writeText(`${window.location.origin}/${business.slug}`);
-    toast({ title: "Lien copié" });
+    toast({ title: t("dashboard:overview.linkCopied") });
   };
 
   const formatRevenue = (val: number) => val.toLocaleString("fr-FR").replace(/,/g, " ");
 
   const stats = [
     {
-      label: "RÉSERVATIONS",
+      label: t("dashboard:overview.bookings"),
       icon: CalendarDays,
       value: bookings.length,
       accent: false,
       pulse: false,
     },
     {
-      label: "FILE D'ATTENTE",
+      label: t("dashboard:overview.queue"),
       icon: Users2,
       value: queueCount,
       accent: queueCount > 0,
       pulse: queueCount > 0,
     },
     {
-      label: "REVENUS EST.",
+      label: t("dashboard:overview.revenue"),
       icon: TrendingUp,
       value: `${formatRevenue(revenue)} DZD`,
       accent: false,
       pulse: false,
     },
     {
-      label: "EN ATTENTE",
+      label: t("dashboard:overview.pending"),
       icon: AlertCircle,
       value: pendingCount,
       accent: pendingCount > 0,
@@ -141,7 +142,7 @@ const Dashboard = () => {
         ) : error ? (
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-12 text-center space-y-3">
             <p className="text-destructive">{error}</p>
-            <Button variant="outline" onClick={() => window.location.reload()}>Réessayer</Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>{t("dashboard:overview.retry")}</Button>
           </div>
         ) : (
           <>
@@ -149,7 +150,7 @@ const Dashboard = () => {
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
               <div>
                 <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">
-                  Bonjour, {profileName}
+                  {t("dashboard:overview.greeting", { name: profileName })}
                 </h1>
                 <p className="text-[13px] text-[var(--text-tertiary)] capitalize mt-0.5">
                   {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
@@ -157,34 +158,33 @@ const Dashboard = () => {
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => navigate("/dashboard/bookings")} className="gap-1.5 text-xs">
-                  <Plus className="h-3.5 w-3.5" /> Réservation
+                  <Plus className="h-3.5 w-3.5" /> {t("dashboard:overview.newBooking")}
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => navigate("/dashboard/queue")} className="gap-1.5 text-xs">
-                  <Plus className="h-3.5 w-3.5" /> File d'attente
+                  <Plus className="h-3.5 w-3.5" /> {t("dashboard:overview.newQueue")}
                 </Button>
               </div>
             </div>
 
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Stats grid — clean, no nested cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--border-default)] rounded-lg overflow-hidden border border-[var(--border-default)]">
               {stats.map((s) => (
                 <div
                   key={s.label}
-                  className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4"
-                  style={{ boxShadow: 'var(--shadow-xs)' }}
+                  className="bg-[var(--bg-base)] p-5"
                 >
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-semibold uppercase text-[var(--text-tertiary)] tracking-[0.04em]">
                       {s.label}
                     </span>
-                    <s.icon className="h-[15px] w-[15px] text-[var(--text-tertiary)]" />
+                    <s.icon className="h-[14px] w-[14px] text-[var(--text-tertiary)]" />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     {s.pulse && (
-                      <span className="h-2 w-2 rounded-full bg-[var(--accent)] animate-pulse shrink-0" />
+                      <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
                     )}
                     <span
-                      className={`font-mono text-[28px] font-semibold leading-none ${
+                      className={`font-mono text-[26px] font-semibold leading-none tracking-tight ${
                         s.accent ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
                       }`}
                     >
@@ -197,27 +197,27 @@ const Dashboard = () => {
 
             {/* Quick link */}
             <Button variant="ghost" size="sm" onClick={copyLink} className="gap-1.5 text-xs text-[var(--text-tertiary)]">
-              <Copy className="h-3.5 w-3.5" /> Copier mon lien public
+              <Copy className="h-3.5 w-3.5" /> {t("dashboard:overview.copyLink")}
             </Button>
 
             {/* Today's bookings */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-baseline gap-2">
-                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">Aujourd'hui</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">{t("dashboard:overview.today")}</h2>
                   <span className="text-[13px] text-[var(--text-tertiary)] capitalize">
                     {format(new Date(), "EEEE d MMMM", { locale: fr })}
                   </span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/bookings")} className="gap-1 text-xs text-[var(--text-tertiary)]">
-                  Voir tout <ArrowRight className="h-3 w-3" />
+                  {t("dashboard:overview.viewAll")} <ArrowRight className="h-3 w-3 rtl:scale-x-[-1]" />
                 </Button>
               </div>
 
               {bookings.length === 0 ? (
                 <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-10 text-center">
                   <CalendarDays className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-                  <p className="text-sm text-[var(--text-tertiary)]">Aucune réservation aujourd'hui</p>
+                  <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:overview.noBookings")}</p>
                 </div>
               ) : (
                 <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
@@ -239,23 +239,23 @@ const Dashboard = () => {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">File d'attente</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">{t("dashboard:overview.queueTitle")}</h2>
                   {queueCount > 0 && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent)]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-                      EN DIRECT
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                      {t("dashboard:overview.live")}
                     </span>
                   )}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/queue")} className="gap-1 text-xs text-[var(--text-tertiary)]">
-                  Gérer <ArrowRight className="h-3 w-3" />
+                  {t("dashboard:overview.manage")} <ArrowRight className="h-3 w-3 rtl:scale-x-[-1]" />
                 </Button>
               </div>
 
               {queueTickets.length === 0 ? (
                 <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-8 text-center">
                   <Users2 className="h-6 w-6 text-[var(--text-tertiary)] mx-auto mb-2" />
-                  <p className="text-sm text-[var(--text-tertiary)]">File d'attente vide</p>
+                  <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:overview.queueEmpty")}</p>
                 </div>
               ) : (
                 <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">

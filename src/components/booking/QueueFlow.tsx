@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function QueueFlow({ businessId, businessName, services }: Props) {
+  const { t } = useTranslation();
   const [waitingCount, setWaitingCount] = useState(0);
   const [estimatedWait, setEstimatedWait] = useState(0);
   const [currentTicket, setCurrentTicket] = useState<string | null>(null);
@@ -178,7 +180,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const validatePhone = (value: string) => {
     const digits = value.replace(/\D/g, "");
     if (digits.length < 9) {
-      setPhoneError("Le numéro doit contenir au moins 9 chiffres");
+      setPhoneError(t("booking:queueFlow.phoneError"));
       return false;
     }
     setPhoneError("");
@@ -203,8 +205,8 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     if (existing) {
       toast({
-        title: "Ticket deja actif",
-        description: `Vous avez deja un ticket (${existing.ticket_label}) en attente.`,
+        title: t("common:toast.error"),
+        description: t("common:toast.updateError"),
         variant: "destructive",
       });
       setSubmitting(false);
@@ -215,7 +217,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       .rpc("generate_ticket_number", { p_business_id: businessId });
 
     if (rpcError || !ticketData || ticketData.length === 0) {
-      toast({ title: "Erreur", description: "Impossible de générer un ticket.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       setSubmitting(false);
       return;
     }
@@ -240,11 +242,11 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         estimated_wait_minutes: estimatedWait,
       })
       .select("id")
-      .single();
+      .maybeSingle();
 
     setSubmitting(false);
     if (error) {
-      toast({ title: "Erreur", description: "Impossible de prendre un ticket.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
     setJoinedTicketId(data.id);
@@ -265,7 +267,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           <div className="px-5 pb-4">
             <Button variant="outline" size="sm" className="w-full gap-2 h-[44px]" asChild>
               <a href={buildQueueTicketUrl(null, businessName, joinedLabel, joinedServiceName, estimatedWait)} target="_blank" rel="noopener noreferrer">
-                <Share2 className="h-4 w-4" /> Partager sur WhatsApp
+                <Share2 className="h-4 w-4" /> {t("booking:queueFlow.shareWhatsApp")}
               </a>
             </Button>
           </div>
@@ -280,23 +282,23 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       <div className="rounded-md border border-border p-4 space-y-2">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          <h3 className="text-[13px] font-semibold text-foreground">File d'attente en direct</h3>
+          <h3 className="text-[13px] font-semibold text-foreground">{t("booking:queueFlow.liveQueueTitle")}</h3>
         </div>
         <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
-          <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {waitingCount} en attente</span>
-          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> ~<span className="font-mono">{estimatedWait}</span> min</span>
+          <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {t("booking:queueFlow.waitingCount", { count: waitingCount })}</span>
+          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {t("booking:queueFlow.estimatedWait", { minutes: estimatedWait })}</span>
         </div>
-        <p className="text-[11px] text-muted-foreground/60">* Estimation basée sur l'historique — le temps réel peut varier</p>
+        <p className="text-[11px] text-muted-foreground/60">{t("booking:queueFlow.estimateDisclaimer")}</p>
         {currentTicket && (
           <p className="text-[12px] text-muted-foreground">
-            En cours : <span className="font-mono font-semibold text-foreground">{currentTicket}</span>
+            {t("booking:queueFlow.currentServing", { ticket: currentTicket })}
           </p>
         )}
       </div>
 
       {/* Service selection */}
       <div>
-        <h2 className="text-[15px] font-semibold text-foreground mb-3.5">Choisissez un service</h2>
+        <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:queueFlow.serviceTitle")}</h2>
         <div className="flex flex-col gap-2">
           {services.map((s) => {
             const isSelected = selectedService?.id === s.id;
@@ -316,7 +318,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
                     {s.name}
                   </p>
                   <p className="text-[12px] text-muted-foreground mt-0.5">
-                    <span className="font-mono">{s.duration_minutes}</span> min
+                    <span className="font-mono">{s.duration_minutes}</span> {t("common:labels.minutesShort")}
                     {s.price_dzd != null && (
                       <> · <span className="font-mono">{s.price_dzd.toLocaleString("fr-FR")}</span> DZD</>
                     )}
@@ -343,19 +345,19 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       {/* Join form */}
       {selectedService && (staffMembers.length === 0 || staffConfirmed) && (
         <div className="space-y-3">
-          <h3 className="text-[15px] font-semibold text-foreground">Rejoindre la file</h3>
+          <h3 className="text-[15px] font-semibold text-foreground">{t("booking:queueFlow.joinTitle")}</h3>
           <div>
-            <label className="text-[13px] font-medium text-foreground">Votre nom</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Votre nom" className="mt-1" />
+            <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.nameLabel")}</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("booking:queueFlow.namePlaceholder")} className="mt-1" />
           </div>
           <div>
-            <label className="text-[13px] font-medium text-foreground">Téléphone</label>
+            <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
             <div className="flex gap-2 mt-1">
               <span className="flex items-center rounded-md border bg-muted px-3 text-[13px] text-muted-foreground shrink-0">+213</span>
               <Input
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value.replace(/\D/g, "")); setPhoneError(""); }}
-                placeholder="555 123 456"
+                placeholder={t("booking:queueFlow.phonePlaceholder")}
                 type="tel"
               />
             </div>
@@ -366,7 +368,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
             disabled={!name.trim() || !phone.trim() || submitting}
             onClick={handleJoin}
           >
-            {submitting ? "En cours..." : "Prendre mon ticket"}
+            {submitting ? t("booking:queueFlow.submitting") : t("booking:queueFlow.takeTicket")}
           </Button>
         </div>
       )}

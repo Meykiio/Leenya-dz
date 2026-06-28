@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +12,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "@/hooks/use-toast";
 
 export default function AccountTab() {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const [form, setForm] = useState({ full_name: "", phone: "", preferred_lang: "fr" });
+  const { setLanguage } = useLanguage();
+  const [form, setForm] = useState({ full_name: "", phone: "", preferred_lang: "en" });
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,8 +32,8 @@ export default function AccountTab() {
       if (error) {
         if (import.meta.env.DEV) console.error('[AccountTab] failed to fetch profile:', error.message);
         toast({ 
-          title: "Erreur", 
-          description: "Impossible de charger votre profil.", 
+          title: t("common:toast.error"), 
+          description: t("common:toast.loadError"), 
           variant: "destructive" 
         });
         return;
@@ -55,83 +59,84 @@ export default function AccountTab() {
       phone: form.phone || null,
       preferred_lang: form.preferred_lang,
     }).eq("id", user.id);
-    if (error) { console.error("saveProfile:", error); toast({ title: "Erreur", description: "Impossible de mettre à jour votre profil.", variant: "destructive" }); }
-    else toast({ title: "Profil mis à jour ✓" });
+    if (error) { console.error("saveProfile:", error); toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" }); }
+    else toast({ title: t("dashboard:settings.account.toast.updated") });
     setLoading(false);
   };
 
   const changePassword = async () => {
     if (password.length < 6) {
-      toast({ title: "Mot de passe trop court", description: "Minimum 6 caractères", variant: "destructive" });
+      toast({ title: t("dashboard:settings.account.error.passwordShort"), variant: "destructive" });
       return;
     }
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) { console.error("changePassword:", error); toast({ title: "Erreur", description: "Impossible de changer le mot de passe.", variant: "destructive" }); }
-    else { toast({ title: "Mot de passe modifié ✓" }); setPassword(""); }
+    if (error) { console.error("changePassword:", error); toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" }); }
+    else { toast({ title: t("dashboard:settings.account.toast.passwordChanged") }); setPassword(""); }
   };
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle className="text-base">Informations personnelles</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.account.personal")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label>{t("dashboard:settings.account.email")}</Label>
             <Input value={user?.email || ""} disabled className="bg-muted" />
           </div>
           <div className="space-y-2">
-            <Label>Nom complet</Label>
+            <Label>{t("dashboard:settings.account.name")}</Label>
             <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>Téléphone</Label>
+            <Label>{t("dashboard:settings.account.phone")}</Label>
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>Langue préférée</Label>
-            <Select value={form.preferred_lang} onValueChange={(v) => setForm({ ...form, preferred_lang: v })}>
+            <Label>{t("dashboard:settings.account.language")}</Label>
+            <Select value={form.preferred_lang} onValueChange={(v) => { setForm({ ...form, preferred_lang: v }); setLanguage(v); }}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="ar">العربية</SelectItem>
+                <SelectItem value="en">{t("common:languages.english")}</SelectItem>
+                <SelectItem value="fr">{t("common:languages.french")}</SelectItem>
+                <SelectItem value="ar">{t("common:languages.arabic")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button onClick={saveProfile} disabled={loading}>
-            {loading ? "Enregistrement..." : "Enregistrer"}
+            {loading ? t("common:buttons.saving") : t("dashboard:settings.account.save")}
           </Button>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Changer le mot de passe</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.account.changePassword")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Nouveau mot de passe</Label>
+            <Label>{t("dashboard:settings.account.newPassword")}</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
-          <Button variant="outline" onClick={changePassword} disabled={!password}>Mettre à jour</Button>
+          <Button variant="outline" onClick={changePassword} disabled={!password}>{t("dashboard:settings.account.update")}</Button>
         </CardContent>
       </Card>
 
       <Card className="border-destructive/30">
-        <CardHeader><CardTitle className="text-base text-destructive">Zone dangereuse</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base text-destructive">{t("dashboard:settings.account.dangerZone")}</CardTitle></CardHeader>
         <CardContent>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">Supprimer mon compte</Button>
+              <Button variant="destructive" size="sm">{t("dashboard:settings.account.delete")}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
+                <AlertDialogTitle>{t("dashboard:settings.account.deleteTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Cette action est irréversible. Toutes vos données seront supprimées définitivement.
+                  {t("dashboard:settings.account.deleteDesc")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction onClick={() => toast({ title: "Contactez le support pour supprimer votre compte." })}>
-                  Confirmer la suppression
+                <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={() => toast({ title: t("dashboard:settings.account.toast.contactSupport") })}>
+                  {t("dashboard:settings.account.confirmDelete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

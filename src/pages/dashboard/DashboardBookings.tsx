@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { Button } from "@/components/ui/button";
@@ -24,18 +25,18 @@ const statusColors: Record<string, string> = {
   no_show: "bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border-default)]",
 };
 
-const statusLabels: Record<string, string> = {
-  pending: "En attente",
-  confirmed: "Confirmé",
-  arrived: "Arrivé",
-  in_service: "En service",
-  completed: "Terminé",
-  cancelled: "Annulé",
-  no_show: "No-show",
-};
-
 const DashboardBookings = () => {
+  const { t } = useTranslation();
   const { business } = useBusinessInfo();
+  const statusLabels: Record<string, string> = {
+    pending: t("dashboard:bookings.status.pending"),
+    confirmed: t("dashboard:bookings.status.confirmed"),
+    arrived: t("dashboard:bookings.status.arrived"),
+    in_service: t("dashboard:bookings.status.inService"),
+    completed: t("dashboard:bookings.status.completed"),
+    cancelled: t("dashboard:bookings.status.cancelled"),
+    no_show: t("dashboard:bookings.status.noShow"),
+  };
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -72,7 +73,7 @@ const DashboardBookings = () => {
 
     const { data, error } = await query;
 
-    if (error) { console.error("fetchBookings:", error); toast({ title: "Erreur", description: "Impossible de charger les réservations.", variant: "destructive" }); }
+    if (error) { console.error("fetchBookings:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.loadBookings"), variant: "destructive" }); }
     setBookings(data || []);
     setInitialLoading(false);
   };
@@ -90,8 +91,8 @@ const DashboardBookings = () => {
       if (servicesError) {
         if (import.meta.env.DEV) console.error('[DashboardBookings] failed to fetch services:', servicesError.message);
         toast({
-          title: "Erreur",
-          description: "Impossible de charger les services.",
+          title: t("dashboard:labels.error"),
+          description: t("dashboard:bookings.errors.loadServices"),
           variant: "destructive"
         });
       } else {
@@ -107,8 +108,8 @@ const DashboardBookings = () => {
       if (staffError) {
         if (import.meta.env.DEV) console.error('[DashboardBookings] failed to fetch staff:', staffError.message);
         toast({
-          title: "Erreur",
-          description: "Impossible de charger l'équipe.",
+          title: t("dashboard:labels.error"),
+          description: t("dashboard:bookings.errors.loadStaff"),
           variant: "destructive"
         });
       } else {
@@ -148,26 +149,35 @@ const DashboardBookings = () => {
   }, [business]);
 
   const updateStatus = async (id: string, status: "pending" | "confirmed" | "arrived" | "in_service" | "completed" | "cancelled" | "no_show") => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("business_id", business.id).eq("id", id);
+    const booking = bookings.find(b => b.id === id);
+    if (!booking) return;
+    const currentStatus = booking.status;
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status })
+      .eq("business_id", business.id)
+      .eq("id", id)
+      .eq("status", currentStatus);
+
     if (error) {
       console.error("updateStatus:", error);
-      toast({ title: "Erreur", description: "Impossible de mettre à jour la réservation.", variant: "destructive" });
-    } else {
-      fetchBookings();
-      // When confirming a booking, send WhatsApp to client
-      if (status === "confirmed" && business && businessDetails) {
-        const booking = bookings.find(b => b.id === id);
-        if (booking) {
-          const url = buildBookingAcceptedUrl(
-            booking.client_phone,
-            business.name,
-            format(new Date(booking.date), "d MMM yyyy", { locale: fr }),
-            booking.start_time?.slice(0, 5),
-            booking.services?.name || "Service",
-            businessDetails.address ?? null
-          );
-          window.open(url, "_blank");
-        }
+      toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.updateBooking"), variant: "destructive" });
+      return;
+    }
+    fetchBookings();
+    // When confirming a booking, send WhatsApp to client
+    if (status === "confirmed" && business && businessDetails) {
+      if (booking) {
+        const url = buildBookingAcceptedUrl(
+          booking.client_phone,
+          business.name,
+          format(new Date(booking.date), "d MMM yyyy", { locale: fr }),
+          booking.start_time?.slice(0, 5),
+          booking.services?.name || "Service",
+          businessDetails.address ?? null
+        );
+        window.open(url, "_blank");
       }
     }
   };
@@ -181,7 +191,7 @@ const DashboardBookings = () => {
   const rejectBooking = async (id: string) => {
     const booking = bookings.find(b => b.id === id);
     await updateStatus(id, "cancelled");
-    toast({ title: "Réservation refusée" });
+    toast({ title: t("dashboard:bookings.rejected") });
     if (booking && business && businessDetails) {
       const url = buildBookingCancelledUrl(
         booking.client_phone,
@@ -210,10 +220,10 @@ const DashboardBookings = () => {
 
   const validateNewBooking = () => {
     const errors: Record<string, string> = {};
-    if (!newBooking.client_name.trim()) errors.client_name = "Le nom est requis";
-    if (!newBooking.client_phone.trim()) errors.client_phone = "Le téléphone est requis";
-    else if (newBooking.client_phone.replace(/\D/g, "").length < 9) errors.client_phone = "Au moins 9 chiffres";
-    if (!newBooking.service_id) errors.service_id = "Sélectionnez un service";
+    if (!newBooking.client_name.trim()) errors.client_name = t("dashboard:bookings.validation.nameRequired");
+    if (!newBooking.client_phone.trim()) errors.client_phone = t("dashboard:bookings.validation.phoneRequired");
+    else if (newBooking.client_phone.replace(/\D/g, "").length < 9) errors.client_phone = t("dashboard:bookings.validation.phoneMinDigits");
+    if (!newBooking.service_id) errors.service_id = t("dashboard:bookings.validation.selectService");
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -245,9 +255,9 @@ const DashboardBookings = () => {
 
     if (error) {
       console.error("createBooking:", error);
-      toast({ title: "Erreur", description: "Impossible de créer la réservation.", variant: "destructive" });
+      toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.createBooking"), variant: "destructive" });
     } else {
-      toast({ title: "Réservation créée" });
+      toast({ title: t("dashboard:bookings.created") });
       setShowNewBooking(false);
       setNewBooking({ client_name: "", client_phone: "", service_id: "", staff_member_id: "", date: format(new Date(), "yyyy-MM-dd"), start_time: "09:00", notes: "" });
       setFormErrors({});
@@ -279,9 +289,9 @@ const DashboardBookings = () => {
   return (
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Réservations</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:bookings.title")}</h2>
           <Button size="sm" onClick={() => setShowNewBooking(true)} className="gap-1.5 text-xs">
-            <Plus className="h-3.5 w-3.5" /> Nouvelle réservation
+            <Plus className="h-3.5 w-3.5" /> {t("dashboard:bookings.new")}
           </Button>
         </div>
 
@@ -312,18 +322,18 @@ const DashboardBookings = () => {
           </div>
         ) : (
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] overflow-hidden">
-            <div className="hidden sm:grid sm:grid-cols-[80px_1fr_1fr_auto_auto] gap-3 px-4 py-2.5 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)]">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">Heure</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">Client</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">Service</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">Statut</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">Actions</span>
+            <div className="hidden sm:grid sm:grid-cols-[80px_1fr_1fr_120px_minmax(300px,1fr)] gap-3 px-4 py-2.5 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)]">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.time")}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.client")}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.service")}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.status")}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.actions")}</span>
             </div>
 
             {filtered.length === 0 ? (
               <div className="text-center py-12">
                 <CalendarDays className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-                <p className="text-sm text-[var(--text-tertiary)]">Aucune réservation pour cette date</p>
+                <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:bookings.empty")}</p>
               </div>
             ) : (
               <div className="divide-y divide-[var(--border-subtle)]">

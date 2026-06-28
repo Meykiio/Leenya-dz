@@ -1,82 +1,83 @@
-const testimonials = [
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { Clock, Heart, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+const cards = [
   {
-    quote:
-      "Avant Leenya, je gérais tout sur un carnet. Maintenant mes clientes réservent toutes seules à minuit.",
-    name: "Nadia B.",
-    role: "Salon de beauté, Alger",
-    initials: "NB",
+    titleKey: "testimonials.card1.title",
+    descKey: "testimonials.card1.desc",
+    icon: Clock,
   },
   {
-    quote: "Les rappels automatiques ont réduit mes annulations de moitié.",
-    name: "Dr. Karim M.",
-    role: "Dentiste, Oran",
-    initials: "KM",
+    titleKey: "testimonials.card2.title",
+    descKey: "testimonials.card2.desc",
+    icon: Heart,
   },
   {
-    quote:
-      "Mes clients adorent suivre leur position dans la file depuis leur téléphone.",
-    name: "Sofiane A.",
-    role: "Barbershop, Constantine",
-    initials: "SA",
+    titleKey: "testimonials.card3.title",
+    descKey: "testimonials.card3.desc",
+    icon: Sparkles,
   },
 ];
 
-const TestimonialsSection = () => {
+function Card({
+  card,
+  index,
+}: {
+  card: (typeof cards)[number];
+  index: number;
+}) {
+  const { t } = useTranslation();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const Icon = card.icon;
+
   return (
-    <section id="contact" className="py-20 px-6 bg-secondary">
-      <div className="max-w-[1080px] mx-auto">
-        {/* Section Label */}
-        <p className="text-[10px] font-medium tracking-[0.1em] uppercase text-muted-foreground mb-3.5 text-center">
-          Témoignages
-        </p>
-        
-        {/* Heading */}
-        <h2 className="text-[34px] font-bold text-foreground tracking-tight text-center mb-14">
-          Ils utilisent Leenya au quotidien
-        </h2>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.5, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="bg-background rounded-xl border border-border p-7 md:p-8 card-hover relative overflow-hidden h-full">
+        <div
+          className="absolute top-0 left-0 rtl:right-0 rtl:left-auto w-1 h-full"
+          style={{ background: "var(--accent)" }}
+        />
 
-        {/* Testimonial Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <div
-              key={t.name}
-              className="relative bg-background rounded-xl p-6 border border-border"
-            >
-              {/* Large Quote Mark */}
-              <span className="absolute top-4 left-5 font-mono text-[64px] leading-none text-muted/50 select-none">
-                "
-              </span>
+        <div className="flex flex-col gap-5">
+          <div className="w-11 h-11 rounded-xl border border-accent/20 flex items-center justify-center bg-accent/5 shrink-0">
+            <Icon className="h-5 w-5 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold text-foreground mb-3">{t("landing:" + card.titleKey)}</h3>
+            <p className="text-sm text-foreground/65 leading-relaxed">{t("landing:" + card.descKey)}</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
-              {/* Quote Text */}
-              <p className="relative z-10 text-sm text-muted-foreground leading-[1.7] pt-10 pb-4">
-                {t.quote}
-              </p>
+export default function TestimonialsSection() {
+  const { t } = useTranslation();
+  return (
+    <section id="testimonials" className="py-20 px-6 bg-muted/30 border-y border-border">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <h2 className="text-[28px] font-bold text-foreground tracking-tight">{t("landing:testimonials.title")}</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            {t("landing:testimonials.subtitle")}
+          </p>
+        </div>
 
-              {/* Author Row */}
-              <div className="flex items-center gap-3 mt-auto">
-                {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {t.initials}
-                  </span>
-                </div>
-                
-                {/* Name & Role */}
-                <div>
-                  <p className="text-[13px] font-semibold text-foreground">
-                    {t.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t.role}
-                  </p>
-                </div>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          {cards.map((card, index) => (
+            <Card key={card.titleKey} card={card} index={index} />
           ))}
         </div>
       </div>
     </section>
   );
-};
-
-export default TestimonialsSection;
+}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import ForgotPassword from "./ForgotPassword";
 
 const LoginForm = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
@@ -72,8 +74,8 @@ const LoginForm = () => {
           await handlePostAuth();
         } else {
           toast({
-            title: "Vérifiez votre email",
-            description: "Un lien de confirmation a été envoyé à votre adresse email.",
+            title: t("auth:signup.emailSent"),
+            description: t("auth:signup.emailSentDesc"),
           });
         }
       } else {
@@ -84,8 +86,8 @@ const LoginForm = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({
-        title: "Erreur",
-        description: err.message || "Une erreur est survenue",
+        title: t(isSignUp ? "auth:signup.error" : "auth:login.error"),
+        description: err.message || t(isSignUp ? "auth:signup.error" : "auth:login.error"),
         variant: "destructive",
       });
     } finally {
@@ -100,18 +102,18 @@ const LoginForm = () => {
           Leenya
         </h1>
         <p className="text-[14px] text-muted-foreground mt-2">
-          {isSignUp ? "Créez votre compte" : "Connectez-vous à votre compte"}
+          {t(isSignUp ? "auth:signup.title" : "auth:login.title")}
         </p>
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <form onSubmit={handleEmailSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[13px]">Email</Label>
+              <Label htmlFor="email" className="text-[13px]">{t(isSignUp ? "auth:signup.emailLabel" : "auth:login.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="votre@email.com"
+                placeholder={t(isSignUp ? "auth:signup.emailPlaceholder" : "auth:login.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -119,14 +121,14 @@ const LoginForm = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-[13px]">Mot de passe</Label>
+                <Label htmlFor="password" className="text-[13px]">{t(isSignUp ? "auth:signup.passwordLabel" : "auth:login.passwordLabel")}</Label>
                 {!isSignUp && (
                   <button
                     type="button"
                     onClick={() => setShowForgot(true)}
                     className="text-[12px] text-primary hover:underline"
                   >
-                    Mot de passe oublié ?
+                    {t("auth:login.forgotPassword")}
                   </button>
                 )}
               </div>
@@ -141,23 +143,23 @@ const LoginForm = () => {
               />
             </div>
             <Button type="submit" className="w-full h-[44px]" disabled={loading}>
-              {loading ? "Chargement..." : isSignUp ? "Créer mon compte" : "Se connecter"}
+              {loading ? t(isSignUp ? "auth:signup.loading" : "auth:login.loading") : isSignUp ? t("auth:signup.submit") : t("auth:login.submit")}
             </Button>
           </form>
 
         <div className="mt-6 text-center text-[13px] text-muted-foreground">
           {isSignUp ? (
             <>
-              Déjà un compte ?{" "}
+              {t("auth:signup.switchToLogin")}{" "}
               <button onClick={() => setIsSignUp(false)} className="text-primary hover:underline font-medium">
-                Se connecter
+                {t("auth:signup.switchToLoginLink")}
               </button>
             </>
           ) : (
             <>
-              Nouveau sur Leenya ?{" "}
+              {t("auth:login.switchToSignup")}{" "}
               <button onClick={() => setIsSignUp(true)} className="text-primary hover:underline font-medium">
-                Créez votre compte gratuitement
+                {t("auth:login.switchToSignupLink")}
               </button>
             </>
           )}

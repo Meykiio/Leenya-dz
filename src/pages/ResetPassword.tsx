@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
 const ResetPassword = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -26,18 +28,18 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) {
-      toast({ title: "Erreur", description: "Les mots de passe ne correspondent pas.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:resetPassword.passwordsMismatch"), variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast({ title: "Mot de passe mis à jour", description: "Vous pouvez maintenant vous connecter." });
+      toast({ title: t("auth:resetPassword.successTitle"), description: t("auth:resetPassword.successDesc") });
       navigate("/login");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -48,22 +50,22 @@ const ResetPassword = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-foreground">
-            Nouveau mot de passe
+            {t("auth:resetPassword.title")}
           </h1>
-          <p className="text-muted-foreground mt-2">Choisissez un nouveau mot de passe</p>
+          <p className="text-muted-foreground mt-2">{t("auth:resetPassword.subtitle")}</p>
         </div>
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-pw">Nouveau mot de passe</Label>
+              <Label htmlFor="new-pw">{t("auth:resetPassword.newPasswordLabel")}</Label>
               <Input id="new-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-pw">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirm-pw">{t("auth:resetPassword.confirmPasswordLabel")}</Label>
               <Input id="confirm-pw" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Mise à jour..." : "Mettre à jour"}
+              {loading ? t("auth:resetPassword.updating") : t("auth:resetPassword.submit")}
             </Button>
           </form>
         </div>

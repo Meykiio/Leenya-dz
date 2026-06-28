@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,7 @@ import SettingsWhatsApp from "./SettingsWhatsApp";
 import { Building2, Clock, CalendarCog, UserCog, Sparkles, MessageCircle } from "lucide-react";
 
 const DashboardSettings = () => {
+  const { t } = useTranslation();
   const { business, loading } = useBusinessInfo();
 
   if (loading) {
@@ -22,28 +24,28 @@ const DashboardSettings = () => {
   }
 
   return (
-      <div className="space-y-4 max-w-3xl">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Paramètres</h2>
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight">{t("dashboard:settings.title")}</h2>
 
         <Tabs defaultValue="business" className="space-y-4">
           <TabsList className="flex flex-wrap h-auto gap-0.5 bg-[var(--bg-muted)] p-0.5 rounded-lg">
             <TabsTrigger value="business" className="gap-1.5 text-xs h-7">
-              <Building2 className="h-3.5 w-3.5" /> Entreprise
+              <Building2 className="h-3.5 w-3.5" /> {t("dashboard:settings.tab.business")}
             </TabsTrigger>
             <TabsTrigger value="hours" className="gap-1.5 text-xs h-7">
-              <Clock className="h-3.5 w-3.5" /> Horaires
+              <Clock className="h-3.5 w-3.5" /> {t("dashboard:settings.tab.hours")}
             </TabsTrigger>
             <TabsTrigger value="prefs" className="gap-1.5 text-xs h-7">
-              <CalendarCog className="h-3.5 w-3.5" /> Réservation
+              <CalendarCog className="h-3.5 w-3.5" /> {t("dashboard:settings.tab.prefs")}
             </TabsTrigger>
             <TabsTrigger value="whatsapp" className="gap-1.5 text-xs h-7">
-              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+              <MessageCircle className="h-3.5 w-3.5" /> {t("dashboard:settings.tab.whatsapp")}
             </TabsTrigger>
             <TabsTrigger value="account" className="gap-1.5 text-xs h-7">
-              <UserCog className="h-3.5 w-3.5" /> Compte
+              <UserCog className="h-3.5 w-3.5" /> {t("dashboard:settings.tab.account")}
             </TabsTrigger>
             <TabsTrigger value="subscription" className="gap-1.5 text-xs h-7">
-              <Sparkles className="h-3.5 w-3.5" /> Abonnement
+              <Sparkles className="h-3.5 w-3.5" /> {t("dashboard:settings.tab.subscription")}
             </TabsTrigger>
           </TabsList>
 

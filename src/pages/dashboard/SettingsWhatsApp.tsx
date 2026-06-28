@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import { useBusinessInfo } from '@/hooks/use-business-info';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import TemplateEditDialog from './whatsapp/TemplateEditDialog';
 import TemplatePreviewDialog from './whatsapp/TemplatePreviewDialog';
 
 export default function SettingsWhatsApp() {
+  const { t } = useTranslation();
   const { business } = useBusinessInfo();
   const {
     templates,
@@ -47,7 +49,7 @@ export default function SettingsWhatsApp() {
   };
 
   const handleReset = async (templateKey: string) => {
-    if (!confirm('Reinitialiser ce modele aux valeurs par defaut ?')) return;
+    if (!confirm(t('dashboard:settings.whatsapp.resetConfirm'))) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await resetTemplate(templateKey as any);
   };
@@ -58,7 +60,7 @@ export default function SettingsWhatsApp() {
   };
 
   const handleInitialize = async () => {
-    if (!confirm('Initialiser les modeles WhatsApp par defaut ?')) return;
+    if (!confirm(t('dashboard:settings.whatsapp.initializeConfirm'))) return;
     await initializeTemplates();
   };
 
@@ -96,19 +98,19 @@ export default function SettingsWhatsApp() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Templates WhatsApp</CardTitle>
+          <CardTitle>{t('dashboard:settings.whatsapp.title')}</CardTitle>
           <CardDescription>
-            Personnalisez les messages WhatsApp envoyes a vos clients
+            {t('dashboard:settings.whatsapp.emptyDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12 space-y-4">
             <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground">
-              Aucun modele WhatsApp configure pour votre business.
+              {t('dashboard:settings.whatsapp.empty')}
             </p>
             <Button onClick={handleInitialize}>
-              Initialiser les modeles par defaut
+              {t('dashboard:settings.whatsapp.initialize')}
             </Button>
           </div>
         </CardContent>
@@ -120,14 +122,14 @@ export default function SettingsWhatsApp() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Templates WhatsApp</h2>
+          <h2 className="text-lg font-semibold">{t('dashboard:settings.whatsapp.title')}</h2>
           <p className="text-sm text-muted-foreground">
-            Personnalisez les messages envoyes via WhatsApp
+            {t('dashboard:settings.whatsapp.description')}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleInitialize}>
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Reinitialiser tous
+          <RotateCcw className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+          {t('dashboard:settings.whatsapp.resetAll')}
         </Button>
       </div>
 
@@ -139,7 +141,7 @@ export default function SettingsWhatsApp() {
                 <CardTitle className="text-base flex items-center gap-2">
                   {template.name}
                   {template.is_active && (
-                    <Badge variant="secondary" className="text-xs">Actif</Badge>
+                    <Badge variant="secondary" className="text-xs">{t('dashboard:settings.whatsapp.active')}</Badge>
                   )}
                 </CardTitle>
                 <CardDescription>{template.description}</CardDescription>
@@ -155,7 +157,7 @@ export default function SettingsWhatsApp() {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Auto-envoi:</span>
+                <span className="text-sm text-muted-foreground">{t('dashboard:settings.whatsapp.autoSend')}</span>
                 <Switch
                   checked={template.is_active}
                   onCheckedChange={(checked) => {
@@ -166,12 +168,12 @@ export default function SettingsWhatsApp() {
 
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => handlePreview(template.template_key)}>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Apercu
+                  <Eye className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                  {t('dashboard:settings.whatsapp.preview')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEdit(template.template_key)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editer
+                  <Edit className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                  {t('dashboard:settings.whatsapp.edit')}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleReset(template.template_key)}>
                   <RotateCcw className="h-4 w-4" />

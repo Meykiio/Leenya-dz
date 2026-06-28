@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -12,6 +13,7 @@ interface Review {
 }
 
 export default function ReviewsSection({ reviews }: { reviews: Review[] }) {
+  const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
 
   if (reviews.length === 0) return null;
@@ -20,7 +22,7 @@ export default function ReviewsSection({ reviews }: { reviews: Review[] }) {
 
   return (
     <div className="px-5 py-6 space-y-4">
-      <h2 className="text-[15px] font-semibold text-foreground">Avis clients</h2>
+      <h2 className="text-[15px] font-semibold text-foreground">{t("booking:businessPublic.reviewsSection.title")}</h2>
       <div className="space-y-2">
         {visible.map((r) => (
           <div key={r.id} className="rounded-md border border-border p-4 space-y-1.5">
@@ -43,7 +45,7 @@ export default function ReviewsSection({ reviews }: { reviews: Review[] }) {
       </div>
       {reviews.length > 3 && !showAll && (
         <Button variant="ghost" size="sm" className="w-full text-[13px]" onClick={() => setShowAll(true)}>
-          Voir plus ({reviews.length - 3} avis)
+          {t("booking:businessPublic.reviewsSection.seeMore", { count: reviews.length - 3 })}
         </Button>
       )}
     </div>

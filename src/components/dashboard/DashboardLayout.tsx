@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,7 @@ import {
   UserCheck,
   BarChart2,
   Settings2,
+  MessageSquareText,
   LogOut,
   Menu,
   X,
@@ -24,40 +26,32 @@ import {
 import FloatingHelp from "@/components/FloatingHelp";
 
 const mainNav = [
-  { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, end: true },
-  { to: "/dashboard/bookings", label: "Réservations", icon: CalendarDays, pending: true },
-  { to: "/dashboard/queue", label: "File d'attente", icon: Users2, live: true },
-  { to: "/dashboard/services", label: "Services", icon: Scissors },
-  { to: "/dashboard/staff", label: "Équipe", icon: UserCheck },
+  { to: "/dashboard", labelKey: "dashboard:nav.dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard/bookings", labelKey: "dashboard:nav.bookings", icon: CalendarDays, pending: true },
+  { to: "/dashboard/queue", labelKey: "dashboard:nav.queue", icon: Users2, live: true },
+  { to: "/dashboard/services", labelKey: "dashboard:nav.services", icon: Scissors },
+  { to: "/dashboard/staff", labelKey: "dashboard:nav.staff", icon: UserCheck },
 ];
 
 const secondaryNav = [
-  { to: "/dashboard/analytics", label: "Analytiques", icon: BarChart2 },
-  { to: "/dashboard/settings", label: "Paramètres", icon: Settings2 },
+  { to: "/dashboard/analytics", labelKey: "dashboard:nav.analytics", icon: BarChart2 },
+  { to: "/dashboard/feedback", labelKey: "dashboard:nav.feedback", icon: MessageSquareText },
+  { to: "/dashboard/settings", labelKey: "dashboard:nav.settings", icon: Settings2 },
 ];
 
 const allNav = [...mainNav, ...secondaryNav];
-
-const categoryLabels: Record<string, string> = {
-  beauty_salon: "Salon de beauté",
-  barbershop: "Barbershop",
-  dental: "Dentiste",
-  clinic: "Clinique",
-  physiotherapy: "Kinésithérapie",
-  veterinary: "Vétérinaire",
-  other: "Autre",
-};
 
 import { Suspense } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { business } = useBusinessInfo();
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
 
-  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utilisateur";
+  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("common:user");
   const initials = profileName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
 
   // Fetch and subscribe to live queue count
@@ -113,10 +107,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const copyLink = async () => {
     if (!business) return;
     await navigator.clipboard.writeText(`${window.location.origin}/${business.slug}`);
-    toast({ title: "Lien copie!" });
+    toast({ title: t("dashboard:nav.linkCopied") });
   };
 
-  const navItemClasses = "flex items-center gap-2 rounded-md px-2 h-8 text-[13px] font-medium transition-all duration-[var(--transition-fast)]";
+  const navItemClasses = "flex items-center gap-2 rounded-[6px] px-2.5 h-8 text-[13px] font-medium transition-all duration-150";
   const navDefault = `${navItemClasses} text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] hover:text-[var(--text-primary)]`;
   const navActive = "bg-[var(--accent-light)] text-[var(--accent)]";
 
@@ -137,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onClick={() => setMobileOpen(false)}
         >
           <item.icon className="h-[15px] w-[15px] shrink-0" />
-          <span className="flex-1">{item.label}</span>
+          <span className="flex-1">{t(item.labelKey)}</span>
           {item.live && queueCount > 0 && (
             <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-white font-mono text-[10px] font-semibold px-1">
               {queueCount > 99 ? "99+" : queueCount}
@@ -185,7 +179,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             onClick={signOut}
             className="text-[var(--text-tertiary)] hover:text-[var(--error)] transition-colors p-0.5"
-            title="Déconnexion"
+            title={t("dashboard:nav.logout")}
           >
             <LogOut className="h-[13px] w-[13px]" />
           </button>
@@ -197,7 +191,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen flex bg-[var(--bg-base)]">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-[220px] lg:flex-col lg:fixed lg:inset-y-0 bg-[var(--bg-subtle)] border-r border-[var(--border-default)]">
+      <aside className="hidden lg:flex lg:w-[220px] lg:flex-col lg:fixed lg:inset-y-0 bg-[var(--bg-subtle)] border-r border-[var(--border-default)] rtl:border-l rtl:border-r-0">
         {sidebarContent}
       </aside>
 
@@ -205,8 +199,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[var(--bg-subtle)] border-r border-[var(--border-default)]">
-            <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[var(--bg-subtle)] border-r border-[var(--border-default)] rtl:left-auto rtl:right-0 rtl:border-l rtl:border-r-0">
+            <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rtl:right-auto rtl:left-3">
               <X className="h-5 w-5" />
             </button>
             {sidebarContent}
@@ -215,7 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Main content */}
-      <div className="flex-1 lg:pl-[220px] flex flex-col">
+      <div className="flex-1 lg:pl-[220px] rtl:lg:pr-[220px] rtl:lg:pl-0 flex flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-40 flex items-center justify-between h-[50px] border-b border-[var(--border-subtle)] bg-[var(--bg-base)] px-4 lg:px-6">
           <div className="flex items-center gap-3">
@@ -229,7 +223,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             {business && (
               <Button variant="ghost" size="sm" onClick={copyLink} className="gap-1.5 text-[var(--text-tertiary)] text-xs hidden sm:flex">
-                <Copy className="h-3.5 w-3.5" /> Copier le lien
+                <Copy className="h-3.5 w-3.5" /> {t("dashboard:nav.copyLink")}
               </Button>
             )}
           </div>
@@ -254,7 +248,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               activeClassName="text-[var(--accent)]"
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[10px]">{item.label.split(" ")[0]}</span>
+              <span className="text-[10px]">{t(item.labelKey).split(" ")[0]}</span>
             </NavLink>
           ))}
         </nav>

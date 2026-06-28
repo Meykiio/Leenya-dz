@@ -41,7 +41,7 @@ export default function StepDateTime({
   return (
     <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
-        <ArrowLeft className="h-4 w-4" /> Retour
+        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> Retour
       </button>
       <h2 className="text-[15px] font-semibold text-foreground mb-3.5">Choisissez une date</h2>
 

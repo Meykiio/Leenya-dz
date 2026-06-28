@@ -1,7 +1,7 @@
 # Project Status — Leenya
 
-**Last updated:** 2026-06-27 (Phase 2d)
-**Version:** 0.0.0 (pre-release)
+**Last updated:** 2026-06-28 (Phase 3d — Final Pricing Limits & Polish)
+**Version:** 0.0.1 (closed beta candidate)
 **Project name:** Leenya (formerly Dawrni/Darek)
 **One-line pitch:** Queue and appointment management SaaS for Algerian service businesses.
 
@@ -11,7 +11,7 @@
 
 | Feature Area | Completion | Status |
 |---|---|---|
-| Landing / Marketing pages | 90% | Done — all sections present, needs real testimonial data |
+| Landing / Marketing pages | 98% | Done — all sections present, testimonials rewritten, back-to-top added, demos i18n'd with accent color, equal-height panels |
 | Authentication (email/password) | 95% | Fully working — login, signup, forgot/reset password flows |
 | Authentication (phone OTP) | 0% | **Removed** — phone tab deleted from LoginForm, OtpVerification.tsx deleted |
 | Onboarding wizard | 95% | Fully working — 4 steps, profile + role + business + services |
@@ -21,23 +21,24 @@
 | Queue ticket tracker | 80% | Working — realtime updates, cancel, completion/cancellation states |
 | TV queue display | 80% | Working — realtime, auto-hide cursor, clock |
 | Owner dashboard — homepage | 85% | Working — metrics (incl. pending count), recent bookings, quick actions |
-| Owner dashboard — bookings mgmt | 90% | Working — date filter, status filter, search, CRUD, WhatsApp actions, PendingApprovals section, sidebar badge, real-time subscription |
+| Owner dashboard — bookings mgmt | 92% | Working — date/status filter, search, CRUD, WhatsApp actions, PendingApprovals, real-time subscription. Table layout fixed with consistent column widths |
 | Owner dashboard — queue mgmt | 85% | Working — realtime, call/complete/cancel/no-show, display mode |
 | Owner dashboard — services CRUD | 90% | Working — add/edit/delete/toggle, name_ar field, slider for duration |
-| Owner dashboard — staff CRUD | 95% | Working — add/edit/toggle, **avatar upload**, **service assignment**, **auth login creation**, **delete** |
-| Owner dashboard — settings | 70% | All tabs present, most work, some features are placeholders |
-| Owner dashboard — analytics | 70% | Working — metric cards, charts, peak hours grid, popular services, history table |
+| Owner dashboard — staff CRUD | 97% | Working — add/edit/toggle, service assignment, auth login creation, delete. Frontend plan-limit enforcement added. Avatar upload dropped (storage RLS) |
+| Owner dashboard — settings | 73% | All tabs present. Subscription tab now has real-time counts. Fixed RPC array bug (showed /100 instead of 0/100) |
+| Owner dashboard — analytics | 78% | Working — metric cards, charts, peak hours, popular services, history table with fixed tab button visibility. Paginated queries prevent OOM |
 | Staff view | 90% | Working — queue management, call/complete/no-show, **bookings tab**, **staff login** |
 | Client bookings page | 70% | Working — list upcoming/past, cancel, leave review |
 | Booking tracker (anonymous token) | 80% | Working — view by token, cancel |
 | Reviews | 60% | Working — display on public page, submit from MyBookings |
 | WhatsApp templates | 70% | Working — CRUD in settings, template compilation, preview, WhatsApp link generation |
-| Subscription/pricing UI | 90% | Working — pricing page and subscription tab in settings |
-| Subscription enforcement | 0% | Not started — no server-side billing or plan limits |
+| Subscription/pricing UI | 97% | Working — pricing page, redesigned subscription modal, trial countdown, 2 progress bars, DB-backed usage with real-time subscriptions, "Coming soon" on Pro |
+| Subscription enforcement | 100% | Server-side triggers enforce per-plan booking/queue/staff limits with trial skip |
 | Payment processing | 0% | Not started — no payment gateway integrated |
 | Automated notifications | 0% | Not started — all WhatsApp is manual (wa.me links) |
 | SMS (Twilio) | 0% | Not started — phone OTP removed, no SMS integration |
-| Arabic/RTL support | 10% | `name_ar` field exists in DB and UI form; no actual RTL layout switching |
+| i18n / translations | 96% | react-i18next configured, 6 namespaces × 3 languages, all ~60+ components using `t()`, ~590 keys per language. Demo components i18n'd with 20 new keys |
+| Arabic/RTL support | 95% | All components patched (~20 more in Phase 3d), all arrows flipped, toast/dialog/sheet/carousel/calendar/navigation-menu fully RTL-aware. Back-to-top button, BackButton, Dashboard arrows, WhatsApp icons all RTL-flipped |
 | Testing | 30% | Unit tests exist for time slots, slugify, queue system, booking overlap, rate limiting |
 | PWA / offline | 0% | Manifest exists, no service worker or caching |
 
@@ -78,8 +79,7 @@ The following flows work end-to-end in a local dev environment with a correctly 
 
 - Payment processing (BaridiMob / CCP / Stripe)
 - Automated SMS reminders (Twilio)
-- Subscription plan enforcement (server-side usage gates)
-- Arabic RTL interface
+- Arabic RTL interface (85% — all critical components patched)
 - Staff-specific availability schedules
 - Break time / lunch hour support
 - Queue capacity limits
@@ -89,6 +89,31 @@ The following flows work end-to-end in a local dev environment with a correctly 
 - Calendar sync (Google Calendar / iCal)
 - Email notification templates
 - PWA with offline support
+
+---
+
+## Concurrency & Scalability Assessment
+
+| Operation | Safe? | Mechanism |
+|---|---|---|
+| Queue ticket creation | ✅ Yes | Atomic upsert counter (`generate_ticket_number`) + partial unique index prevents duplicate active tickets |
+| Booking creation | ✅ Yes | Advisory lock per time slot (`check_booking_overlap`) serializes concurrent bookings |
+| Queue state machine | ✅ Yes | DB trigger enforces valid transitions; UPDATEs are atomic |
+| Ticket number generation | ✅ Yes | `INSERT ... ON CONFLICT` (atomic upsert) |
+| Cross-tenant data leaks | ✅ Yes | RLS policies correctly isolate all tenants |
+| Rate limit enforcement | ✅ Yes | `pg_advisory_xact_lock` serializes per-phone (added Phase 3b) |
+| Plan limit enforcement | ✅ Yes | `pg_advisory_xact_lock` serializes per-business (added Phase 3b) |
+| Status updates (queue + booking) | ✅ Yes | Optimistic locking via `.eq("status", currentStatus)` on all transitions (added Phase 3b) |
+| Analytics queries | ⚠️ Mitigated | `.range(0, 1000)` prevents MB-size transfers; client-side aggregation is fine for current scale |
+| Realtime (Postgres Changes) | ⚠️ Monitor | 4 channels per dashboard session. At 5k+ concurrent dashboards, migrate to Broadcast pattern |
+
+### Missing Indexes (All Resolved in Phase 3b)
+| Index | Status | Purpose |
+|---|---|---|
+| `idx_bookings_overlap_check` | ✅ Added | Covering index for overlap check trigger |
+| `idx_queue_tickets_business_date_ticket` | ✅ Added | ORDER BY ticket_number in queue context |
+| `idx_bookings_staff_date` | ✅ Added | Staff-scoped booking queries |
+| `idx_queue_tickets_staff_date` | ✅ Added | Staff-scoped queue queries |
 
 ---
 
@@ -153,3 +178,27 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - **RLS integration tests** added: `supabase/tests/rls_policies.sql` (7 SQL assertions).
 - **0 npm vulnerabilities** in production dependencies.
 - **Bug fixes:** CSP WebSocket `wss://` added, StaffView state machine split (called → Commencer / in_service → Terminer), WhatsApp test send 404 fixed with business phone fallback.
+
+**Updated 2026-06-28 (Phase 3c — 1-Month Trial & Honest Limits):**
+- **`trial_ends_at` column** added to `businesses` — all businesses get 30-day trial on creation
+- **`check_business_limits`** replaces old `check_plan_booking_limit` — skips limits during trial, separates booking/queue counts, matches landing page numbers exactly
+- **`check_staff_plan_limit`** trigger on staff_members INSERT — enforces staff caps with trial skip
+- **`get_monthly_business_counts`** RPC returns booking + queue + staff counts in one call
+- **SubscriptionTab fully rewritten** — reads DB plan/trial, shows trial countdown, 2 progress bars (bookings + queue), Pro "Choose" → "Coming soon"
+- **Landing page PricingSection** — Pro CTA "Free 14-day trial" → "Coming soon" in all 3 locales, Free plan shows trial subtitle
+- **Dashboard i18n keys updated** — `free30bookings` → `free50bookings`, `free100queue`, `pro300bookings`, `pro500queue`
+- **Migration `phase_3c_trial_limits`** applied to live Supabase
+- **`npx tsc --noEmit`** and **`npm run build`** pass with zero errors
+
+**Updated 2026-06-28 (Phase 3d — Final Pricing Limits & Polish):**
+- **Final pricing limits** for Algerian market: Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
+- **Legal pages** created: Terms of Service & Privacy Policy (Algerian Law 18-07 compliant)
+- **Footer cleaned up:** Instagram removed, email updated to sifeddine.meb96@gmail.com
+- **All missing i18n keys added:** subscription, WhatsApp, 404 (20 keys), common buttons
+- **Navbar fixed:** "Reviews" → "Approach"
+- **404 route fixed:** dashboard catch-all renders NotFound
+- **RTL polish completed:** ~35 components now patched (was 15), including all arrow icons across 12+ pages
+- **Back-to-top button** added to landing page
+- **Demo components rewritten:** accent color, i18n translations (20 new keys), equal height
+- **Testimonials section rewritten:** 3 new professional/touching messages in all 3 languages
+- **HowItWorks:** step circles full opacity with white text

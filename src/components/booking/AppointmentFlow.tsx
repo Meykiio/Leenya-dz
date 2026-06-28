@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
@@ -41,6 +42,7 @@ interface Props {
 type Step = "service" | "staff" | "datetime" | "details" | "confirmed";
 
 export default function AppointmentFlow({ businessId, businessName, services, businessHours, advanceBookingDays }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>("service");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null | "no_preference">("no_preference");
@@ -161,7 +163,7 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
     if (!selectedService || !selectedDate || !selectedTime || !name.trim() || !phone.trim()) return;
     const digits = phone.replace(/\D/g, "");
     if (digits.length < 9) {
-      setPhoneError("Le numero doit contenir au moins 9 chiffres");
+      setPhoneError(t("booking:appointmentFlow.phoneError"));
       return;
     }
     setPhoneError("");
@@ -192,16 +194,16 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
         status: "pending",
       })
       .select("id, booking_token")
-      .single();
+      .maybeSingle();
 
     setSubmitting(false);
     if (error) {
       const msg = error.message.includes("Trop de demandes")
-        ? "Trop de demandes. Veuillez reessayer plus tard."
+        ? t("booking:appointmentFlow.error.rateLimited")
         : error.message.includes("deja reserve")
-        ? "Ce creneau vient d'etre reserve. Veuillez en choisir un autre."
-        : "Impossible de creer la reservation.";
-      toast({ title: "Erreur", description: msg, variant: "destructive" });
+        ? t("booking:appointmentFlow.error.slotTaken")
+        : t("booking:appointmentFlow.error.creationFailed");
+      toast({ title: t("common:toast.error"), description: msg, variant: "destructive" });
       return;
     }
     setBookingId(data.id);
@@ -236,17 +238,17 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
   const copyTrackingLink = () => {
     if (!trackingUrl) return;
     navigator.clipboard.writeText(trackingUrl).then(() => {
-      toast({ title: "Lien copie", description: "Le lien de suivi a ete copie." });
+      toast({ title: t("booking:appointmentFlow.toast.linkCopied"), description: t("booking:appointmentFlow.toast.linkCopiedDesc") });
     });
   };
 
   const hasStaffStep = staffMembers.length > 0;
   const allSteps: { key: Step; label: string }[] = [
-    { key: "service", label: "Service" },
-    ...(hasStaffStep ? [{ key: "staff" as Step, label: "Equipe" }] : []),
-    { key: "datetime" as Step, label: "Date" },
-    { key: "details" as Step, label: "Infos" },
-    { key: "confirmed" as Step, label: "Envoyee" },
+    { key: "service", label: t("booking:appointmentFlow.step.service") },
+    ...(hasStaffStep ? [{ key: "staff" as Step, label: t("booking:appointmentFlow.step.staff") }] : []),
+    { key: "datetime" as Step, label: t("booking:appointmentFlow.step.date") },
+    { key: "details" as Step, label: t("booking:appointmentFlow.step.details") },
+    { key: "confirmed" as Step, label: t("booking:appointmentFlow.step.sent") },
   ];
   const currentStepIndex = allSteps.findIndex((s) => s.key === step);
 

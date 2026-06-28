@@ -6,6 +6,18 @@ export type {
   NewBookingForm, NewQueueTicketForm, BookingFilters,
 } from "./booking";
 
+export type FeedbackCategory = "bug" | "feature" | "general";
+
+export interface Feedback {
+  id: string;
+  business_id?: string;
+  email?: string;
+  category: FeedbackCategory;
+  message: string;
+  page_url?: string;
+  created_at: string;
+}
+
 export interface MetricCard {
   label: string;
   value: number | string;

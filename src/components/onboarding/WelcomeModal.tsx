@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Check, Copy, MessageCircle } from "lucide-react";
 
@@ -8,6 +9,7 @@ interface WelcomeModalProps {
 }
 
 const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const link = `${window.location.origin}/${slug}`;
 
@@ -18,7 +20,7 @@ const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
   };
 
   const handleWhatsApp = () => {
-    const text = encodeURIComponent(`Réservez en ligne sur ${link}`);
+    const text = encodeURIComponent(t("auth:onboarding.shareWhatsAppText", { link }));
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
@@ -27,10 +29,10 @@ const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
       <div className="w-full max-w-md rounded-xl bg-card p-8 shadow-lg text-center space-y-6">
         <div className="text-5xl">🎉</div>
         <h2 className="text-2xl font-bold text-foreground">
-          Votre espace est prêt!
+          {t("auth:onboarding.welcomeModalTitle")}
         </h2>
         <p className="text-muted-foreground">
-          Voici votre lien public:
+          {t("auth:onboarding.welcomeModalSubtitle")}
         </p>
         <div className="rounded-md bg-muted px-4 py-3 font-mono text-primary text-lg">
           {link}
@@ -39,16 +41,16 @@ const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
         <div className="flex flex-col gap-3">
           <Button onClick={handleCopy} variant="outline" className="gap-2">
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copié!" : "Copier le lien"}
+            {copied ? t("auth:onboarding.copied") : t("auth:onboarding.copyLink")}
           </Button>
           <Button onClick={handleWhatsApp} className="gap-2">
             <MessageCircle className="h-4 w-4" />
-            Partager sur WhatsApp
+            {t("auth:onboarding.shareWhatsApp")}
           </Button>
         </div>
 
         <Button variant="ghost" onClick={onClose} className="text-muted-foreground">
-          Aller au tableau de bord →
+          {t("auth:onboarding.goToDashboard")} →
         </Button>
       </div>
     </div>

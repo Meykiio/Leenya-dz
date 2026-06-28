@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 
 export default function BookingPrefsTab({ businessId }: { businessId: string }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     accepts_appointments: true,
     accepts_walkins: true,
@@ -26,8 +28,8 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
       if (error) {
         if (import.meta.env.DEV) console.error('[BookingPrefsTab] failed to fetch prefs:', error.message);
         toast({ 
-          title: "Erreur", 
-          description: "Impossible de charger les préférences.", 
+          title: t("common:toast.error"), 
+          description: t("common:toast.loadError"), 
           variant: "destructive" 
         });
         return;
@@ -52,27 +54,27 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
       accepts_walkins: form.accepts_walkins,
       advance_booking_days: form.advance_booking_days,
     }).eq("id", businessId);
-    if (error) { console.error("save prefs:", error); toast({ title: "Erreur", description: "Impossible de mettre à jour les préférences.", variant: "destructive" }); }
-    else toast({ title: "Préférences enregistrées ✓" });
+    if (error) { console.error("save prefs:", error); toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" }); }
+    else toast({ title: t("dashboard:settings.booking.toast.saved") });
     setLoading(false);
   };
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle className="text-base">Modes de réservation</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.booking.modes")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">Rendez-vous en ligne</p>
-              <p className="text-xs text-muted-foreground">Les clients peuvent réserver depuis votre page</p>
+              <p className="text-sm font-medium text-foreground">{t("dashboard:settings.booking.online")}</p>
+              <p className="text-xs text-muted-foreground">{t("dashboard:settings.booking.onlineDesc")}</p>
             </div>
             <Switch checked={form.accepts_appointments} onCheckedChange={(v) => setForm({ ...form, accepts_appointments: v })} />
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">Walk-ins (file d'attente)</p>
-              <p className="text-xs text-muted-foreground">Les clients peuvent rejoindre la file sans rendez-vous</p>
+              <p className="text-sm font-medium text-foreground">{t("dashboard:settings.booking.walkins")}</p>
+              <p className="text-xs text-muted-foreground">{t("dashboard:settings.booking.walkinsDesc")}</p>
             </div>
             <Switch checked={form.accepts_walkins} onCheckedChange={(v) => setForm({ ...form, accepts_walkins: v })} />
           </div>
@@ -80,10 +82,10 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Délais</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.booking.deadlines")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Réservation jusqu'à X jours à l'avance</Label>
+            <Label>{t("dashboard:settings.booking.advanceDays", { days: form.advance_booking_days })}</Label>
             <Input
               type="number"
               min={1}
@@ -97,7 +99,7 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
       </Card>
 
       <Button onClick={save} disabled={loading} className="w-full sm:w-auto">
-        {loading ? "Enregistrement..." : "Enregistrer les préférences"}
+        {loading ? t("common:buttons.saving") : t("dashboard:settings.booking.save")}
       </Button>
     </div>
   );

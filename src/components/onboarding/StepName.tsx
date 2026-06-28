@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ interface StepNameProps {
 }
 
 const StepName = ({ defaultName, onNext }: StepNameProps) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(defaultName);
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +23,7 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non authentifié");
+      if (!user) throw new Error(t("auth:onboarding.notAuthenticated"));
 
       // Upsert profile via SECURITY DEFINER RPC (bypasses RLS)
       const { error: profileError } = await supabase
@@ -37,7 +39,7 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("onboarding create profile failed:", err);
-      toast({ title: "Erreur", description: "Impossible de créer votre profil.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:onboarding.errorCreateProfile"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -47,18 +49,18 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          Bienvenue! Comment vous appelez-vous?
+          {t("auth:onboarding.welcomeTitle")}
         </h2>
         <p className="text-muted-foreground mt-2">
-          Ce nom sera utilisé dans votre profil professionnel
+          {t("auth:onboarding.welcomeSubtitle")}
         </p>
       </div>
 
       <div className="space-y-2 max-w-sm mx-auto">
-        <Label htmlFor="fullName">Nom complet</Label>
+        <Label htmlFor="fullName">{t("auth:onboarding.fullNameLabel")}</Label>
         <Input
           id="fullName"
-          placeholder="Votre nom complet"
+          placeholder={t("auth:onboarding.fullNamePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -69,7 +71,7 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
 
       <div className="flex justify-center">
         <Button type="submit" disabled={!name.trim() || loading} className="px-8">
-          {loading ? "Enregistrement..." : "Continuer →"}
+          {loading ? t("common:buttons.saving") : t("auth:onboarding.continue") + " →"}
         </Button>
       </div>
     </form>

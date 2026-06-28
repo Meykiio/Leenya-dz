@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ let idCounter = 0;
 const makeId = () => `local-${++idCounter}`;
 
 const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepServicesProps) => {
+  const { t } = useTranslation();
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -77,7 +79,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("onboarding add services failed:", err);
-      toast({ title: "Erreur", description: "Impossible d'ajouter les services.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:onboarding.errorAddServices"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -87,16 +89,16 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          Quels services proposez-vous?
+          {t("auth:onboarding.servicesTitle")}
         </h2>
         <p className="text-muted-foreground mt-2">
-          Ajoutez au moins un service pour commencer
+          {t("auth:onboarding.servicesSubtitle")}
         </p>
       </div>
 
       {/* Suggestions */}
       <div className="max-w-lg mx-auto space-y-3">
-        <p className="text-sm font-medium text-foreground">Services suggérés</p>
+        <p className="text-sm font-medium text-foreground">{t("auth:onboarding.suggestedServices")}</p>
         <div className="space-y-2">
           {suggestions.map((s) => {
             const added = services.some((sv) => sv.name === s.name);
@@ -122,7 +124,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
                   </Button>
                 ) : (
                   <Button size="sm" variant="outline" onClick={() => addSuggestion(s)}>
-                    Ajouter
+                    {t("auth:onboarding.add")}
                   </Button>
                 )}
               </div>
@@ -133,7 +135,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
         {/* Added services */}
         {services.filter((s) => !suggestions.some((sg) => sg.name === s.name)).length > 0 && (
           <div className="space-y-2 mt-4">
-            <p className="text-sm font-medium text-foreground">Services personnalisés</p>
+            <p className="text-sm font-medium text-foreground">{t("auth:onboarding.customServices")}</p>
             {services
               .filter((s) => !suggestions.some((sg) => sg.name === s.name))
               .map((s) => (
@@ -155,14 +157,14 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
         {/* Add custom */}
         {showCustom ? (
           <div className="rounded-lg border bg-card p-4 space-y-3">
-            <Input placeholder="Nom du service" value={customName} onChange={(e) => setCustomName(e.target.value)} />
+            <Input placeholder={t("auth:onboarding.serviceNamePlaceholder")} value={customName} onChange={(e) => setCustomName(e.target.value)} />
             <div className="flex gap-2">
-              <Input placeholder="Durée (min)" type="number" value={customDuration} onChange={(e) => setCustomDuration(e.target.value)} />
-              <Input placeholder="Prix (DZD)" type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} />
+              <Input placeholder={t("auth:onboarding.durationPlaceholder")} type="number" value={customDuration} onChange={(e) => setCustomDuration(e.target.value)} />
+              <Input placeholder={t("auth:onboarding.pricePlaceholder")} type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={addCustom} disabled={!customName.trim()}>Ajouter</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowCustom(false)}>Annuler</Button>
+              <Button size="sm" onClick={addCustom} disabled={!customName.trim()}>{t("auth:onboarding.add")}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowCustom(false)}>{t("auth:onboarding.cancel")}</Button>
             </div>
           </div>
         ) : (
@@ -171,17 +173,17 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
             onClick={() => setShowCustom(true)}
             className="flex items-center gap-2 text-sm text-primary hover:underline"
           >
-            <Plus className="h-4 w-4" /> Ajouter un service personnalisé
+            <Plus className="h-4 w-4" /> {t("auth:onboarding.addCustomService")}
           </button>
         )}
       </div>
 
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={onBack}>
-          ← Retour
+          ← {t("auth:onboarding.back")}
         </Button>
         <Button onClick={handleComplete} disabled={services.length === 0 || loading} className="px-8">
-          {loading ? "Enregistrement..." : "Terminer la configuration"}
+          {loading ? t("common:buttons.saving") : t("auth:onboarding.finishSetup")}
         </Button>
       </div>
     </div>

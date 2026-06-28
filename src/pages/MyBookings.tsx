@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,16 +13,6 @@ import { format, isPast, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Booking } from "@/types";
 
-const statusLabels: Record<string, string> = {
-  pending: "En attente",
-  confirmed: "Confirmé",
-  arrived: "Arrivé",
-  in_service: "En service",
-  completed: "Terminé",
-  cancelled: "Annulé",
-  no_show: "No-show",
-};
-
 const statusBadgeClasses: Record<string, string> = {
   pending: "badge-waiting",
   confirmed: "badge-confirmed",
@@ -33,6 +24,7 @@ const statusBadgeClasses: Record<string, string> = {
 };
 
 export default function MyBookings() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -53,7 +45,7 @@ export default function MyBookings() {
 
     if (error) {
       if (import.meta.env.DEV) console.error('[MyBookings] failed to fetch bookings:', error.message);
-      toast({ title: "Erreur", description: "Impossible de charger vos réservations.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.loadError"), variant: "destructive" });
     }
     setBookings(data || []);
     setLoading(false);
@@ -65,11 +57,24 @@ export default function MyBookings() {
     const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
     if (error) {
       console.error("cancelBooking:", error);
-      toast({ title: "Erreur", description: "Impossible d'annuler la réservation.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
-    toast({ title: "Réservation annulée" });
+    toast({ title: t("booking:myBookings.toast.cancelled") });
     fetchBookings();
+  };
+
+  const getStatusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      pending: t("common:statuses.pending"),
+      confirmed: t("common:statuses.confirmed"),
+      arrived: t("common:statuses.arrived"),
+      in_service: t("common:statuses.inProgress"),
+      completed: t("common:statuses.completed"),
+      cancelled: t("common:statuses.cancelled"),
+      no_show: t("common:statuses.noShow"),
+    };
+    return map[status] || status;
   };
 
   const submitReview = async () => {
@@ -85,10 +90,10 @@ export default function MyBookings() {
     setSubmittingReview(false);
     if (error) {
       console.error("submitReview:", error);
-      toast({ title: "Erreur", description: "Impossible d'envoyer votre avis.", variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
-    toast({ title: "Avis publié" });
+    toast({ title: t("booking:myBookings.toast.reviewPublished") });
     setReviewModal(null);
     setComment("");
     setRating(5);
@@ -100,8 +105,8 @@ export default function MyBookings() {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] max-w-lg mx-auto pb-8">
       <header className="sticky top-0 z-10 bg-[var(--bg-base)] backdrop-blur-sm border-b border-[var(--border-default)] px-5 py-4 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[var(--text-secondary)]"><ArrowLeft className="h-5 w-5" /></button>
-        <h1 className="text-lg font-bold text-[var(--text-primary)]">Mes réservations</h1>
+        <button onClick={() => navigate(-1)} className="text-[var(--text-secondary)]"><ArrowLeft className="h-5 w-5 rtl:scale-x-[-1]" /></button>
+        <h1 className="text-lg font-bold text-[var(--text-primary)]">{t("booking:myBookings.title")}</h1>
       </header>
 
       <div className="px-5 py-4 space-y-6">
@@ -112,20 +117,20 @@ export default function MyBookings() {
         ) : bookings.length === 0 ? (
           <div className="text-center py-16 space-y-2">
             <p className="text-4xl">📅</p>
-            <p className="text-[var(--text-secondary)]">Aucune réservation pour le moment</p>
+            <p className="text-[var(--text-secondary)]">{t("booking:myBookings.empty")}</p>
           </div>
         ) : (
           <>
             {upcoming.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">À venir</h2>
+                <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">{t("booking:myBookings.upcoming")}</h2>
                 <div className="space-y-3">
                   {upcoming.map((b) => (
                     <div key={b.id} className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-[var(--text-primary)]">{b.businesses?.name}</p>
                         <Badge variant="outline" className={statusBadgeClasses[b.status] || ""}>
-                          {statusLabels[b.status] || b.status}
+                          {getStatusLabel(b.status)}
                         </Badge>
                       </div>
                       <p className="text-sm text-[var(--text-secondary)]">
@@ -136,7 +141,7 @@ export default function MyBookings() {
                       )}
                       {b.status !== "cancelled" && (
                         <Button variant="outline" size="sm" className="text-destructive border-destructive/30" onClick={() => cancelBooking(b.id)}>
-                          Annuler
+                          {t("booking:myBookings.cancel")}
                         </Button>
                       )}
                     </div>
@@ -147,14 +152,14 @@ export default function MyBookings() {
 
             {past.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Passées</h2>
+                <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">{t("booking:myBookings.past")}</h2>
                 <div className="space-y-3">
                   {past.map((b) => (
                     <div key={b.id} className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 space-y-2 opacity-80">
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-[var(--text-primary)]">{b.businesses?.name}</p>
                         <Badge variant="outline" className={statusBadgeClasses[b.status] || ""}>
-                          {statusLabels[b.status] || b.status}
+                          {getStatusLabel(b.status)}
                         </Badge>
                       </div>
                       <p className="text-sm text-[var(--text-secondary)]">
@@ -162,7 +167,7 @@ export default function MyBookings() {
                       </p>
                       {b.status === "completed" && (
                         <Button variant="outline" size="sm" onClick={() => setReviewModal({ bookingId: b.id, businessId: b.business_id })}>
-                          <Star className="h-3 w-3 mr-1" /> Laisser un avis
+                          <Star className="h-3 w-3 mr-1" /> {t("booking:myBookings.leaveReview")}
                         </Button>
                       )}
                     </div>
@@ -180,7 +185,7 @@ export default function MyBookings() {
           <div className="absolute inset-0 bg-foreground/40" onClick={() => setReviewModal(null)} />
           <div className="relative w-full max-w-sm rounded-2xl bg-[var(--bg-base)] border border-[var(--border-default)] p-6 shadow-lg space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">Votre avis</h3>
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">{t("booking:myBookings.reviewModalTitle")}</h3>
               <button onClick={() => setReviewModal(null)}><X className="h-5 w-5 text-[var(--text-tertiary)]" /></button>
             </div>
             <div className="flex gap-1 justify-center">
@@ -190,9 +195,9 @@ export default function MyBookings() {
                 </button>
               ))}
             </div>
-            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Commentaire (optionnel)..." rows={3} />
+            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder={t("booking:myBookings.reviewPlaceholder")} rows={3} />
             <Button onClick={submitReview} disabled={submittingReview} className="w-full">
-              {submittingReview ? "Envoi..." : "Envoyer mon avis"}
+              {submittingReview ? t("booking:myBookings.reviewSubmitting") : t("booking:myBookings.reviewSubmit")}
             </Button>
           </div>
         </div>

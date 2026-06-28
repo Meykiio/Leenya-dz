@@ -21,6 +21,8 @@ const MyBookings = React.lazy(() => import("@/pages/MyBookings"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const ResetPassword = React.lazy(() => import("@/pages/ResetPassword"));
 const BookingTrack = React.lazy(() => import("@/pages/BookingTrack"));
+const TermsOfService = React.lazy(() => import("@/pages/TermsOfService"));
+const PrivacyPolicy = React.lazy(() => import("@/pages/PrivacyPolicy"));
 
 // Dashboard pages
 const Dashboard = React.lazy(() => import("@/pages/dashboard/Dashboard"));
@@ -30,6 +32,7 @@ const DashboardServices = React.lazy(() => import("@/pages/dashboard/DashboardSe
 const DashboardStaff = React.lazy(() => import("@/pages/dashboard/DashboardStaff"));
 const DashboardSettings = React.lazy(() => import("@/pages/dashboard/DashboardSettings"));
 const DashboardAnalytics = React.lazy(() => import("@/pages/dashboard/DashboardAnalytics"));
+const DashboardFeedback = React.lazy(() => import("@/pages/dashboard/DashboardFeedback"));
 
 const queryClient = new QueryClient();
 
@@ -71,6 +74,8 @@ const App = () => (
                         <Route path="staff" element={<DashboardStaff />} />
                         <Route path="settings" element={<DashboardSettings />} />
                         <Route path="analytics" element={<DashboardAnalytics />} />
+                        <Route path="feedback" element={<DashboardFeedback />} />
+                        <Route path="*" element={<NotFound />} />
                       </Route>
 
                       {/* Staff routes */}
@@ -80,6 +85,8 @@ const App = () => (
                       <Route path="/display/:slug" element={<QueueDisplay />} />
 
                       {/* Public business routes — MUST be last before catch-all */}
+                      <Route path="/terms" element={<TermsOfService />} />
+                      <Route path="/privacy" element={<PrivacyPolicy />} />
                       <Route path="/:slug/queue" element={<QueuePublic />} />
                       <Route path="/:slug" element={<BusinessPublic />} />
 

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,8 +22,9 @@ interface Props {
 }
 
 export default function BookingRow({ booking: b, statusColors, statusLabels, onAccept, onReject, onArrived, onNoShow, onCancel, onReminder, onWhatsApp }: Props) {
+  const { t } = useTranslation();
   return (
-    <div className="flex flex-col sm:grid sm:grid-cols-[80px_1fr_1fr_auto_auto] gap-2 sm:gap-3 px-4 py-3 hover:bg-[var(--bg-subtle)] transition-colors items-start sm:items-center">
+    <div className="flex flex-col sm:grid sm:grid-cols-[80px_1fr_1fr_120px_minmax(300px,1fr)] gap-2 sm:gap-3 px-4 py-3 hover:bg-[var(--bg-subtle)] transition-colors items-start sm:items-center">
       <span className="font-mono text-xs text-[var(--text-tertiary)]">
         {b.start_time?.slice(0, 5)} — {b.end_time?.slice(0, 5)}
       </span>
@@ -41,57 +43,57 @@ export default function BookingRow({ booking: b, statusColors, statusLabels, onA
         {b.status === "pending" && (
           <>
             <Button size="sm" variant="outline" onClick={() => onAccept(b.id)} className="h-7 text-xs px-2 text-[var(--success)] border-[var(--success-border)]">
-              ✓ Accepter
+              {t("dashboard:bookings.accept")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => onReject(b.id)} className="h-7 text-xs px-2 text-[var(--error)]">
-              ✕ Refuser
+              {t("dashboard:bookings.reject")}
             </Button>
           </>
         )}
         {b.status === "confirmed" && (
           <Button size="sm" variant="outline" onClick={() => onArrived(b.id)} className="h-7 text-xs px-2">
-            Déjà arrivé
+            {t("dashboard:bookings.arrived")}
           </Button>
         )}
         {b.status !== "completed" && b.status !== "cancelled" && b.status !== "no_show" && (
           <>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-[var(--error)]">No-show</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-[var(--error)]">{t("common:statuses.noShow")}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Marquer comme no-show?</AlertDialogTitle>
-                  <AlertDialogDescription>{b.client_name} sera marqué(e) comme absent(e).</AlertDialogDescription>
+                  <AlertDialogTitle>{t("dashboard:bookings.markNoShow")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("dashboard:bookings.markNoShowDesc", { name: b.client_name })}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Non</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onNoShow(b.id)}>Confirmer</AlertDialogAction>
+                  <AlertDialogCancel>{t("common:buttons.no")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onNoShow(b.id)}>{t("common:buttons.confirm")}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-[var(--error)]">Annuler</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-[var(--error)]">{t("dashboard:bookings.cancel")}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Annuler cette réservation?</AlertDialogTitle>
-                  <AlertDialogDescription>La réservation de {b.client_name} sera annulée.</AlertDialogDescription>
+                  <AlertDialogTitle>{t("dashboard:bookings.cancelConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("dashboard:bookings.cancelConfirmDesc", { name: b.client_name })}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Non</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onCancel(b.id)} className="bg-destructive text-destructive-foreground">Annuler la réservation</AlertDialogAction>
+                  <AlertDialogCancel>{t("common:buttons.no")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onCancel(b.id)} className="bg-destructive text-destructive-foreground">{t("dashboard:bookings.cancelBooking")}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </>
         )}
-        <Button size="sm" variant="ghost" onClick={() => onWhatsApp(b)} title="WhatsApp" className="h-7 w-7 p-0">
+        <Button size="sm" variant="ghost" onClick={() => onWhatsApp(b)} title={t("dashboard:queue.tooltip.whatsapp")} className="h-7 w-7 p-0">
           <MessageCircle className="h-3.5 w-3.5" />
         </Button>
         {b.status !== "completed" && b.status !== "cancelled" && (
-          <Button size="sm" variant="ghost" onClick={() => onReminder(b)} title="Rappel WhatsApp" className="h-7 w-7 p-0">
+          <Button size="sm" variant="ghost" onClick={() => onReminder(b)} title={t("dashboard:bookings.tooltip.whatsapp")} className="h-7 w-7 p-0">
             <Bell className="h-3.5 w-3.5" />
           </Button>
         )}
