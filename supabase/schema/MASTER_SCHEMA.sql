@@ -232,6 +232,21 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 -- -----------------------------------------------------------
+-- feedback — landing page feedback form (anon-submittable)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.feedback (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  business_id UUID REFERENCES public.businesses(id),
+  email TEXT,
+  category TEXT NOT NULL,
+  message TEXT NOT NULL,
+  page_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+
+-- -----------------------------------------------------------
 -- whatsapp_templates
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.whatsapp_templates (
@@ -770,6 +785,10 @@ GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authe
 GRANT EXECUTE ON FUNCTION public.get_user_role(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_monthly_business_counts(UUID) TO authenticated;
+
+-- Explicitly revoke EXECUTE on trigger-only functions (not RPCs)
+REVOKE EXECUTE ON FUNCTION public.check_business_limits() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.check_staff_plan_limit() FROM anon;
 
 -- -----------------------------------------------------------
 -- check_business_limits — enforces per-plan monthly caps with trial support
@@ -1483,6 +1502,31 @@ CREATE POLICY "Clients can insert reviews" ON public.reviews
 DROP POLICY IF EXISTS "Clients can update own reviews" ON public.reviews;
 CREATE POLICY "Clients can update own reviews" ON public.reviews
   FOR UPDATE USING (auth.uid() = client_id);
+
+-- -----------------------------------------------------------
+-- feedback
+-- -----------------------------------------------------------
+DROP POLICY IF EXISTS "Anyone can insert feedback" ON public.feedback;
+CREATE POLICY "Anyone can insert feedback" ON public.feedback
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Owners can delete feedback" ON public.feedback;
+CREATE POLICY "Owners can delete feedback" ON public.feedback
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE id = feedback.business_id AND owner_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Owners can view their feedback" ON public.feedback;
+CREATE POLICY "Owners can view their feedback" ON public.feedback
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE id = feedback.business_id AND owner_id = auth.uid()
+    )
+  );
 
 -- -----------------------------------------------------------
 -- whatsapp_templates

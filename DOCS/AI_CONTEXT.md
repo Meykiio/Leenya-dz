@@ -182,14 +182,18 @@ user_roles.user_id → auth.users.id
 ### Security Gaps (Phase 2b)
 1. RLS policies are `PERMISSIVE` — need `AS RESTRICTIVE` (H-006)
 2. Blanket `GRANT ALL ON ALL TABLES` — need per-table grants (H-004)
-3. Storage bucket `business-assets` allows public listing (H-010)
-4. Leaked password protection disabled in Supabase Auth (H-011)
-5. No Content Security Policy (H-002/M-02)
-6. Error messages leak schema details (SEC-01)
-7. 17 queries missing `business_id` scope (ARC-04)
-8. 38 lint errors (all `no-explicit-any`) (H-002)
-9. `.env` in git history not purged (C-004)
-10. `@tanstack/react-query` imported but unused (+13 kB dead bundle)
+3. Storage bucket `business-assets` allows public listing (H-010) — files are still accessible via public URLs if SELECT policy removed
+4. Leaked password protection disabled in Supabase Auth (H-011) — requires Pro plan
+5. Error messages leak schema details (SEC-01)
+6. 38 lint errors (all `no-explicit-any`) (H-002)
+7. `.env` in git history not purged (C-004)
+8. `@tanstack/react-query` imported but unused (+13 kB dead bundle)
+
+### Supabase Linter Warnings (Intentional)
+These warnings are by design, not security issues:
+- **Anon SECURITY DEFINER functions** (10): All public RPCs (`get_booking_by_token`, `cancel_booking_by_token`, `get_queue_ticket`, `get_business_queue`, `get_completed_ticket_stats`, `get_queue_context`, `generate_ticket_number`, `get_monthly_business_counts`, `get_default_whatsapp_templates`) are intentionally callable by anonymous users for public booking/queue features
+- **Authenticated SECURITY DEFINER functions** (14): All internal RPCs (`assign_owner_role`, `create_staff_user`, `upsert_profile`, etc.) are intentionally callable by authenticated users for the dashboard
+- **`feedback` table `INSERT` policy** (`WITH CHECK (true)`): By design for the public landing page feedback form. Owners can view/delete feedback related to their business.
 
 ---
 
