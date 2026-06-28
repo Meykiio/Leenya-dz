@@ -180,7 +180,6 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       });
 
     return () => { supabase.removeChannel(channel); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId, refetchAll]);
 
   const handleCancel = async () => {

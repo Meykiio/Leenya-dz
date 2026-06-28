@@ -132,13 +132,12 @@ const DashboardBookings = () => {
     fetchStaticData();
   }, [business, t]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!business) return;
     fetchBookings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [business, selectedDate, filterMode]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!business) return;
     const channel = supabase
@@ -148,6 +147,7 @@ const DashboardBookings = () => {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [business]);
 
   const updateStatus = async (id: string, status: "pending" | "confirmed" | "arrived" | "in_service" | "completed" | "cancelled" | "no_show") => {
