@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -39,12 +40,13 @@ export default function StepDateTime({
   dates, selectedDate, selectedTime, onSelectDate, onSelectTime,
   onBack, onContinue, businessHours, loadingSlots, slots, hasStaffStep,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
-        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> Retour
+        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> {t("common:buttons.back")}
       </button>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">Choisissez une date</h2>
+      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepDateTime.titleDate")}</h2>
 
       <div className="flex gap-2 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
         {dates.map((d) => {
@@ -68,7 +70,7 @@ export default function StepDateTime({
               <span className={`text-[10px] font-medium uppercase ${
                 dateSelected ? "text-background/60" : today ? "text-primary" : "text-muted-foreground"
               }`}>
-                {today ? "Auj." : label.dayName}
+                {today ? t("booking:appointmentFlow.stepDateTime.today") : label.dayName}
               </span>
               <span className={`font-mono text-[18px] font-semibold leading-tight ${
                 dateSelected ? "text-background" : "text-foreground"
@@ -82,11 +84,11 @@ export default function StepDateTime({
 
       {selectedDate && (
         <div className="mt-4">
-          <h3 className="text-[15px] font-semibold text-foreground mb-3">Choisissez une heure</h3>
+          <h3 className="text-[15px] font-semibold text-foreground mb-3">{t("booking:appointmentFlow.stepDateTime.titleTime")}</h3>
           {loadingSlots ? (
-            <p className="text-[13px] text-muted-foreground">Chargement...</p>
+            <p className="text-[13px] text-muted-foreground">{t("common:loading")}</p>
           ) : slots.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">Aucun creneau disponible ce jour.</p>
+            <p className="text-[13px] text-muted-foreground">{t("booking:appointmentFlow.stepDateTime.noSlots")}</p>
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {slots.map((slot) => (
@@ -109,7 +111,7 @@ export default function StepDateTime({
 
       {selectedTime && (
         <Button className="w-full mt-5 h-[44px]" onClick={onContinue}>
-          Continuer
+          {t("booking:appointmentFlow.stepService.continue")}
         </Button>
       )}
     </motion.div>

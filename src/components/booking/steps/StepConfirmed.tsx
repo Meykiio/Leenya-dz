@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Copy, ExternalLink, Calendar, MessageCircle, Share2 } from "lucide-react";
@@ -28,6 +29,7 @@ export default function StepConfirmed({
   businessName, trackingUrl, googleCalUrl, shareToBusinessUrl, whatsappShareUrl,
   onCopyLink,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <motion.div
       key="confirmed"
@@ -44,9 +46,9 @@ export default function StepConfirmed({
       >
         <CheckCircle2 className="h-6 w-6" style={{ color: 'var(--success)' }} />
       </motion.div>
-      <h2 className="text-[20px] font-bold text-foreground">Demande envoyée</h2>
+      <h2 className="text-[20px] font-bold text-foreground">{t("booking:appointmentFlow.stepConfirmed.title")}</h2>
       <p className="text-[13px] text-muted-foreground">
-        En attente de confirmation par le salon.
+        {t("booking:appointmentFlow.stepConfirmed.pending")}
       </p>
 
       <div className="rounded-md border border-border bg-muted/50 p-[14px_16px] text-left space-y-1">
@@ -59,15 +61,15 @@ export default function StepConfirmed({
 
       {bookingId && (
         <div className="rounded-md border border-primary/20 bg-primary/5 p-[14px_16px] space-y-2">
-          <p className="text-[13px] font-medium text-foreground">Lien de suivi</p>
-          <p className="text-[12px] text-muted-foreground">Conservez ce lien pour suivre ou annuler votre reservation</p>
+          <p className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepConfirmed.trackingLink")}</p>
+          <p className="text-[12px] text-muted-foreground">{t("booking:appointmentFlow.stepConfirmed.trackingHint")}</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="flex-1 gap-1 h-8 text-xs" onClick={onCopyLink}>
-              <Copy className="h-3.5 w-3.5" /> Copier
+              <Copy className="h-3.5 w-3.5" /> {t("booking:appointmentFlow.stepConfirmed.copy")}
             </Button>
             <Button variant="outline" size="sm" className="flex-1 gap-1 h-8 text-xs" asChild>
               <a href={trackingUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3.5 w-3.5" /> Ouvrir
+                <ExternalLink className="h-3.5 w-3.5" /> {t("booking:appointmentFlow.stepConfirmed.open")}
               </a>
             </Button>
           </div>
@@ -77,17 +79,17 @@ export default function StepConfirmed({
       <div className="flex gap-2 pt-2">
         <Button variant="outline" size="sm" className="flex-1 h-[44px]" asChild>
           <a href={googleCalUrl} target="_blank" rel="noopener noreferrer">
-            <Calendar className="h-4 w-4 mr-1.5" /> Calendrier
+            <Calendar className="h-4 w-4 mr-1.5" /> {t("booking:appointmentFlow.stepConfirmed.calendar")}
           </a>
         </Button>
         <Button variant="outline" size="sm" className="flex-1 h-[44px] gap-1" asChild>
           <a href={shareToBusinessUrl}>
-            <MessageCircle className="h-4 w-4" /> Salon
+            <MessageCircle className="h-4 w-4" /> {t("booking:appointmentFlow.stepConfirmed.contactBusiness")}
           </a>
         </Button>
         <Button variant="outline" size="sm" className="flex-1 h-[44px] gap-1" asChild>
           <a href={whatsappShareUrl}>
-            <Share2 className="h-4 w-4" /> WhatsApp
+            <Share2 className="h-4 w-4" /> {t("booking:appointmentFlow.stepConfirmed.whatsapp")}
           </a>
         </Button>
       </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,20 +41,21 @@ export default function StepDetails({
   selectedService, selectedDate, selectedTime, selectedStaff,
   onSubmit, submitting,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
-        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> Retour
+        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> {t("common:buttons.back")}
       </button>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">Vos coordonnees</h2>
+      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepDetails.title")}</h2>
 
       <div className="space-y-3">
         <div>
-          <label className="text-[13px] font-medium text-foreground">Nom complet</label>
-          <Input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder="Votre nom" className="mt-1" />
+          <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.nameLabel")}</label>
+          <Input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.namePlaceholder")} className="mt-1" />
         </div>
         <div>
-          <label className="text-[13px] font-medium text-foreground">Telephone</label>
+          <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.phoneLabel")}</label>
           <div className="flex gap-2 mt-1">
             <span className="flex items-center rounded-md border bg-muted px-3 text-[13px] text-muted-foreground shrink-0">+213</span>
             <Input value={phone} onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ""))} placeholder="555 123 456" type="tel" />
@@ -61,15 +63,15 @@ export default function StepDetails({
           {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
         </div>
         <div>
-          <label className="text-[13px] font-medium text-foreground">Message (optionnel)</label>
-          <Textarea value={note} onChange={(e) => onNoteChange(e.target.value)} placeholder="Message pour le salon..." rows={2} className="mt-1" />
+          <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.noteLabel")}</label>
+          <Textarea value={note} onChange={(e) => onNoteChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.notePlaceholder")} rows={2} className="mt-1" />
         </div>
       </div>
 
       <div className="mt-5 rounded-md border border-border bg-muted/50 p-[14px_16px] space-y-1">
         <p className="text-[14px] font-medium text-foreground">{selectedService?.name}</p>
         <p className="text-[12px] text-muted-foreground">
-          {selectedService?.price_dzd ? `${selectedService.price_dzd.toLocaleString("fr-FR")} DZD` : "Prix sur demande"}
+          {selectedService?.price_dzd ? `${selectedService.price_dzd.toLocaleString("fr-FR")} DZD` : t("booking:appointmentFlow.stepDetails.priceOnRequest")}
         </p>
         <p className="text-[12px] text-muted-foreground flex items-center gap-1">
           <Calendar className="h-3 w-3" />
@@ -87,7 +89,7 @@ export default function StepDetails({
         disabled={!name.trim() || !phone.trim() || submitting}
         onClick={onSubmit}
       >
-        {submitting ? "Confirmation..." : "Confirmer la reservation"}
+        {submitting ? t("booking:appointmentFlow.stepDetails.submitting") : t("booking:appointmentFlow.stepDetails.submit")}
       </Button>
     </motion.div>
   );

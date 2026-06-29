@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -19,9 +20,10 @@ interface Props {
 
 /** @description Booking step for service selection — lists available services with duration and price, enables proceeding once a service is chosen. */
 export default function StepService({ services, selectedService, onSelect, onContinue, loadingStaff }: Props) {
+  const { t } = useTranslation();
   return (
     <motion.div key="service" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">Choisissez un service</h2>
+      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepService.title")}</h2>
       <div className="flex flex-col gap-2">
         {services.map((s) => {
           const isSelected = selectedService?.id === s.id;
@@ -54,7 +56,7 @@ export default function StepService({ services, selectedService, onSelect, onCon
       </div>
       {selectedService && (
         <Button className="w-full mt-5 h-[44px]" disabled={loadingStaff} onClick={onContinue}>
-          {loadingStaff ? "Chargement..." : "Continuer"}
+          {loadingStaff ? t("common:loading") : t("booking:appointmentFlow.stepService.continue")}
         </Button>
       )}
     </motion.div>

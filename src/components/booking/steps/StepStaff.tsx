@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, ChevronRight } from "lucide-react";
@@ -19,12 +20,13 @@ interface Props {
 
 /** @description Booking step for staff member selection — shows staff list with avatars and a "no preference" option for auto-assignment. */
 export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBack, onContinue }: Props) {
+  const { t } = useTranslation();
   return (
     <motion.div key="staff" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
-        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> Retour
+        <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> {t("common:buttons.back")}
       </button>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">Choisir un membre de l'equipe</h2>
+      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepStaff.title")}</h2>
       <div className="flex flex-col gap-2">
         <button
           type="button"
@@ -41,9 +43,9 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
             </div>
             <div>
               <p className={`text-[14px] font-medium ${selectedStaff === "no_preference" ? "text-primary" : "text-foreground"}`}>
-                Pas de preference
+                {t("booking:appointmentFlow.stepStaff.noPreference")}
               </p>
-              <p className="text-[12px] text-muted-foreground mt-0.5">Le premier disponible</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">{t("booking:appointmentFlow.stepStaff.firstAvailable")}</p>
             </div>
           </div>
           <ChevronRight className={`h-4 w-4 shrink-0 ${selectedStaff === "no_preference" ? "text-primary" : "text-muted-foreground"}`} />
@@ -84,7 +86,7 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
         })}
       </div>
       <Button className="w-full mt-5 h-[44px]" onClick={onContinue}>
-        Continuer
+        {t("common:buttons.continue")}
       </Button>
     </motion.div>
   );

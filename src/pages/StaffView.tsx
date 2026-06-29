@@ -280,16 +280,16 @@ const StaffView = () => {
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-destructive">No-show</Button>
+                          <Button size="sm" variant="ghost" className="text-destructive">{t("staff:staffView.dialogNoShowButton")}</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Marquer comme no-show?</AlertDialogTitle>
-                            <AlertDialogDescription>Le client {t.client_name} sera marqué comme absent.</AlertDialogDescription>
+                            <AlertDialogTitle>{t("staff:staffView.dialogNoShow")}</AlertDialogTitle>
+                            <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { clientName: t.client_name })}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>Confirmer</AlertDialogAction>
+                            <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>{t("common:buttons.confirm")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
