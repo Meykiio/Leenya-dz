@@ -212,7 +212,7 @@
 
   /* Arabic content */
   [dir="rtl"], [lang="ar"], .font-arabic {
-    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-family: 'Cairo', sans-serif;
   }
 
   :focus-visible {

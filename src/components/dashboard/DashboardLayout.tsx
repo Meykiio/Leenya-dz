@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessInfo } from "@/hooks/use-business-info";
 import { NavLink } from "@/components/NavLink";
@@ -48,6 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, signOut } = useAuth();
   const { business } = useBusinessInfo();
   const { t } = useTranslation();
+  useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
@@ -195,7 +197,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen flex bg-[var(--bg-base)]">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-[220px] lg:flex-col lg:fixed lg:inset-y-0 bg-[var(--bg-subtle)] border-r border-[var(--border-default)] rtl:border-l rtl:border-r-0">
+      <aside className="hidden lg:flex lg:w-[220px] lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 rtl:lg:left-auto rtl:lg:right-0 bg-[var(--bg-subtle)] border-r border-[var(--border-default)] rtl:border-l rtl:border-r-0">
         {sidebarContent}
       </aside>
 

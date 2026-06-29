@@ -18,7 +18,7 @@ export default {
         body: ['Inter', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
         mono: ['Geist Mono', 'JetBrains Mono', 'ui-monospace', 'monospace'],
-        arabic: ['IBM Plex Sans Arabic', 'sans-serif'],
+        arabic: ['Cairo', 'sans-serif'],
       },
       fontSize: {
         xs: ['11px', { lineHeight: '1.45', letterSpacing: '0.01em' }],
