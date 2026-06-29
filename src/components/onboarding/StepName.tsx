@@ -28,12 +28,12 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
 
       // Upsert profile via SECURITY DEFINER RPC (bypasses RLS)
       const { error: profileError } = await supabase
-        .rpc("upsert_profile", { p_id: user.id, p_full_name: name.trim() });
+        .rpc("upsert_profile", { p_full_name: name.trim() });
       if (profileError) throw profileError;
 
       // Insert role via SECURITY DEFINER RPC (bypasses RLS)
       const { error: roleError } = await supabase
-        .rpc("assign_owner_role", { p_user_id: user.id });
+        .rpc("assign_owner_role");
       if (roleError && !roleError.message.includes("duplicate")) throw roleError;
 
       onNext(name.trim());

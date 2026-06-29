@@ -267,15 +267,15 @@ const StaffView = () => {
             {called.length > 0 && (
               <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
                 <h3 className="text-base font-semibold text-[var(--text-primary)]">{t("staff:staffView.sectionCalled")}</h3>
-                {called.map((t) => (
-                  <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
-                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{t.ticket_label}</span>
+                {called.map((ticket) => (
+                  <div key={ticket.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
+                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{ticket.ticket_label}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"} • {t.called_at ? timeAgo(t.called_at) : ""}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"} • {ticket.called_at ? timeAgo(ticket.called_at) : ""}</p>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" onClick={() => updateTicketStatus(t.id, "in_service")} className="gap-1">
+                      <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "in_service")} className="gap-1">
                         <Play className="h-3 w-3" /> {t("staff:staffView.buttonStart")}
                       </Button>
                       <AlertDialog>
@@ -285,11 +285,11 @@ const StaffView = () => {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>{t("staff:staffView.dialogNoShow")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { clientName: t.client_name })}</AlertDialogDescription>
+                            <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { clientName: ticket.client_name })}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>{t("common:buttons.confirm")}</AlertDialogAction>
+                            <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "no_show")}>{t("common:buttons.confirm")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -303,33 +303,16 @@ const StaffView = () => {
             {inService.length > 0 && (
               <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
                 <h3 className="text-base font-semibold text-[var(--text-primary)]">{t("staff:staffView.sectionInProgress")}</h3>
-                {inService.map((t) => (
-                  <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
-                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{t.ticket_label}</span>
+                {inService.map((ticket) => (
+                  <div key={ticket.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
+                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{ticket.ticket_label}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"} • {t.called_at ? timeAgo(t.called_at) : ""}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"} • {ticket.called_at ? timeAgo(ticket.called_at) : ""}</p>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="outline" onClick={() => updateTicketStatus(t.id, "completed")} className="gap-1">
-                        <CheckCircle className="h-3 w-3" /> {t("staff:staffView.buttonComplete")}
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-destructive">{t("staff:staffView.buttonNoShow")}</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t("staff:staffView.dialogNoShowTitle")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { clientName: t.client_name })}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t("staff:staffView.dialogCancel")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "no_show")}>{t("staff:staffView.dialogConfirm")}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                    <Button size="sm" variant="outline" onClick={() => updateTicketStatus(ticket.id, "completed")} className="gap-1">
+                      <CheckCircle className="h-3 w-3" /> {t("staff:staffView.buttonComplete")}
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -351,15 +334,15 @@ const StaffView = () => {
                     <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoClients")}</p>
                   </div>
                 ) : (
-                  waiting.map((t) => (
-                    <div key={t.id} className="flex items-center gap-3 rounded-lg border border-[var(--border-default)] p-3">
-                      <span className="font-mono text-lg font-bold text-[var(--accent)] shrink-0">{t.ticket_label}</span>
+                  waiting.map((ticket) => (
+                    <div key={ticket.id} className="flex items-center gap-3 rounded-lg border border-[var(--border-default)] p-3">
+                      <span className="font-mono text-lg font-bold text-[var(--accent)] shrink-0">{ticket.ticket_label}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
-                        <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"} • {t("staff:staffView.since")} {timeAgo(t.created_at)}</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"} • {t("staff:staffView.since")} {timeAgo(ticket.created_at)}</p>
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" onClick={() => updateTicketStatus(t.id, "called")} className="gap-1">
+                        <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "called")} className="gap-1">
                           <Play className="h-3 w-3" /> {t("staff:staffView.buttonCall")}
                         </Button>
                       <AlertDialog>
@@ -369,11 +352,11 @@ const StaffView = () => {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>{t("staff:staffView.dialogCancelTicketTitle")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("staff:staffView.dialogCancelTicketDesc", { ticketLabel: t.ticket_label, clientName: t.client_name })}</AlertDialogDescription>
+                            <AlertDialogDescription>{t("staff:staffView.dialogCancelTicketDesc", { ticketLabel: ticket.ticket_label, clientName: ticket.client_name })}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(t.id, "cancelled")} className="bg-destructive text-destructive-foreground">{t("staff:staffView.dialogYesCancel")}</AlertDialogAction>
+                            <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "cancelled")} className="bg-destructive text-destructive-foreground">{t("staff:staffView.dialogYesCancel")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

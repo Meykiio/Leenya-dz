@@ -1,16 +1,5 @@
-/**
- * Normalize a phone number to international format (Algeria +213).
- * Strips non-digit characters; prepends 213 if number starts with 0.
- *
- * @param phone - Raw phone number (e.g., "0551 23 45 67")
- * @returns Cleaned number starting with "213" (e.g., "213551234567")
- */
-export function cleanPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("0")) return `213${digits.slice(1)}`;
-  if (digits.startsWith("213")) return digits;
-  return `213${digits}`;
-}
+import { cleanPhone } from "@/lib/phone/validation";
+export { cleanPhone };
 
 /** Build a WhatsApp deep link (wa.me) with an optional phone and encoded message text. */
 function buildWaUrl(phone: string | null, text: string): string {
@@ -184,7 +173,7 @@ export function buildBookingCancelledUrl(
  * browsers properly hand off wa.me URLs to the WhatsApp app.
  */
 export function openWhatsApp(url: string) {
-  window.location.href = url;
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 /**

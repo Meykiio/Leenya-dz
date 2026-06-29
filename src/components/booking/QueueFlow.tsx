@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import TicketTracker from "./TicketTracker";
 import StepStaff from "@/components/booking/steps/StepStaff";
 import { formatDateForDB } from "@/lib/timeSlots";
 import { buildQueueTicketUrl } from "@/lib/whatsapp";
+import { validateAlgerianPhone } from "@/lib/phone/validation";
 
 interface Service {
   id: string;
@@ -29,6 +30,8 @@ interface Props {
   services: Service[];
 }
 
+const STORAGE_KEY = "leenya_queue_active";
+
 /** @description Live virtual queue flow allowing clients to select a service, optionally choose staff, join the queue, and receive a ticket with real-time position tracking. */
 export default function QueueFlow({ businessId, businessName, services }: Props) {
   const { t } = useTranslation();
@@ -47,6 +50,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const [joinedTicketId, setJoinedTicketId] = useState<string | null>(null);
   const [joinedServiceName, setJoinedServiceName] = useState("");
   const [joinedLabel, setJoinedLabel] = useState("");
+  const [restored, setRestored] = useState(false);
 
   const today = formatDateForDB(new Date());
 
@@ -99,6 +103,22 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     return Math.round((waiting / staffCount) * avgWaitMin);
   };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.businessId === businessId) {
+          setJoinedTicketId(saved.ticketId);
+          setJoinedServiceName(saved.serviceName);
+          setJoinedLabel(saved.ticketLabel);
+          setPhone(saved.phone || "");
+        }
+      }
+    } catch { /* ignore corrupt data */ }
+    setRestored(true);
+  }, [businessId]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -180,9 +200,17 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   }, [selectedService, businessId]);
 
   const validatePhone = (value: string) => {
-    const digits = value.replace(/\D/g, "");
-    if (digits.length < 9) {
-      setPhoneError(t("booking:queueFlow.phoneError"));
+    const result = validateAlgerianPhone(value);
+    if (!result.valid) {
+      if (result.errorCode === 'invalid_prefix') {
+        setPhoneError(t("common:validation.phone.invalidPrefix"));
+      } else if (result.errorCode === 'invalid_too_short') {
+        setPhoneError(t("common:validation.phone.invalidTooShort"));
+      } else if (result.errorCode === 'invalid_too_long') {
+        setPhoneError(t("common:validation.phone.invalidTooLong"));
+      } else {
+        setPhoneError(t("booking:queueFlow.phoneError"));
+      }
       return false;
     }
     setPhoneError("");
@@ -192,13 +220,14 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const handleJoin = async () => {
     if (!selectedService || !name.trim() || !phone.trim()) return;
     if (!validatePhone(phone)) return;
+    const normalizedPhone = validateAlgerianPhone(phone).normalized;
     setSubmitting(true);
 
     const { data: existing, error: existingError } = await supabase
       .from("queue_tickets")
       .select("id, ticket_label")
       .eq("business_id", businessId)
-      .eq("client_phone", phone.replace(/\D/g, ''))
+      .eq("client_phone", normalizedPhone)
       .eq("queue_date", today)
       .in("status", ["waiting", "called", "in_service"])
       .maybeSingle();
@@ -235,7 +264,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         service_id: selectedService.id,
         staff_member_id: staffMemberId,
         client_name: name.trim(),
-        client_phone: phone.replace(/\D/g, ''),
+        client_phone: normalizedPhone,
         ticket_number: ticket_num,
         ticket_label: ticket_lbl,
         queue_date: today,
@@ -254,7 +283,29 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     setJoinedTicketId(data.id);
     setJoinedServiceName(selectedService.name);
     setJoinedLabel(ticket_lbl);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ticketId: data.id,
+        businessId,
+        businessName,
+        serviceName: selectedService.name,
+        ticketLabel: ticket_lbl,
+        phone,
+        estimatedWait,
+      }));
+    } catch { /* storage full — non-critical */ }
   };
+
+  const handleGoBack = () => {
+    setJoinedTicketId(null);
+    setJoinedServiceName("");
+    setJoinedLabel("");
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  };
+
+  if (!restored) {
+    return null;
+  }
 
   if (joinedTicketId) {
     return (
@@ -263,7 +314,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           ticketId={joinedTicketId}
           businessName={businessName}
           serviceName={joinedServiceName}
-          onBack={() => setJoinedTicketId(null)}
+          onBack={handleGoBack}
         />
         {joinedLabel && phone && (
           <div className="px-5 pb-4">
@@ -355,7 +406,6 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           <div>
             <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
             <div className="flex gap-2 mt-1">
-              <span className="flex items-center rounded-md border bg-muted px-3 text-[13px] text-muted-foreground shrink-0">+213</span>
               <Input
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value.replace(/\D/g, "")); setPhoneError(""); }}

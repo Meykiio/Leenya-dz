@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,18 +12,31 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+interface BookingData {
+  id: string;
+  status: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  client_name: string;
+  client_phone: string;
+  businesses?: { name: string; address?: string };
+  services?: { name: string };
+}
+
 /**
  * Booking tracker — allows customers to view and cancel their booking via a secure token.
  * Fetches booking details by token RPC and displays status, time, and location.
+ * Subscribes to real-time changes so the page updates when staff changes the status.
  * @returns The booking tracking page JSX
  */
 const BookingTrack = () => {
   const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const bookingIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -35,10 +48,36 @@ const BookingTrack = () => {
           if (error) console.error("get_booking_by_token:", error);
           setBooking(null);
         } else {
-          setBooking(data);
+          setBooking(data as BookingData);
+          bookingIdRef.current = data.id;
         }
         setLoading(false);
       });
+  }, [token]);
+
+  useEffect(() => {
+    if (!bookingIdRef.current) return;
+
+    const channel = supabase
+      .channel(`booking-track-${bookingIdRef.current}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "bookings",
+          filter: `id=eq.${bookingIdRef.current}`,
+        },
+        (payload) => {
+          const updated = payload.new as Partial<BookingData>;
+          if (updated.status) {
+            setBooking((prev) => prev ? { ...prev, status: updated.status! } : prev);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [token]);
 
   const handleCancel = async () => {

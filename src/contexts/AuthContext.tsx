@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import * as Sentry from "@sentry/react";
 
 /** User role within the app: business owner, staff member, or client. */
 type AppRole = "owner" | "staff" | "client" | null;
@@ -50,13 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roleReady, setRoleReady] = useState(false);
 
   /** Fetch the user's app role from the database via RPC. */
-  const fetchRole = async (userId: string) => {
+  const fetchRole = async () => {
     try {
       const { data, error } = await supabase
-        .rpc("get_user_role", { _user_id: userId });
+        .rpc("get_user_role");
       if (error) throw error;
       setRole((data as AppRole) ?? null);
-    } catch {
+    } catch (error) {
+      console.error("[AuthContext] fetchRole failed:", error);
       setRole(null);
     } finally {
       setRoleReady(true);
@@ -69,8 +71,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
+          Sentry.setUser({ id: session.user.id, email: session.user.email ?? undefined });
+          setRoleReady(false);
           // setTimeout avoids Supabase client deadlock
-          setTimeout(() => fetchRole(session.user.id), 0);
+          setTimeout(() => fetchRole(), 0);
         } else {
           setRole(null);
           setRoleReady(true);
@@ -93,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         setSession(session);
         setUser(user);
-        fetchRole(user.id);
+        fetchRole();
       } else {
         setSession(null);
         setUser(null);
@@ -118,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshRole = async () => {
     if (!user) return;
     setRoleReady(false);
-    await fetchRole(user.id);
+    await fetchRole();
   };
 
   const loading = !sessionReady || !roleReady;

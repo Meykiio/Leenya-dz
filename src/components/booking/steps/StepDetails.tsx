@@ -57,7 +57,6 @@ export default function StepDetails({
         <div>
           <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.phoneLabel")}</label>
           <div className="flex gap-2 mt-1">
-            <span className="flex items-center rounded-md border bg-muted px-3 text-[13px] text-muted-foreground shrink-0">+213</span>
             <Input value={phone} onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ""))} placeholder="555 123 456" type="tel" />
           </div>
           {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}

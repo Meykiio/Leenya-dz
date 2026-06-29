@@ -39,5 +39,8 @@
   "staffView.toast.bookingsLoadError": "Unable to load the bookings.",
   "staffView.toast.updateError": "Unable to update.",
   "staffView.toast.ticketTaken": "Ticket already taken",
-  "staffView.toast.ticketTakenDesc": "Another staff member has already called this ticket."
+  "staffView.toast.ticketTakenDesc": "Another staff member has already called this ticket.",
+  "staffView.since": "Since",
+  "staffView.timeJustNow": "Just now",
+  "staffView.timeMin": "{{mins}} min"
 }

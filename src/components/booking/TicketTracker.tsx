@@ -2,21 +2,10 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { formatDateForDB } from "@/lib/timeSlots";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import TicketCompleted from "./TicketCompleted";
 import TicketCancelled from "./TicketCancelled";
 
@@ -40,19 +29,26 @@ interface TicketData {
 
 const CACHE_PREFIX = "leenya_ticket_";
 
-/** @description Real-time queue ticket tracker that displays ticket status, position ahead, estimated wait time, and live updates via Supabase Realtime subscription with offline-aware caching. */
 export default function TicketTracker({ ticketId, businessName, serviceName, onBack }: Props) {
   const { t } = useTranslation();
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [currentServing, setCurrentServing] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState(0);
-  const [isCalled, setIsCalled] = useState(false);
   const [avgWaitTime, setAvgWaitTime] = useState<number | null>(null);
   const [staffCount, setStaffCount] = useState(1);
   const [isOffline, setIsOffline] = useState(false);
+  const [submittedReview, setSubmittedReview] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const businessIdRef = useRef<string | null>(null);
   const queueDateRef = useRef<string | null>(null);
   const serviceIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const reviewed = localStorage.getItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
+    if (reviewed) setSubmittedReview(true);
+  }, [ticketId]);
 
   useEffect(() => {
     const cached = localStorage.getItem(`${CACHE_PREFIX}${ticketId}`);
@@ -76,7 +72,6 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         p_business_id: bizId,
         p_service_id: servId ?? undefined,
       });
-
     if (error) { console.error("fetchHistoricalData:", error); return; }
     if (data && data.length > 0) {
       setAvgWaitTime(data[0].avg_wait_minutes > 0 ? data[0].avg_wait_minutes : null);
@@ -91,7 +86,6 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         p_queue_date: qDate,
         p_ticket_number: ticketNumber,
       });
-
     if (queueError) { console.error("refreshQueueContext:", queueError); return; }
     if (!queueData) return;
     const cs = queueData.length > 0 ? queueData[0].current_serving_label : null;
@@ -120,7 +114,6 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           queue_date: data.queue_date,
         };
         setTicket(t);
-        if (data.status === "called") setIsCalled(true);
         businessIdRef.current = data.business_id;
         queueDateRef.current = data.queue_date;
         serviceIdRef.current = data.service_id;
@@ -152,59 +145,124 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       queue_date: data.queue_date,
     };
     setTicket(t);
-    if (data.status === "called") setIsCalled(true);
 
-    const ctx = await refreshQueueContext(
-      businessIdRef.current,
-      queueDateRef.current,
-      t.ticket_number
-    );
-    if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
+    if (data.status === "waiting" || data.status === "called") {
+      const ctx = await refreshQueueContext(
+        businessIdRef.current,
+        queueDateRef.current,
+        t.ticket_number
+      );
+      if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId, ticket, refreshQueueContext]);
 
   useEffect(() => {
     if (!businessIdRef.current) return;
-
     const channel = supabase
       .channel(`queue-tracker-${ticketId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "queue_tickets", filter: `business_id=eq.${businessIdRef.current}` },
-        async () => {
-          refetchAll();
-        }
+        async () => { refetchAll(); }
       )
       .subscribe((status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setIsOffline(true);
         if (status === "SUBSCRIBED") setIsOffline(false);
       });
-
     return () => { supabase.removeChannel(channel); };
   }, [ticketId, refetchAll]);
 
-  const handleCancel = async () => {
-    const { error } = await supabase
-      .rpc("cancel_booking_by_token", { p_booking_id: "", p_token: "" });
+  const handleSubmitReview = async () => {
+    if (rating === 0) return;
+    setSubmitting(true);
+    const bizId = businessIdRef.current || ticket?.business_id;
+    if (!bizId) { setSubmitting(false); return; }
 
+    const { error } = await supabase.from("reviews").insert({
+      business_id: bizId,
+      ticket_id: ticketId,
+      rating,
+      comment: comment.trim() || null,
+    });
+    setSubmitting(false);
     if (error) {
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
-    localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
-    toast({ title: t("booking:ticketTracker.toast.cancelled") });
-    onBack();
+    localStorage.setItem(`${CACHE_PREFIX}${ticketId}_reviewed`, "1");
+    setSubmittedReview(true);
   };
-
-  const canCancel = false;
 
   if (!ticket) {
     return <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">{t("common:loading")}</div>;
   }
 
-  if (ticket.status === "completed") return <TicketCompleted />;
+  if (ticket.status === "in_service") {
+    return (
+      <div className="flex flex-col px-5 py-4">
+        <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
+          <ChevronLeft className="h-5 w-5" />
+          <span className="font-medium">{businessName}</span>
+        </button>
+        <div className="rounded-xl p-8 text-center space-y-4" style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}>
+          <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center mx-auto" style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}>
+            <span style={{ color: 'var(--success)' }} className="text-xl">&#x2713;</span>
+          </div>
+          <h2 className="text-[20px] font-bold text-foreground">{t("booking:ticketTracker.inServiceTitle")}</h2>
+          <p className="text-[14px] text-muted-foreground">{t("booking:ticketTracker.inServiceSubtitle")}</p>
+          <div className="pt-2">
+            <p className="font-mono text-[48px] font-bold text-foreground leading-none">{ticket.ticket_label}</p>
+            <p className="text-[14px] text-muted-foreground mt-2">{serviceName}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (ticket.status === "completed") {
+    if (!submittedReview) {
+      return (
+        <div className="flex flex-col px-5 py-4">
+          <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
+            <ChevronLeft className="h-5 w-5" />
+            <span className="font-medium">{businessName}</span>
+          </button>
+          <div className="rounded-xl border border-border bg-muted/50 p-6 text-center space-y-5">
+            <h2 className="text-[18px] font-bold text-foreground">{t("booking:ticketTracker.reviewTitle")}</h2>
+            <p className="text-[13px] text-muted-foreground">{t("booking:ticketTracker.reviewSubtitle")}</p>
+            <div className="flex items-center justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} type="button" onClick={() => setRating(star)} className="text-3xl transition-colors">
+                  <span style={{ color: star <= rating ? 'var(--accent)' : 'var(--text-tertiary)' }}>{star <= rating ? '\u2605' : '\u2606'}</span>
+                </button>
+              ))}
+            </div>
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={t("booking:ticketTracker.reviewCommentPlaceholder")}
+              rows={3}
+              className="text-[13px]"
+            />
+            <div className="flex gap-3">
+              <Button onClick={handleSubmitReview} disabled={rating === 0 || submitting} className="flex-1">
+                {submitting ? t("common:loading") : t("booking:ticketTracker.reviewSubmit")}
+              </Button>
+              <Button variant="ghost" onClick={() => { setSubmittedReview(true); }} disabled={submitting}>
+                {t("booking:ticketTracker.reviewSkip")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return <TicketCompleted />;
+  }
+
   if (ticket.status === "cancelled") return <TicketCancelled onBack={onBack} />;
 
+  const isCalled = ticket.status === "called";
   const computedEwt = ticket.estimated_wait_minutes ?? Math.round((waitingCount / Math.max(staffCount, 1)) * (avgWaitTime ?? 15));
   const estimatedMin = computedEwt;
   const progress = waitingCount > 0 ? Math.max(10, Math.min(90, 100 - (waitingCount / (waitingCount + 3)) * 100)) : 95;
@@ -300,11 +358,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </p>
       </div>
 
-      {!isCalled && (
-        <p className="text-[12px] text-muted-foreground text-center mt-4">
-          {t("booking:ticketTracker.cancelHint")}
-        </p>
-      )}
+      <p className="text-[12px] text-muted-foreground text-center mt-4">
+        {t("booking:ticketTracker.cancelHint")}
+      </p>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { buildBookingTrackingUrl, buildBookingNotificationForBusinessUrl } from "@/lib/whatsapp";
 import { generateTimeSlots, getDayOfWeek, formatDateLabel, formatDateForDB } from "@/lib/timeSlots";
+import { validateAlgerianPhone } from "@/lib/phone/validation";
 import StepService from "./steps/StepService";
 import StepStaff from "./steps/StepStaff";
 import StepDateTime from "./steps/StepDateTime";
@@ -44,6 +46,7 @@ type Step = "service" | "staff" | "datetime" | "details" | "confirmed";
 /** @description Multi-step appointment booking flow guiding users through service selection, staff selection, date/time picking, contact details, and confirmation with WhatsApp / Google Calendar actions. */
 export default function AppointmentFlow({ businessId, businessName, services, businessHours, advanceBookingDays }: Props) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("service");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null | "no_preference">("no_preference");
@@ -81,6 +84,19 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
         if (data?.phone) setBusinessPhone(data.phone);
       });
   }, [businessId]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("leenya_booking_active");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.businessId === businessId) {
+          localStorage.removeItem("leenya_booking_active");
+          navigate(`/booking/track/${saved.bookingToken}`, { replace: true });
+        }
+      }
+    } catch { /* ignore corrupt data */ }
+  }, [businessId, navigate]);
 
   useEffect(() => {
     if (!selectedService) {
@@ -162,12 +178,21 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
 
   const handleSubmit = async () => {
     if (!selectedService || !selectedDate || !selectedTime || !name.trim() || !phone.trim()) return;
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length < 9) {
-      setPhoneError(t("booking:appointmentFlow.phoneError"));
+    const validation = validateAlgerianPhone(phone);
+    if (!validation.valid) {
+      if (validation.errorCode === 'invalid_prefix') {
+        setPhoneError(t("common:validation.phone.invalidPrefix"));
+      } else if (validation.errorCode === 'invalid_too_short') {
+        setPhoneError(t("common:validation.phone.invalidTooShort"));
+      } else if (validation.errorCode === 'invalid_too_long') {
+        setPhoneError(t("common:validation.phone.invalidTooLong"));
+      } else {
+        setPhoneError(t("booking:appointmentFlow.phoneError"));
+      }
       return;
     }
     setPhoneError("");
+    const normalizedPhone = validateAlgerianPhone(phone).normalized;
     setSubmitting(true);
 
     const dateStr = formatDateForDB(selectedDate);
@@ -190,7 +215,7 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
         start_time: selectedTime,
         end_time: endTime,
         client_name: name.trim(),
-        client_phone: phone.replace(/\D/g, ''),
+        client_phone: normalizedPhone,
         notes: note.trim() || null,
         status: "pending",
       })
@@ -210,6 +235,12 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
     setBookingId(data.id);
     setBookingToken(data.booking_token);
     setStep("confirmed");
+    try {
+      localStorage.setItem("leenya_booking_active", JSON.stringify({
+        bookingToken: data.booking_token,
+        businessId,
+      }));
+    } catch { /* storage full — non-critical */ }
   };
 
   const trackingUrl = bookingToken ? `${window.location.origin}/booking/track/${bookingToken}` : "";

@@ -63,5 +63,13 @@
   "time.today": "اليوم",
   "languages.english": "English",
   "languages.french": "Français",
-  "languages.arabic": "العربية"
+  "languages.arabic": "العربية",
+  "validation": {
+    "phone": {
+      "invalidPrefix": "يجب أن يبدأ بـ 05 أو 06 أو 07",
+      "invalidLength": "يجب أن يتكون من 10 أرقام بالضبط",
+      "invalidTooShort": "10 أرقام على الأقل",
+      "invalidTooLong": "يجب أن يتكون من 10 أرقام بالضبط"
+    }
+  }
 }

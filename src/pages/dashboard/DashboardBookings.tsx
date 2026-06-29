@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Plus, CalendarDays } from "lucide-react";
 import { openWhatsApp, buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl, buildBookingCancelledUrl } from "@/lib/whatsapp";
+import { validateAlgerianPhone } from "@/lib/phone/validation";
 import type { Booking, Service, StaffMember, Business, NewBookingForm } from "@/types";
 import BookingFilters from "./bookings/BookingFilters";
 import BookingRow from "./bookings/BookingRow";
@@ -229,7 +230,14 @@ const DashboardBookings = () => {
     const errors: Record<string, string> = {};
     if (!newBooking.client_name.trim()) errors.client_name = t("dashboard:bookings.validation.nameRequired");
     if (!newBooking.client_phone.trim()) errors.client_phone = t("dashboard:bookings.validation.phoneRequired");
-    else if (newBooking.client_phone.replace(/\D/g, "").length < 9) errors.client_phone = t("dashboard:bookings.validation.phoneMinDigits");
+    else {
+      const validation = validateAlgerianPhone(newBooking.client_phone);
+      if (!validation.valid) {
+        if (validation.errorCode === 'invalid_prefix') errors.client_phone = t("common:validation.phone.invalidPrefix");
+        else if (validation.errorCode === 'invalid_too_short') errors.client_phone = t("common:validation.phone.invalidTooShort");
+        else if (validation.errorCode === 'invalid_too_long') errors.client_phone = t("common:validation.phone.invalidTooLong");
+      }
+    }
     if (!newBooking.service_id) errors.service_id = t("dashboard:bookings.validation.selectService");
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -237,6 +245,7 @@ const DashboardBookings = () => {
 
   const createBooking = async () => {
     if (!business || !validateNewBooking()) return;
+    const normalizedPhone = validateAlgerianPhone(newBooking.client_phone).normalized;
     setLoading(true);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -250,7 +259,7 @@ const DashboardBookings = () => {
     const { error } = await supabase.from("bookings").insert({
       business_id: business.id,
       client_name: newBooking.client_name,
-      client_phone: newBooking.client_phone,
+      client_phone: normalizedPhone,
       service_id: newBooking.service_id || null,
       staff_member_id: newBooking.staff_member_id || null,
       date: newBooking.date,

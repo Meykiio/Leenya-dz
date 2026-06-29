@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import * as Sentry from "@sentry/react";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -23,7 +24,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    if (import.meta.env.DEV) console.error("[ErrorBoundary]", error, info.componentStack);
+    console.error("[ErrorBoundary]", error, info.componentStack);
+    Sentry.captureException(error, { contexts: { react: { componentStack: info.componentStack } } });
   }
 
   render() {

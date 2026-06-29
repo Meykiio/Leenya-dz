@@ -39,5 +39,8 @@
   "staffView.toast.bookingsLoadError": "Impossible de charger les réservations.",
   "staffView.toast.updateError": "Impossible de mettre à jour.",
   "staffView.toast.ticketTaken": "Ticket déjà pris",
-  "staffView.toast.ticketTakenDesc": "Un autre membre a déjà appelé ce ticket."
+  "staffView.toast.ticketTakenDesc": "Un autre membre a déjà appelé ce ticket.",
+  "staffView.since": "Depuis",
+  "staffView.timeJustNow": "À l'instant",
+  "staffView.timeMin": "{{mins}} min"
 }

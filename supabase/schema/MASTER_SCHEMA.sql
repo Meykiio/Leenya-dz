@@ -16,8 +16,10 @@ GRANT SELECT ON TABLE public.services TO anon;
 GRANT SELECT ON TABLE public.staff_members TO anon;
 GRANT SELECT ON TABLE public.business_hours TO anon;
 GRANT SELECT ON TABLE public.reviews TO anon;
+GRANT INSERT ON TABLE public.reviews TO anon;
 GRANT SELECT ON TABLE public.feedback TO anon;
--- No anon access to: bookings, queue_tickets, queue_counters, profiles, user_roles, whatsapp_templates, staff_services
+-- No anon access to: bookings, queue_counters, profiles, user_roles, whatsapp_templates, staff_services
+GRANT INSERT, SELECT ON TABLE public.queue_tickets TO anon;
 
 -- authenticated: per-RLS access (SELECT/INSERT/UPDATE; DELETE only where required)
 GRANT SELECT, INSERT, UPDATE ON TABLE public.businesses TO authenticated;
@@ -81,7 +83,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   phone TEXT UNIQUE,
   preferred_lang TEXT DEFAULT 'fr',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -93,7 +96,9 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   role app_role NOT NULL,
-  UNIQUE (user_id, role)
+  UNIQUE (user_id, role),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
@@ -120,7 +125,9 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   advance_booking_days INT DEFAULT 14,
   plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'business')),
   trial_ends_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  queue_capacity INT CHECK (queue_capacity IS NULL OR queue_capacity > 0),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
@@ -134,7 +141,8 @@ CREATE TABLE IF NOT EXISTS public.business_hours (
   day_of_week INT CHECK (day_of_week BETWEEN 0 AND 6) NOT NULL,
   opens_at TIME,
   closes_at TIME,
-  is_closed BOOLEAN DEFAULT false
+  is_closed BOOLEAN DEFAULT false,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.business_hours ENABLE ROW LEVEL SECURITY;
@@ -151,7 +159,8 @@ CREATE TABLE IF NOT EXISTS public.services (
   duration_minutes INT NOT NULL DEFAULT 30,
   price_dzd INT,
   is_active BOOLEAN DEFAULT true,
-  display_order INT DEFAULT 0
+  display_order INT DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
@@ -166,7 +175,8 @@ CREATE TABLE IF NOT EXISTS public.staff_members (
   display_name TEXT NOT NULL,
   avatar_url TEXT,
   is_active BOOLEAN DEFAULT true,
-  accepts_bookings BOOLEAN DEFAULT true
+  accepts_bookings BOOLEAN DEFAULT true,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.staff_members ENABLE ROW LEVEL SECURITY;
@@ -193,7 +203,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
   staff_member_id UUID REFERENCES public.staff_members(id) ON DELETE SET NULL,
   client_id UUID REFERENCES public.profiles(id),
   client_name TEXT NOT NULL,
-  client_phone TEXT NOT NULL,
+  client_phone TEXT NOT NULL CHECK (client_phone ~ '^0(5|6|7)[0-9]{8}$'),
   date DATE NOT NULL,
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
@@ -201,7 +211,8 @@ CREATE TABLE IF NOT EXISTS public.bookings (
   notes TEXT,
   booking_token UUID DEFAULT gen_random_uuid(),
   reminder_sent BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
@@ -229,7 +240,7 @@ CREATE TABLE IF NOT EXISTS public.queue_tickets (
   staff_member_id UUID REFERENCES public.staff_members(id) ON DELETE SET NULL,
   client_id UUID REFERENCES public.profiles(id),
   client_name TEXT NOT NULL,
-  client_phone TEXT NOT NULL,
+  client_phone TEXT NOT NULL CHECK (client_phone ~ '^0(5|6|7)[0-9]{8}$'),
   ticket_number INT NOT NULL,
   ticket_label TEXT NOT NULL,
   queue_date DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -238,7 +249,8 @@ CREATE TABLE IF NOT EXISTS public.queue_tickets (
   position_in_queue INT,
   called_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.queue_tickets ENABLE ROW LEVEL SECURITY;
@@ -250,10 +262,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   business_id UUID REFERENCES public.businesses(id) NOT NULL,
   booking_id UUID REFERENCES public.bookings(id),
-  client_id UUID REFERENCES public.profiles(id) NOT NULL,
+  client_id UUID REFERENCES public.profiles(id),
+  ticket_id UUID REFERENCES public.queue_tickets(id),
   rating INT CHECK (rating BETWEEN 1 AND 5) NOT NULL,
   comment TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
@@ -307,7 +321,7 @@ FROM public.bookings;
 -- -----------------------------------------------------------
 -- has_role — SECURITY DEFINER to avoid recursive RLS
 -- -----------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role app_role)
+CREATE OR REPLACE FUNCTION public.has_role(_role app_role)
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
@@ -315,21 +329,21 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role
+    SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = _role
   )
 $$;
 
 -- -----------------------------------------------------------
 -- get_user_role
 -- -----------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.get_user_role(_user_id UUID)
+CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS app_role
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT role FROM public.user_roles WHERE user_id = _user_id LIMIT 1
+  SELECT role FROM public.user_roles WHERE user_id = auth.uid() LIMIT 1
 $$;
 
 -- -----------------------------------------------------------
@@ -465,19 +479,19 @@ $$;
 -- -----------------------------------------------------------
 -- assign_owner_role — SECURITY DEFINER to bypass RLS for onboarding
 -- -----------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.assign_owner_role(p_user_id UUID)
+CREATE OR REPLACE FUNCTION public.assign_owner_role()
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 BEGIN
   INSERT INTO public.user_roles (user_id, role)
-  VALUES (p_user_id, 'owner'::app_role)
+  VALUES (auth.uid(), 'owner'::app_role)
   ON CONFLICT (user_id, role) DO NOTHING;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.assign_owner_role(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_owner_role() TO authenticated;
 
 -- -----------------------------------------------------------
 -- create_staff_user — SECURITY DEFINER to bypass RLS for staff account creation
@@ -492,9 +506,24 @@ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 DECLARE
+  v_business_id UUID;
   v_existing_id UUID;
   v_user_id UUID;
 BEGIN
+  -- Get the business this staff member belongs to
+  SELECT business_id INTO v_business_id FROM public.staff_members WHERE id = p_staff_id;
+  IF v_business_id IS NULL THEN
+    RAISE EXCEPTION 'Staff member not found';
+  END IF;
+
+  -- Verify caller owns the business
+  IF NOT EXISTS (
+    SELECT 1 FROM public.businesses
+    WHERE id = v_business_id AND owner_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'Not authorized to create staff for this business';
+  END IF;
+
   -- If auth user for this email already exists, just link staff to it
   SELECT id INTO v_existing_id FROM auth.users WHERE email = p_email;
   IF v_existing_id IS NOT NULL THEN
@@ -547,25 +576,24 @@ GRANT EXECUTE ON FUNCTION public.create_staff_user(UUID, TEXT, TEXT) TO authenti
 -- -----------------------------------------------------------
 -- upsert_profile — SECURITY DEFINER to bypass RLS for onboarding
 -- -----------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.upsert_profile(p_id UUID, p_full_name TEXT)
+CREATE OR REPLACE FUNCTION public.upsert_profile(p_full_name TEXT)
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name)
-  VALUES (p_id, p_full_name)
+  VALUES (auth.uid(), p_full_name)
   ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.upsert_profile(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.upsert_profile(TEXT) TO authenticated;
 
 -- -----------------------------------------------------------
 -- upsert_business — SECURITY DEFINER to bypass RLS for onboarding
 -- -----------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.upsert_business(
-  p_owner_id UUID,
   p_name TEXT,
   p_slug TEXT,
   p_phone TEXT,
@@ -580,8 +608,9 @@ SET search_path = 'public'
 AS $$
 DECLARE
   v_id UUID;
+  v_owner_id UUID := auth.uid();
 BEGIN
-  SELECT id INTO v_id FROM public.businesses WHERE owner_id = p_owner_id LIMIT 1;
+  SELECT id INTO v_id FROM public.businesses WHERE owner_id = v_owner_id LIMIT 1;
 
   IF v_id IS NOT NULL THEN
     UPDATE public.businesses SET
@@ -595,7 +624,7 @@ BEGIN
     WHERE id = v_id;
   ELSE
     INSERT INTO public.businesses (owner_id, name, slug, phone, address, wilaya_code, wilaya_name, category)
-    VALUES (p_owner_id, p_name, p_slug, p_phone, p_address, p_wilaya_code, p_wilaya_name, p_category)
+    VALUES (v_owner_id, p_name, p_slug, p_phone, p_address, p_wilaya_code, p_wilaya_name, p_category)
     RETURNING id INTO v_id;
   END IF;
 
@@ -613,7 +642,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.upsert_business(UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, public.business_category) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.upsert_business(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, public.business_category) TO authenticated;
 
 -- -----------------------------------------------------------
 -- insert_services — SECURITY DEFINER to bypass RLS for onboarding
@@ -627,6 +656,13 @@ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.businesses
+    WHERE id = p_business_id AND owner_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'Not authorized to modify services for this business';
+  END IF;
+
   INSERT INTO public.services (business_id, name, duration_minutes, price_dzd, display_order)
   SELECT p_business_id, s.name, s.duration_minutes, s.price_dzd, s.display_order
   FROM jsonb_to_recordset(p_services) AS s(name TEXT, duration_minutes INT, price_dzd INT, display_order INT);
@@ -809,13 +845,21 @@ GRANT EXECUTE ON FUNCTION public.cancel_booking_by_token(UUID, UUID) TO anon, au
 GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authenticated;
 
 -- Authenticated-only RPCs
-GRANT EXECUTE ON FUNCTION public.get_user_role(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_role() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_role(public.app_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_monthly_business_counts(UUID) TO authenticated;
 
--- Explicitly revoke EXECUTE on trigger-only functions (not RPCs)
-REVOKE EXECUTE ON FUNCTION public.check_business_limits() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.check_staff_plan_limit() FROM anon;
+-- Revoke PUBLIC EXECUTE on trigger-only functions (REST API shouldn't call them directly)
+REVOKE EXECUTE ON FUNCTION public.check_business_limits() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_staff_plan_limit() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_booking_overlap() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_booking_service_business() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_business_hours() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_past_booking() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_insert_rate_limit() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_queue_ticket_state_transition() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_booking_state_transition() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
 
 -- -----------------------------------------------------------
 -- check_business_limits — enforces per-plan monthly caps with trial support
@@ -1146,6 +1190,22 @@ Laissez-nous un avis: {review_link}'::TEXT,
     )
 $$;
 
+-- -----------------------------------------------------------
+-- update_updated_at_column — auto-set updated_at on row change
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = 'public'
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.update_updated_at_column() FROM PUBLIC;
+
 -- ============================================================
 -- TRIGGERS
 -- ============================================================
@@ -1176,20 +1236,20 @@ CREATE TRIGGER trg_rate_limit_queue
   FOR EACH ROW EXECUTE FUNCTION public.check_insert_rate_limit();
 
 -- Business limits on bookings
-DROP TRIGGER IF EXISTS trg_business_limits_bookings ON public.bookings;
-CREATE TRIGGER trg_business_limits_bookings
+DROP TRIGGER IF EXISTS check_plan_limit_trigger ON public.bookings;
+CREATE TRIGGER check_plan_limit_trigger
   BEFORE INSERT ON public.bookings
   FOR EACH ROW EXECUTE FUNCTION public.check_business_limits();
 
 -- Business limits on queue tickets
-DROP TRIGGER IF EXISTS trg_business_limits_queue ON public.queue_tickets;
-CREATE TRIGGER trg_business_limits_queue
+DROP TRIGGER IF EXISTS check_plan_limit_queue_trigger ON public.queue_tickets;
+CREATE TRIGGER check_plan_limit_queue_trigger
   BEFORE INSERT ON public.queue_tickets
   FOR EACH ROW EXECUTE FUNCTION public.check_business_limits();
 
 -- Staff plan limit
-DROP TRIGGER IF EXISTS trg_staff_plan_limit ON public.staff_members;
-CREATE TRIGGER trg_staff_plan_limit
+DROP TRIGGER IF EXISTS check_staff_plan_limit_trigger ON public.staff_members;
+CREATE TRIGGER check_staff_plan_limit_trigger
   BEFORE INSERT ON public.staff_members
   FOR EACH ROW EXECUTE FUNCTION public.check_staff_plan_limit();
 
@@ -1223,6 +1283,57 @@ CREATE TRIGGER check_booking_state_transition_trigger
   BEFORE UPDATE OF status ON public.bookings
   FOR EACH ROW EXECUTE FUNCTION public.check_booking_state_transition();
 
+-- Auto-update updated_at on row modification
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON public.profiles;
+CREATE TRIGGER trg_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_user_roles_updated_at ON public.user_roles;
+CREATE TRIGGER trg_user_roles_updated_at
+  BEFORE UPDATE ON public.user_roles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_businesses_updated_at ON public.businesses;
+CREATE TRIGGER trg_businesses_updated_at
+  BEFORE UPDATE ON public.businesses
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_business_hours_updated_at ON public.business_hours;
+CREATE TRIGGER trg_business_hours_updated_at
+  BEFORE UPDATE ON public.business_hours
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_services_updated_at ON public.services;
+CREATE TRIGGER trg_services_updated_at
+  BEFORE UPDATE ON public.services
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_staff_members_updated_at ON public.staff_members;
+CREATE TRIGGER trg_staff_members_updated_at
+  BEFORE UPDATE ON public.staff_members
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_bookings_updated_at ON public.bookings;
+CREATE TRIGGER trg_bookings_updated_at
+  BEFORE UPDATE ON public.bookings
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_queue_tickets_updated_at ON public.queue_tickets;
+CREATE TRIGGER trg_queue_tickets_updated_at
+  BEFORE UPDATE ON public.queue_tickets
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_reviews_updated_at ON public.reviews;
+CREATE TRIGGER trg_reviews_updated_at
+  BEFORE UPDATE ON public.reviews
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_whatsapp_templates_updated_at ON public.whatsapp_templates;
+CREATE TRIGGER trg_whatsapp_templates_updated_at
+  BEFORE UPDATE ON public.whatsapp_templates
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 -- ============================================================
 -- RLS POLICIES
 -- ============================================================
@@ -1249,9 +1360,7 @@ DROP POLICY IF EXISTS "Users can read their own roles" ON public.user_roles;
 CREATE POLICY "Users can read their own roles" ON public.user_roles
   FOR SELECT USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can insert their own role" ON public.user_roles;
-CREATE POLICY "Users can insert their own role" ON public.user_roles
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 
 -- -----------------------------------------------------------
 -- businesses
@@ -1522,9 +1631,14 @@ DROP POLICY IF EXISTS "Public can view reviews" ON public.reviews;
 CREATE POLICY "Public can view reviews" ON public.reviews
   FOR SELECT USING (true);
 
-DROP POLICY IF EXISTS "Clients can insert reviews" ON public.reviews;
-CREATE POLICY "Clients can insert reviews" ON public.reviews
-  FOR INSERT WITH CHECK (auth.uid() = client_id);
+DROP POLICY IF EXISTS "Anyone can insert reviews" ON public.reviews;
+CREATE POLICY "Anyone can insert reviews" ON public.reviews
+  FOR INSERT TO anon, authenticated
+  WITH CHECK (
+    (client_id IS NULL AND ticket_id IS NOT NULL)
+    OR
+    (auth.uid() = client_id)
+  );
 
 DROP POLICY IF EXISTS "Clients can update own reviews" ON public.reviews;
 CREATE POLICY "Clients can update own reviews" ON public.reviews
@@ -1670,6 +1784,7 @@ GRANT SELECT ON TABLE public.services TO anon;
 GRANT SELECT ON TABLE public.staff_members TO anon;
 GRANT SELECT ON TABLE public.business_hours TO anon;
 GRANT SELECT ON TABLE public.reviews TO anon;
+GRANT INSERT ON TABLE public.reviews TO anon;
 GRANT SELECT ON TABLE public.feedback TO anon;
 
 -- authenticated: per-RLS access (SELECT/INSERT/UPDATE; DELETE only where required)
@@ -1720,6 +1835,11 @@ CREATE INDEX IF NOT EXISTS idx_bookings_overlap_check ON public.bookings (busine
 CREATE INDEX IF NOT EXISTS idx_queue_tickets_business_date_ticket ON public.queue_tickets (business_id, queue_date, ticket_number);
 CREATE INDEX IF NOT EXISTS idx_bookings_staff_date ON public.bookings (business_id, staff_member_id, date);
 CREATE INDEX IF NOT EXISTS idx_queue_tickets_staff_date ON public.queue_tickets (business_id, staff_member_id, queue_date);
+
+-- Unique position constraint (prevents duplicate queue positions)
+CREATE UNIQUE INDEX IF NOT EXISTS queue_tickets_position_unique
+  ON public.queue_tickets (business_id, queue_date, position_in_queue)
+  WHERE position_in_queue IS NOT NULL;
 
 -- Double-queue-join prevention (2026-06-26)
 -- Only one active ticket per phone per day at the same business

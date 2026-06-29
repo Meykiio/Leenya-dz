@@ -55,7 +55,6 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
       // Upsert business + hours via SECURITY DEFINER RPC (bypasses RLS)
       const { data: biz, error: bizError } = await supabase
         .rpc("upsert_business", {
-          p_owner_id: user.id,
           p_name: businessName.trim(),
           p_slug: slug,
           p_phone: businessPhone.trim(),

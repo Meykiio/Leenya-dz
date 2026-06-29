@@ -39,5 +39,8 @@
   "staffView.toast.bookingsLoadError": "تعذر تحميل الحجوزات.",
   "staffView.toast.updateError": "تعذر التحديث.",
   "staffView.toast.ticketTaken": "التذكرة تم أخذها بالفعل",
-  "staffView.toast.ticketTakenDesc": "قام عضو آخر بالفعل باستدعاء هذه التذكرة."
+  "staffView.toast.ticketTakenDesc": "قام عضو آخر بالفعل باستدعاء هذه التذكرة.",
+  "staffView.since": "منذ",
+  "staffView.timeJustNow": "الآن",
+  "staffView.timeMin": "{{mins}} د"
 }

@@ -10,7 +10,11 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io; img-src 'self' data: https://*.supabase.co; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'" }
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://ieuhknpdhjvuuwtpsguw.supabase.co" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io; img-src 'self' data: https://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://d8jnt0lcm91z4.cloudfront.net; frame-ancestors 'none'; base-uri 'self'" }
       ]
     }
   ]

@@ -13,6 +13,7 @@ export interface BusinessInfo {
 
 /**
  * Hook to fetch the current user's business info (name, slug, category, phone).
+ * First checks `businesses` by owner_id, then falls back to `staff_members` join.
  * Returns the business data and a loading flag. Refetches when the user changes.
  */
 export function useBusinessInfo() {
@@ -22,16 +23,40 @@ export function useBusinessInfo() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("businesses")
-      .select("id, name, slug, category, phone")
-      .eq("owner_id", user.id)
-      .limit(1)
-      .single()
-      .then(({ data }) => {
-        setBusiness(data as BusinessInfo | null);
+
+    const fetchBusiness = async () => {
+      setLoading(true);
+
+      const { data: ownerBiz } = await supabase
+        .from("businesses")
+        .select("id, name, slug, category, phone")
+        .eq("owner_id", user.id)
+        .limit(1)
+        .single();
+
+      if (ownerBiz) {
+        setBusiness(ownerBiz as BusinessInfo);
         setLoading(false);
-      });
+        return;
+      }
+
+      const { data: staffBiz } = await supabase
+        .from("staff_members")
+        .select("businesses!inner(id, name, slug, category, phone)")
+        .eq("profile_id", user.id)
+        .limit(1)
+        .single();
+
+      if (staffBiz) {
+        const biz = staffBiz.businesses as unknown as BusinessInfo;
+        setBusiness(biz);
+      } else {
+        setBusiness(null);
+      }
+      setLoading(false);
+    };
+
+    fetchBusiness();
   }, [user]);
 
   return { business, loading };

@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { openWhatsApp, buildQueueCalledUrl } from "@/lib/whatsapp";
+import { validateAlgerianPhone } from "@/lib/phone/validation";
 import { Plus, Tv, Users2 } from "lucide-react";
 import type { QueueTicket, Service } from "@/types";
 import QueueWaitingList from "./queue/QueueWaitingList";
@@ -152,17 +153,24 @@ const DashboardQueue = () => {
 
   const addToQueue = async () => {
     if (!business || !newClient.name || !newClient.phone) return;
-    if (newClient.phone.replace(/\D/g, "").length < 9) {
-      toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.phoneMinDigits"), variant: "destructive" });
+    const phoneResult = validateAlgerianPhone(newClient.phone);
+    if (!phoneResult.valid) {
+      let msg: string
+      if (phoneResult.errorCode === 'invalid_prefix') msg = t("common:validation.phone.invalidPrefix");
+      else if (phoneResult.errorCode === 'invalid_too_short') msg = t("common:validation.phone.invalidTooShort");
+      else if (phoneResult.errorCode === 'invalid_too_long') msg = t("common:validation.phone.invalidTooLong");
+      else msg = t("dashboard:queue.errors.phoneMinDigits");
+      toast({ title: t("dashboard:labels.error"), description: msg, variant: "destructive" });
       return;
     }
+    const normalizedPhone = phoneResult.normalized;
     setLoading(true);
 
     const { data: existing } = await supabase
       .from("queue_tickets")
       .select("id, ticket_label")
       .eq("business_id", business.id)
-      .eq("client_phone", newClient.phone)
+      .eq("client_phone", phoneResult.normalized)
       .eq("queue_date", today)
       .in("status", ["waiting", "called", "in_service"])
       .maybeSingle();
@@ -191,7 +199,7 @@ const DashboardQueue = () => {
     const { error } = await supabase.from("queue_tickets").insert({
       business_id: business.id,
       client_name: newClient.name,
-      client_phone: newClient.phone,
+      client_phone: normalizedPhone,
       service_id: newClient.service_id || null,
       staff_member_id: newClient.staff_member_id || null,
       ticket_number: ticket_num,

@@ -638,6 +638,23 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 - Vitest setup with jsdom
 - Tests for: slugify, timeSlots, queue system, booking overlap, rate limiting
 
+## 2026-06-29 — Bug Bash: Staff Flow UX & Review Collection
+
+### Fixes
+- **Phone input `+213` prefix removed** — removed country code label from StepDetails.tsx and QueueFlow.tsx (user-facing confusion)
+- **StaffView No Show hidden during service** — removed No Show button from `in_service` ticket cards (irrelevant once customer is being served)
+- **Queue join 401 fixed** — added missing `GRANT INSERT, SELECT ON queue_tickets TO anon` so public (non-auth) users can join queues; RLS policies existed but table-level GRANT was missing
+- **`in_service` state added to TicketTracker** — when staff clicks Start, user sees "Enjoy your service!" message instead of stale "Your turn!" banner; removes queue stats (no longer relevant)
+- **Post-service review collection** — when ticket status transitions to `completed`, user sees star rating (1-5) + optional comment form; after submit, stores in `reviews` table with `ticket_id` linkage; supports skip
+- **Reviews table relaxed** — `client_id` made nullable (for non-auth queue users), `ticket_id` column added (FK to queue_tickets), anon INSERT policy + GRANT added
+
+### Database
+- Migration `fix_anon_queue_insert_and_reviews` applied
+- MASTER_SCHEMA.sql updated: reviews.`client_id` nullable, reviews.`ticket_id` added, GRANTs for anon on queue_tickets + reviews INSERT, RLS policy "Anyone can insert reviews"
+
+### Build
+- `npm run build` passes with zero errors
+
 ---
 
 ## Pre-2026-03-08 — Initial Scaffold
