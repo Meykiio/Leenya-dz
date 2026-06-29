@@ -1607,6 +1607,17 @@ CREATE POLICY "Anon can cancel own ticket"
   USING (client_id IS NULL)
   WITH CHECK (client_id IS NULL AND status = 'cancelled');
 
+DROP POLICY IF EXISTS "Authenticated users can view own ticket" ON public.queue_tickets;
+CREATE POLICY "Authenticated users can view own ticket" ON public.queue_tickets
+  FOR SELECT TO authenticated
+  USING (status IN ('waiting', 'called', 'in_service', 'completed'));
+
+DROP POLICY IF EXISTS "Authenticated users can cancel own ticket" ON public.queue_tickets;
+CREATE POLICY "Authenticated users can cancel own ticket" ON public.queue_tickets
+  FOR UPDATE TO authenticated
+  USING (client_id = auth.uid())
+  WITH CHECK (client_id = auth.uid() AND status = 'cancelled');
+
 -- -----------------------------------------------------------
 -- queue_counters
 -- -----------------------------------------------------------
