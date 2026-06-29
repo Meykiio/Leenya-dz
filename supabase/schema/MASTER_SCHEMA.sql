@@ -1589,6 +1589,11 @@ DROP POLICY IF EXISTS "Public can insert queue tickets" ON public.queue_tickets;
 CREATE POLICY "Public can insert queue tickets" ON public.queue_tickets
   FOR INSERT TO anon WITH CHECK (client_id IS NULL);
 
+DROP POLICY IF EXISTS "Authenticated users can insert queue tickets" ON public.queue_tickets;
+CREATE POLICY "Authenticated users can insert queue tickets" ON public.queue_tickets
+  FOR INSERT TO authenticated
+  WITH CHECK ((client_id IS NULL) OR (auth.uid() = client_id));
+
 -- Fixed: scoped to active statuses only (replaces the old open USING (true))
 DROP POLICY IF EXISTS "Anon can view own ticket by id" ON public.queue_tickets;
 CREATE POLICY "Anon can view own ticket by id"
