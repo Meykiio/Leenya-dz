@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { ArrowRight } from "lucide-react";
 
 export default function BottomCta() {
   const { t } = useTranslation();
@@ -28,9 +29,14 @@ export default function BottomCta() {
         <span className="text-white/20 text-sm">·</span>
         <Link
           to={session ? "/dashboard" : "/login"}
-          className="bg-[#7b39fc] hover:bg-[#6828e8] rounded-full px-4 py-1.5 text-white text-[13px] font-semibold transition-all duration-200"
+          className="bg-[#7b39fc] hover:bg-[#6828e8] rounded-full px-4 py-1.5 text-white text-[13px] font-semibold transition-all duration-200 flex items-center gap-1"
         >
-          {session ? t("landing:bottomCta.dashboard") : t("landing:bottomCta.createAccount")}
+          <span className="sm:hidden">
+            <ArrowRight className="h-4 w-4" />
+          </span>
+          <span className="hidden sm:inline">
+            {session ? t("landing:bottomCta.dashboard") : t("landing:bottomCta.createAccount")}
+          </span>
         </Link>
       </div>
     </div>

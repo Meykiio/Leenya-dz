@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Plus, CalendarDays } from "lucide-react";
-import { buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl, buildBookingCancelledUrl } from "@/lib/whatsapp";
+import { openWhatsApp, buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl, buildBookingCancelledUrl } from "@/lib/whatsapp";
 import type { Booking, Service, StaffMember, Business, NewBookingForm } from "@/types";
 import BookingFilters from "./bookings/BookingFilters";
 import BookingRow from "./bookings/BookingRow";
@@ -184,7 +184,7 @@ const DashboardBookings = () => {
           booking.services?.name || "Service",
           businessDetails.address ?? null
         );
-        window.open(url, "_blank");
+        openWhatsApp(url);
       }
     }
   };
@@ -207,7 +207,7 @@ const DashboardBookings = () => {
         booking.start_time?.slice(0, 5),
         booking.services?.name || "Service"
       );
-      window.open(url, "_blank");
+      openWhatsApp(url);
     }
   };
 
@@ -222,7 +222,7 @@ const DashboardBookings = () => {
       businessDetails.address ?? null,
       businessDetails.phone ?? null
     );
-    window.open(url, "_blank");
+    openWhatsApp(url);
   };
 
   const validateNewBooking = () => {
@@ -290,7 +290,7 @@ const DashboardBookings = () => {
       businessDetails?.address ?? null,
       b.id
     );
-    window.open(url, "_blank");
+    openWhatsApp(url);
   };
 
   return (

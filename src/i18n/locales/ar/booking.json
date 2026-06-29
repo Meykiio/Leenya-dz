@@ -29,6 +29,7 @@
   "appointmentFlow.toast.linkCopied": "تم نسخ الرابط",
   "appointmentFlow.toast.linkCopiedDesc": "تم نسخ رابط التتبع.",
   "appointmentFlow.phoneError": "يجب أن يحتوي الرقم على 9 أرقام على الأقل",
+  "appointmentFlow.stepIndicator": "الخطوة {{current}} من {{total}}",
   "appointmentFlow.stepService.title": "اختر خدمة",
   "appointmentFlow.stepService.continue": "متابعة",
   "appointmentFlow.stepStaff.title": "اختر عضو فريق",

@@ -256,6 +256,11 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
   return (
     <div className="px-5 py-5">
       {step !== "confirmed" && (
+        <p className="text-xs text-center text-[var(--text-tertiary)] mb-2">
+          {t("booking:appointmentFlow.stepIndicator", { current: currentStepIndex + 1, total: allSteps.length })}
+        </p>
+      )}
+      {step !== "confirmed" && (
         <div className="flex items-center justify-center gap-1 mb-6">
           {allSteps.map((s, i) => (
             <div key={s.key} className="flex items-center gap-1">

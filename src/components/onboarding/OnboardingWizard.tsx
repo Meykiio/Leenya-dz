@@ -28,7 +28,7 @@ const OnboardingWizard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { refreshRole } = useAuth();
-  const STEPS = [t("auth:onboarding.stepName"), t("auth:onboarding.stepType"), t("auth:onboarding.stepBusiness"), t("auth:onboarding.stepServices")];
+  const STEPS = [t("auth:onboarding.stepName"), t("auth:onboarding.stepType"), t("auth:onboarding.stepDetails"), t("auth:onboarding.stepServices")];
   const [step, setStep] = useState(0);
   const [data, setData] = useState<Partial<OnboardingData>>({});
   const [showWelcome, setShowWelcome] = useState(false);

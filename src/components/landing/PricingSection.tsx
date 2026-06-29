@@ -124,11 +124,11 @@ const PricingSection = () => {
                 </p>
 
                 <div className="mt-3 mb-5">
-                  <span className="font-mono text-[32px] font-bold text-foreground">
+                  <span className="font-mono text-[32px] font-bold text-foreground" dir="ltr">
                     {annual ? plan.annualPrice : plan.monthlyPrice}
                   </span>
                   {plan.nameKey !== "pricing.free" && (
-                    <span className="text-[13px] text-muted-foreground ml-1">
+                    <span className="text-[13px] text-muted-foreground ms-1">
                       {annual ? t("landing:pricing.perYear") : t("landing:pricing.perMonth")}
                     </span>
                   )}

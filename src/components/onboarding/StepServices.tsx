@@ -80,7 +80,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("onboarding add services failed:", err);
-      toast({ title: t("common:toast.error"), description: t("auth:onboarding.errorAddServices"), variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:onboarding.services.error"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -90,16 +90,16 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          {t("auth:onboarding.servicesTitle")}
+          {t("auth:onboarding.services.title")}
         </h2>
         <p className="text-muted-foreground mt-2">
-          {t("auth:onboarding.servicesSubtitle")}
+          {t("auth:onboarding.services.subtitle")}
         </p>
       </div>
 
       {/* Suggestions */}
       <div className="max-w-lg mx-auto space-y-3">
-        <p className="text-sm font-medium text-foreground">{t("auth:onboarding.suggestedServices")}</p>
+        <p className="text-sm font-medium text-foreground">{t("auth:onboarding.services.suggested")}</p>
         <div className="space-y-2">
           {suggestions.map((s) => {
             const added = services.some((sv) => sv.name === s.name);
@@ -136,7 +136,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
         {/* Added services */}
         {services.filter((s) => !suggestions.some((sg) => sg.name === s.name)).length > 0 && (
           <div className="space-y-2 mt-4">
-            <p className="text-sm font-medium text-foreground">{t("auth:onboarding.customServices")}</p>
+            <p className="text-sm font-medium text-foreground">{t("auth:onboarding.services.custom")}</p>
             {services
               .filter((s) => !suggestions.some((sg) => sg.name === s.name))
               .map((s) => (

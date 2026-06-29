@@ -29,6 +29,7 @@
   "appointmentFlow.toast.linkCopied": "Lien copi\u00e9",
   "appointmentFlow.toast.linkCopiedDesc": "Le lien de suivi a \u00e9t\u00e9 copi\u00e9.",
   "appointmentFlow.phoneError": "Le num\u00e9ro doit contenir au moins 9 chiffres",
+  "appointmentFlow.stepIndicator": "Etape {{current}} sur {{total}}",
   "appointmentFlow.stepService.title": "Choisissez un service",
   "appointmentFlow.stepService.continue": "Continuer",
   "appointmentFlow.stepStaff.title": "Choisir un membre de l'equipe",

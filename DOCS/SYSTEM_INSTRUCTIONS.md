@@ -91,19 +91,15 @@ See `DOCS/AI_CONTEXT.md` → File Map for the complete reference. Key files:
 2. Verify Supabase email confirmation setting (currently ON)
 
 ### P1 — High Priority
-3. Add step indicator UI in AppointmentFlow
-4. Verify ResetPassword email flow
-5. Loading skeletons for slow pages
+3. Verify ResetPassword email flow
+4. Loading skeletons for slow pages
 
-### P2 — Security Hardening
-6. RLS PERMISSIVE → RESTRICTIVE
-7. Fix blanket grants → per-table
-8. Storage bucket public listing
-9. Enable leaked password protection
-10. Fix 17 queries missing business_id scope
+### P2 — Security Hardening (Still Open)
+5. RLS PERMISSIVE → RESTRICTIVE (Phase 2b)
+6. Enable leaked password protection (requires Supabase Pro)
 
 ### P3 — Monetization
-11. Payment processing integration
+7. Payment processing integration
 
 ---
 
@@ -148,22 +144,26 @@ npx tsc --noEmit # Type-check only
 - **Phase 2a Doctor audit fixes:** C-001/C-002 (PII leak → RPC-based access), C-003 (anon cancel → dropped), H-001 (role self-insert → dropped), H-005 (business hours → trigger), H-007 (state machine → triggers), H-008 (anon cancel → RPC), H-009 (SECURITY DEFINER → EXECUTE revoked), C-005 (vitest CVE), H-003 (npm audit 19→2). See `doctor/reports/FINAL_AUDIT.md`.
 - **Security model updated:** Public queue/booking access now via RPCs (not direct table queries). See `src/components/booking/TicketTracker.tsx`, `src/pages/QueueDisplay.tsx`, `src/pages/BookingTrack.tsx`.
 
-### Pre-Existing Gaps (Not Fixed — See Phase 2b)
+### Pre-Existing Gaps (Not Fixed — See Phase 2b / Next)
 
-- RLS policies are PERMISSIVE (need AS RESTRICTIVE) — Phase 2b
-- Blanket per-table grants (need per-table replacement) — Phase 2b
-- Storage bucket `business-assets` allows public listing — Phase 2b
-- Leaked password protection disabled — Phase 2b
-- Error messages leak schema details — Phase 2b
-- 17 queries missing `business_id` scope — Phase 2b
-- 38 lint errors (`@typescript-eslint/no-explicit-any`) — Phase 2b
-- `.env` in git history — Phase 2b
-- No step indicator UI in AppointmentFlow
-- `getInitials()` and `getAvatarColor()` duplicated in AppointmentFlow.tsx and DashboardStaff.tsx
-- Analytics delta display may divide by zero
-- WhatsApp variable format may be fragile
+- RLS policies are PERMISSIVE (need AS RESTRICTIVE)
+- Leaked password protection disabled (requires Supabase Pro)
+- Error messages leak schema details
 - No error boundaries on major page sections
 - No loading skeletons (spinners only)
+
+### ✅ Fixed in Phase 4 (Launch Prep)
+- Blanket per-table grants → explicit per-table grants (✅ B1)
+- Storage bucket public listing — already fixed (✅ B2)
+- 17 queries missing business_id — all scoped (✅ B3)
+- 38 lint errors — now 0 warnings (✅ C3)
+- `.env` in git history — already gitignored (✅ C2)
+- Step indicator UI in AppointmentFlow (✅ A3)
+- Analytics delta display divide-by-zero — already guarded (✅ A4)
+- WhatsApp variable format — now uses native JS array (✅ A5)
+- Default booking view → upcoming (✅ A1 — already done)
+- Default public tab → queue (✅ A2 — already done)
+- Unused @tanstack/react-query removed (✅ C1)
 
 ### AI Agent Behavior Rules
 

@@ -29,10 +29,10 @@ const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeP
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-[20px] font-bold text-foreground tracking-tight">
-          {t("auth:onboarding.businessTypeTitle")}
+          {t("auth:onboarding.type.title")}
         </h2>
         <p className="text-[14px] text-muted-foreground mt-1.5">
-          {t("auth:onboarding.businessTypeSubtitle")}
+          {t("auth:onboarding.type.subtitle")}
         </p>
       </div>
 

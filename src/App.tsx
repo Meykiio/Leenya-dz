@@ -2,7 +2,6 @@ import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -34,8 +33,6 @@ const DashboardSettings = React.lazy(() => import("@/pages/dashboard/DashboardSe
 const DashboardAnalytics = React.lazy(() => import("@/pages/dashboard/DashboardAnalytics"));
 const DashboardFeedback = React.lazy(() => import("@/pages/dashboard/DashboardFeedback"));
 
-const queryClient = new QueryClient();
-
 /** Spinner shown as a Suspense fallback while lazy-loaded page chunks load. */
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
@@ -47,7 +44,6 @@ const PageLoader = () => (
  * Root application component.
  * Sets up:
  * - Error boundaries at multiple nesting levels
- * - React Query client provider
  * - Auth provider (Supabase session + role)
  * - Tooltip provider and toast/sonner toasters
  * - React Router with lazy-loaded public, client, owner dashboard, staff, and display routes
@@ -55,62 +51,60 @@ const PageLoader = () => (
  */
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <AuthProvider>
-          <ErrorBoundary>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <ErrorBoundary>
-                <BrowserRouter>
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      {/* Public routes */}
-                      <Route path="/" element={<Landing />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/onboarding" element={<Onboarding />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/booking/track/:token" element={<BookingTrack />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <ErrorBoundary>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <ErrorBoundary>
+              <BrowserRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/onboarding" element={<Onboarding />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/booking/track/:token" element={<BookingTrack />} />
 
-                      {/* Client routes */}
-                      <Route path="/mes-reservations" element={<ProtectedRoute allowedRoles={["client"]}><MyBookings /></ProtectedRoute>} />
+                    {/* Client routes */}
+                    <Route path="/mes-reservations" element={<ProtectedRoute allowedRoles={["client"]}><MyBookings /></ProtectedRoute>} />
 
-                      {/* Owner dashboard routes — layout route keeps DashboardLayout + sidebar mounted */}
-                      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardLayout><Outlet /></DashboardLayout></ProtectedRoute>}>
-                        <Route index element={<Dashboard />} />
-                        <Route path="bookings" element={<DashboardBookings />} />
-                        <Route path="queue" element={<DashboardQueue />} />
-                        <Route path="services" element={<DashboardServices />} />
-                        <Route path="staff" element={<DashboardStaff />} />
-                        <Route path="settings" element={<DashboardSettings />} />
-                        <Route path="analytics" element={<DashboardAnalytics />} />
-                        <Route path="feedback" element={<DashboardFeedback />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Route>
-
-                      {/* Staff routes */}
-                      <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff", "owner"]}><StaffView /></ProtectedRoute>} />
-
-                      {/* TV display mode */}
-                      <Route path="/display/:slug" element={<QueueDisplay />} />
-
-                      {/* Public business routes — MUST be last before catch-all */}
-                      <Route path="/terms" element={<TermsOfService />} />
-                      <Route path="/privacy" element={<PrivacyPolicy />} />
-                      <Route path="/:slug/queue" element={<QueuePublic />} />
-                      <Route path="/:slug" element={<BusinessPublic />} />
-
+                    {/* Owner dashboard routes — layout route keeps DashboardLayout + sidebar mounted */}
+                    <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardLayout><Outlet /></DashboardLayout></ProtectedRoute>}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="bookings" element={<DashboardBookings />} />
+                      <Route path="queue" element={<DashboardQueue />} />
+                      <Route path="services" element={<DashboardServices />} />
+                      <Route path="staff" element={<DashboardStaff />} />
+                      <Route path="settings" element={<DashboardSettings />} />
+                      <Route path="analytics" element={<DashboardAnalytics />} />
+                      <Route path="feedback" element={<DashboardFeedback />} />
                       <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </ErrorBoundary>
-            </TooltipProvider>
-          </ErrorBoundary>
-        </AuthProvider>
-      </ErrorBoundary>
-    </QueryClientProvider>
+                    </Route>
+
+                    {/* Staff routes */}
+                    <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff", "owner"]}><StaffView /></ProtectedRoute>} />
+
+                    {/* TV display mode */}
+                    <Route path="/display/:slug" element={<QueueDisplay />} />
+
+                    {/* Public business routes — MUST be last before catch-all */}
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/:slug/queue" element={<QueuePublic />} />
+                    <Route path="/:slug" element={<BusinessPublic />} />
+
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </ErrorBoundary>
+          </TooltipProvider>
+        </ErrorBoundary>
+      </AuthProvider>
+    </ErrorBoundary>
   </ErrorBoundary>
 );
 

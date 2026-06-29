@@ -29,12 +29,12 @@ const AuthContext = createContext<AuthContextType>({
   refreshRole: async () => {},
 });
 
-// eslint-disable-next-line react-refresh/only-export-components
 /**
  * Hook to access the AuthContext.
  * Returns the current session, user, role, loading state, signOut, and refreshRole.
  * Must be used within an AuthProvider.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
 /**

@@ -40,7 +40,7 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("onboarding create profile failed:", err);
-      toast({ title: t("common:toast.error"), description: t("auth:onboarding.errorCreateProfile"), variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:onboarding.name.error"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -50,18 +50,18 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          {t("auth:onboarding.welcomeTitle")}
+          {t("auth:onboarding.name.title")}
         </h2>
         <p className="text-muted-foreground mt-2">
-          {t("auth:onboarding.welcomeSubtitle")}
+          {t("auth:onboarding.name.subtitle")}
         </p>
       </div>
 
       <div className="space-y-2 max-w-sm mx-auto">
-        <Label htmlFor="fullName">{t("auth:onboarding.fullNameLabel")}</Label>
+        <Label htmlFor="fullName">{t("auth:onboarding.name.label")}</Label>
         <Input
           id="fullName"
-          placeholder={t("auth:onboarding.fullNamePlaceholder")}
+          placeholder={t("auth:onboarding.name.placeholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required

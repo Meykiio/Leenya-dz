@@ -81,12 +81,12 @@ export default function StepConfirmed({
           </a>
         </Button>
         <Button variant="outline" size="sm" className="flex-1 h-[44px] gap-1" asChild>
-          <a href={shareToBusinessUrl} target="_blank" rel="noopener noreferrer">
+          <a href={shareToBusinessUrl}>
             <MessageCircle className="h-4 w-4" /> Salon
           </a>
         </Button>
         <Button variant="outline" size="sm" className="flex-1 h-[44px] gap-1" asChild>
-          <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer">
+          <a href={whatsappShareUrl}>
             <Share2 className="h-4 w-4" /> WhatsApp
           </a>
         </Button>

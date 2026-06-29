@@ -179,6 +179,15 @@ export function buildBookingCancelledUrl(
 }
 
 /**
+ * Navigate to a WhatsApp URL in the current tab.
+ * Uses window.location.href instead of window.open to ensure mobile
+ * browsers properly hand off wa.me URLs to the WhatsApp app.
+ */
+export function openWhatsApp(url: string) {
+  window.location.href = url;
+}
+
+/**
  * Build a WhatsApp URL notifying the client that their queue ticket is being called.
  * Includes ticket label, business name, and service.
  */

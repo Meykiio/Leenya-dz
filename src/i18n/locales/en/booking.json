@@ -29,6 +29,7 @@
   "appointmentFlow.toast.linkCopied": "Link copied",
   "appointmentFlow.toast.linkCopiedDesc": "The tracking link has been copied.",
   "appointmentFlow.phoneError": "The number must contain at least 9 digits",
+  "appointmentFlow.stepIndicator": "Step {{current}} of {{total}}",
   "appointmentFlow.stepService.title": "Choose a service",
   "appointmentFlow.stepService.continue": "Continue",
   "appointmentFlow.stepStaff.title": "Choose a team member",

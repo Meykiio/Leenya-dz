@@ -131,7 +131,7 @@ export default function PrivacyPolicy() {
             <p className="mt-2">
               Sifeddine Mebarki<br />
               Email: <a href="mailto:sifeddine.meb96@gmail.com" className="text-[var(--accent)] hover:underline">sifeddine.meb96@gmail.com</a><br />
-              WhatsApp: <a href="https://wa.me/213542883297" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">+213 542 88 32 97</a><br />
+              WhatsApp: <a href="https://wa.me/213542883297" className="text-[var(--accent)] hover:underline">+213 542 88 32 97</a><br />
               Algeria
             </p>
           </section>

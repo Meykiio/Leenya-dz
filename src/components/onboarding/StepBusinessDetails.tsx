@@ -79,7 +79,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("onboarding create business failed:", err);
-      toast({ title: t("common:toast.error"), description: t("auth:onboarding.errorCreateBusiness"), variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:onboarding.details.error"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -89,26 +89,26 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          {t("auth:onboarding.businessDetailsTitle")}
+          {t("auth:onboarding.details.title")}
         </h2>
         <p className="text-muted-foreground mt-2">
-          {t("auth:onboarding.businessDetailsSubtitle")}
+          {t("auth:onboarding.details.subtitle")}
         </p>
       </div>
 
       <div className="space-y-4 max-w-md mx-auto">
         <div className="space-y-2">
-          <Label htmlFor="bizName">{t("auth:onboarding.businessNameLabel")}</Label>
+          <Label htmlFor="bizName">{t("auth:onboarding.details.nameLabel")}</Label>
           <Input
             id="bizName"
-            placeholder={t("auth:onboarding.businessNamePlaceholder")}
+            placeholder={t("auth:onboarding.details.namePlaceholder")}
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
             required
           />
           {slug && (
             <p className="text-xs text-muted-foreground">
-              {t("auth:onboarding.yourLink")} <span className="font-mono text-primary">leenya.dz/{slug}</span>
+              {t("auth:onboarding.details.linkLabel")} <span className="font-mono text-primary">leenya.dz/{slug}</span>
             </p>
           )}
         </div>
@@ -122,7 +122,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
             <Input
               id="bizPhone"
               type="tel"
-              placeholder={t("auth:onboarding.phonePlaceholder")}
+              placeholder={t("auth:onboarding.details.phonePlaceholder")}
               value={businessPhone}
               onChange={(e) => setBusinessPhone(e.target.value.replace(/\D/g, ""))}
               maxLength={10}
@@ -135,7 +135,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
           <Label htmlFor="address">{t("auth:onboarding.addressLabel")}</Label>
           <Input
             id="address"
-            placeholder={t("auth:onboarding.addressPlaceholder")}
+            placeholder={t("auth:onboarding.details.addressPlaceholder")}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             required
@@ -145,7 +145,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         <div className="space-y-2 relative">
           <Label>{t("auth:onboarding.wilayaLabel")}</Label>
           <Input
-            placeholder={t("auth:onboarding.wilayaPlaceholder")}
+            placeholder={t("auth:onboarding.details.wilayaPlaceholder")}
             value={showWilayaDropdown ? wilayaSearch : (selectedWilaya ? `${selectedWilaya.code} — ${selectedWilaya.name}` : "")}
             onChange={(e) => {
               setWilayaSearch(e.target.value);

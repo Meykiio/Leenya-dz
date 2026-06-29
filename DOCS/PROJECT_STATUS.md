@@ -10,37 +10,40 @@
 ## Current Completion by Feature Area
 
 | Feature Area | Completion | Status |
-|---|---|---|
+|---|---|---|---|
 | Landing / Marketing pages | 98% | Done — all sections present, testimonials rewritten, back-to-top added, demos i18n'd with accent color, equal-height panels |
 | Authentication (email/password) | 95% | Fully working — login, signup, forgot/reset password flows |
 | Authentication (phone OTP) | 0% | **Removed** — phone tab deleted from LoginForm, OtpVerification.tsx deleted |
 | Onboarding wizard | 95% | Fully working — 4 steps, profile + role + business + services |
-| Business public page | 90% | Fully working — slug-based, tabs for appointment/queue |
-| Appointment booking flow | 88% | Working — service, staff selection, date/time, details, WhatsApp links |
+| Business public page | 92% | Fully working — slug-based, tabs default to queue, appointment/queue flows |
+| Appointment booking flow | 90% | Working — service, staff selection, date/time, details, WhatsApp links, step indicator |
 | Queue (walk-in) flow | 88% | Working — service selection, ticket generation, real-time tracker, double-join prevention via partial unique index |
 | Queue ticket tracker | 80% | Working — realtime updates, cancel, completion/cancellation states |
 | TV queue display | 80% | Working — realtime, auto-hide cursor, clock |
 | Owner dashboard — homepage | 85% | Working — metrics (incl. pending count), recent bookings, quick actions |
-| Owner dashboard — bookings mgmt | 92% | Working — date/status filter, search, CRUD, WhatsApp actions, PendingApprovals, real-time subscription. Table layout fixed with consistent column widths |
+| Owner dashboard — bookings mgmt | 92% | Working — upcoming/by-date filter, search, CRUD, WhatsApp actions, PendingApprovals, real-time subscription |
 | Owner dashboard — queue mgmt | 85% | Working — realtime, call/complete/cancel/no-show, display mode |
 | Owner dashboard — services CRUD | 90% | Working — add/edit/delete/toggle, name_ar field, slider for duration |
-| Owner dashboard — staff CRUD | 97% | Working — add/edit/toggle, service assignment, auth login creation, delete. Frontend plan-limit enforcement added. Avatar upload dropped (storage RLS) |
-| Owner dashboard — settings | 73% | All tabs present. Subscription tab now has real-time counts. Fixed RPC array bug (showed /100 instead of 0/100) |
-| Owner dashboard — analytics | 78% | Working — metric cards, charts, peak hours, popular services, history table with fixed tab button visibility. Paginated queries prevent OOM |
+| Owner dashboard — staff CRUD | 97% | Working — add/edit/toggle, service assignment, auth login creation, delete |
+| Owner dashboard — settings | 73% | All tabs present. Subscription tab with real-time counts |
+| Owner dashboard — analytics | 80% | Working — metric cards with safe delta calculations (no divide-by-zero), charts, peak hours, popular services, history table |
 | Staff view | 90% | Working — queue management, call/complete/no-show, **bookings tab**, **staff login** |
 | Client bookings page | 70% | Working — list upcoming/past, cancel, leave review |
 | Booking tracker (anonymous token) | 80% | Working — view by token, cancel |
 | Reviews | 60% | Working — display on public page, submit from MyBookings |
-| WhatsApp templates | 70% | Working — CRUD in settings, template compilation, preview, WhatsApp link generation |
-| Subscription/pricing UI | 97% | Working — pricing page, redesigned subscription modal, trial countdown, 2 progress bars, DB-backed usage with real-time subscriptions, "Coming soon" on Pro |
+| WhatsApp templates | 72% | Working — CRUD in settings, template compilation, preview, WhatsApp link generation, array format fixed |
+| Subscription/pricing UI | 97% | Working — pricing page, redesigned subscription modal, trial countdown, 2 progress bars, DB-backed usage with real-time subscriptions |
 | Subscription enforcement | 100% | Server-side triggers enforce per-plan booking/queue/staff limits with trial skip |
 | Payment processing | 0% | Not started — no payment gateway integrated |
 | Automated notifications | 0% | Not started — all WhatsApp is manual (wa.me links) |
 | SMS (Twilio) | 0% | Not started — phone OTP removed, no SMS integration |
-| i18n / translations | 96% | react-i18next configured, 6 namespaces × 3 languages, all ~60+ components using `t()`, ~590 keys per language. Demo components i18n'd with 20 new keys |
-| Arabic/RTL support | 95% | All components patched (~20 more in Phase 3d), all arrows flipped, toast/dialog/sheet/carousel/calendar/navigation-menu fully RTL-aware. Back-to-top button, BackButton, Dashboard arrows, WhatsApp icons all RTL-flipped |
+| i18n / translations | 97% | react-i18next configured, 6 namespaces × 3 languages, step indicator key added |
+| Arabic/RTL support | 95% | All components patched, all arrows flipped, toast/dialog/sheet/carousel/calendar/navigation-menu fully RTL-aware |
+| Security — DB grants | 100% | Per-table grants replace blanket GRANT ALL. Storage bucket public listing removed |
+| Security — RLS | 90% | PERMISSIVE → RESTRICTIVE pending (Phase 2b/next) |
 | Testing | 30% | Unit tests exist for time slots, slugify, queue system, booking overlap, rate limiting |
 | PWA / offline | 0% | Manifest exists, no service worker or caching |
+| Bundle size | — | Unused @tanstack/react-query (+13kB) removed |
 
 ---
 
@@ -66,12 +69,7 @@ The following flows work end-to-end in a local dev environment with a correctly 
 ## What Is Built But Broken
 
 1. **`ResetPassword.tsx`**: The `useEffect` listener for `PASSWORD_RECOVERY` event is correct, but this flow is only half-tested — depends on Supabase email configuration being live.
-2. **Dashboard analytics delta comparisons**: Previous period data is fetched but the delta display logic in `MetricCards.tsx` may not render properly for all edge cases (e.g., dividing by zero when previous period had 0 bookings).
-3. **WhatsApp template initialization** (`useWhatsAppTemplates.ts`): The `initializeTemplates()` function uses hardcoded SQL variable format (`'{item1,item2}'`) for the `variables` array which may not work correctly depending on Supabase client's handling of Postgres arrays.
-
-4. **Default booking view shows today only:** Owners must manually filter to future dates to see upcoming reservations. A booking for tomorrow is invisible by default. (Fix: change default filter to "upcoming" — P1 in NEXT.md)
-
-5. **Queue tab is not the default on the public business page:** The appointment tab is shown by default. For barbershops and walk-in-first businesses, the queue tab should be the default. (Fix: swap default tab — P1 in NEXT.md)
+2. **RLS policies still use PERMISSIVE** — need to switch to RESTRICTIVE (AS RESTRICTIVE on all CREATE POLICY statements). This is a known gap from Phase 2b.
 
 ---
 

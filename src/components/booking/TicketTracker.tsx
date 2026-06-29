@@ -244,7 +244,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
 
       <div className="rounded-xl border border-border bg-muted/50 p-[28px_24px] text-center">
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-3.5">
-          Votre ticket
+          {t("booking:ticketTracker.yourTicket")}
         </p>
 
         <motion.p
@@ -261,7 +261,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
 
         <div className="flex items-center justify-center">
           <div className="flex-1 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">En cours</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{t("booking:ticketTracker.nowServing")}</p>
             <p className="font-mono text-[17px] font-semibold text-foreground">
               {currentServing ?? "---"}
             </p>
@@ -270,21 +270,21 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           <div className="w-px h-8 bg-border" />
 
           <div className="flex-1 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Avant vous</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{t("booking:ticketTracker.aheadOfYou")}</p>
             <p className="font-mono text-[22px] font-semibold text-foreground">{waitingCount}</p>
-            <p className="text-[11px] text-muted-foreground">personne{waitingCount !== 1 ? "s" : ""}</p>
+            <p className="text-[11px] text-muted-foreground">{waitingCount !== 1 ? t("booking:ticketTracker.people") : t("booking:ticketTracker.person")}</p>
           </div>
 
           <div className="w-px h-8 bg-border" />
 
           <div className="flex-1 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Attente</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{t("booking:ticketTracker.estimatedWait")}</p>
             <p className="font-mono text-[22px] font-semibold text-foreground">~{estimatedMin}</p>
-            <p className="text-[11px] text-muted-foreground">minutes</p>
+            <p className="text-[11px] text-muted-foreground">{t("booking:ticketTracker.minutes")}</p>
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground/60 mt-3">* Estimation basée sur l'historique — le temps réel peut varier</p>
+        <p className="text-[11px] text-muted-foreground/60 mt-3">{t("booking:ticketTracker.estimateDisclaimer")}</p>
 
         <div className="mt-4">
           <div className="w-full h-[3px] bg-muted rounded-full overflow-hidden">
@@ -296,13 +296,13 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </div>
 
         <p className="text-[13px] text-muted-foreground mt-3.5 leading-relaxed">
-          Restez sur cette page pour suivre votre position en temps reel.
+          {t("booking:ticketTracker.stayOnPage")}
         </p>
       </div>
 
       {!isCalled && (
         <p className="text-[12px] text-muted-foreground text-center mt-4">
-          Pour annuler, contactez le salon directement.
+          {t("booking:ticketTracker.cancelHint")}
         </p>
       )}
     </div>

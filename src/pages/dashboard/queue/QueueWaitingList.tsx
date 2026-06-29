@@ -5,7 +5,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Play, XCircle, MessageCircle, Users2 } from "lucide-react";
-import { buildQueueCalledUrl } from "@/lib/whatsapp";
+import { openWhatsApp, buildQueueCalledUrl } from "@/lib/whatsapp";
 import type { QueueTicket } from "@/types";
 
 interface Props {
@@ -48,7 +48,7 @@ export default function QueueWaitingList({ tickets, businessName, onCall, onCanc
               size="sm" variant="ghost"
               onClick={() => {
                 const url = buildQueueCalledUrl(ticket.client_phone, businessName, ticket.ticket_label, ticket.services?.name || t("dashboard:queue.form.service"));
-                window.open(url, "_blank");
+                openWhatsApp(url);
               }}
               title={t("dashboard:queue.tooltip.whatsapp")}
               className="text-[var(--text-tertiary)] h-[26px] w-[26px] p-0"

@@ -18,8 +18,6 @@ const Footer = () => {
             <div className="flex items-center gap-3 mt-4">
               <a
                 href="https://wa.me/213542883297"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-accent hover:border-accent/30 transition-all"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
@@ -74,7 +72,7 @@ const Footer = () => {
                 <a href="mailto:sifeddine.meb96@gmail.com" className="text-xs text-muted-foreground hover:text-foreground transition-all duration-200">
                   sifeddine.meb96@gmail.com
                 </a>
-                <a href="https://wa.me/213542883297" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-all duration-200">
+                <a href="https://wa.me/213542883297" className="text-xs text-muted-foreground hover:text-foreground transition-all duration-200">
                   {t("landing:footer.whatsapp")}
                 </a>
               </nav>

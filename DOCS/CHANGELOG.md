@@ -2,6 +2,65 @@
 
 Dates are approximate, reconstructed from migration timestamps and documentation.
 
+## 2026-06-28 — Phase 4: Launch Prep (Final Pre-Launch Session)
+
+### Block A — UX Fixes
+
+**A1-A2: Already verified as fixed in codebase**
+- Default booking view is `"upcoming"` (today + future dates, ascending) — done
+- Default public business page tab is `"queue"` — done
+
+**A3: Step indicator in AppointmentFlow**
+- Added "Étape X sur Y" text indicator above existing dot progress bar
+- New i18n key `booking:appointmentFlow.stepIndicator` added to all 3 locales (EN/FR/AR)
+- Shows `"Step 1 of 5"` / `"Etape 1 sur 5"` / `"الخطوة 1 من 5"`
+
+**A4: Analytics delta divide-by-zero — already guarded**
+- `MetricCards.tsx` `pctChange()` function returns `"+100%"` or `null` instead of dividing by zero
+
+**A5: WhatsApp template initialization array format fixed**
+- `useWhatsAppTemplates.ts` — removed hardcoded SQL string `'{item1,item2}'` format
+- Now passes JS array directly to Supabase client for proper TEXT[] serialization
+
+### Block B — Security Hardening
+
+**B1: Per-table grants replace blanket GRANT ALL**
+- Removed `GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated`
+- `anon`: SELECT only on `businesses`, `services`, `staff_members`, `business_hours`, `reviews`, `feedback`
+- `authenticated`: SELECT/INSERT/UPDATE per RLS policy; DELETE only on `whatsapp_templates`, `staff_services`, `feedback`
+- `service_role`: retains ALL for admin operations (triggers, SECURITY DEFINER)
+- Applied in both schema sections (top and BASE PRIVILEGES bottom)
+
+**B2: Storage bucket public listing — already fixed**
+- Confirmed no public SELECT policy on `storage.objects` remains (H-010 fixed in prior session)
+
+**B3: All dashboard queries scoped to business_id**
+- Scanned 60+ Supabase `.from()` calls across `src/pages/dashboard/` and `src/components/dashboard/`
+- Only 1 missing `business_id` found (`DashboardFeedback.tsx` insert — app-level feedback, not business-scoped by design)
+- All 59 multi-tenant queries properly filtered
+
+### Block C — Cleanup
+
+**C1: Removed unused @tanstack/react-query**
+- Removed import, `queryClient` creation, and `QueryClientProvider` wrapper from `App.tsx`
+- Saves +13kB of bundle weight (dead code)
+
+**C2: .env already in .gitignore** — confirmed present
+
+**C3: Lint warnings fixed (2 → 0)**
+- Fixed unused eslint-disable directive in `AuthContext.tsx`
+- Moved eslint-disable-next-line to correct line
+
+### Block D — Production Checklist
+- Detailed production checklist output for developer to execute manually
+
+### Build Verification
+- `npm run build` — zero errors
+- `npx tsc --noEmit` — zero errors
+- `npx eslint src --ext .ts,.tsx --max-warnings 50` — zero warnings
+
+---
+
 ## 2026-06-28 — Session 5: RTL Polish + Subscription fixes + Table layout
 
 ### RTL Polish (~20 items across 18 files)

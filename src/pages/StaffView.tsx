@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { buildQueueCalledUrl, buildBookingConfirmationUrl } from "@/lib/whatsapp";
+import { openWhatsApp, buildQueueCalledUrl, buildBookingConfirmationUrl } from "@/lib/whatsapp";
 import type { Business, QueueTicket, Booking } from "@/types";
 import type { BookingStatus } from "@/integrations/supabase/types";
 
@@ -139,7 +139,7 @@ const StaffView = () => {
       const ticketData = data[0];
       const serviceName = ticket.services?.name || t("staff:staffView.serviceDefault");
       const url = buildQueueCalledUrl(ticketData.client_phone, business!.name, ticketData.ticket_label, serviceName);
-      window.open(url, "_blank");
+      openWhatsApp(url);
     }
   };
 
@@ -170,7 +170,7 @@ const StaffView = () => {
       booking.client_phone, business!.name, booking.date,
       booking.start_time.slice(0, 5), serviceName, null, booking.id
     );
-    window.open(url, "_blank");
+    openWhatsApp(url);
   };
 
   const waiting = tickets.filter((t) => t.status === "waiting");

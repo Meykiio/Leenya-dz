@@ -171,7 +171,7 @@ const DashboardStaff = () => {
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
     const { error: updateError } = await supabase.from("staff_members").update({ avatar_url: publicUrl }).eq("business_id", business.id).eq("id", staffId);
     if (updateError) { console.error("updateAvatar:", updateError); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.updateAvatar"), variant: "destructive" }); return; }
-    toast({ title: t("dashboard:staff.avatarUpdated") });
+    toast({ title: t("dashboard:staff.toast.avatarUpdated") });
     fetchStaff();
   };
 
@@ -199,7 +199,7 @@ const DashboardStaff = () => {
     if (toAdd.length > 0) {
       await supabase.from("staff_services").insert(toAdd.map((service_id) => ({ staff_member_id: editStaffId, service_id })));
     }
-    toast({ title: t("dashboard:staff.servicesUpdated") });
+    toast({ title: t("dashboard:staff.toast.servicesUpdated") });
     loadServiceAssignments();
   };
 

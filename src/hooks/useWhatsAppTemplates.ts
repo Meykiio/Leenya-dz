@@ -134,16 +134,13 @@ export function useWhatsAppTemplates(businessId: string | null) {
     
     // Insert each template one by one, ignoring duplicates
     for (const t of defaults) {
-      // Convert JavaScript array to PostgreSQL TEXT[] format: {item1,item2}
-      const variablesString = '{' + t.variables.join(',') + '}';
-      
       const insertData = {
         business_id: businessId,
         template_key: t.template_key,
         name: t.name,
         description: t.description || null,
         message_template: t.message_template,
-        variables: variablesString,
+        variables: t.variables,
       };
       
       const { error } = await supabase

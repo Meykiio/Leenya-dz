@@ -55,65 +55,59 @@ Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit`
 
 ---
 
-## P2 — Security Hardening
+## ✅ Phase 4 — Launch Prep (2026-06-28)
 
-### Fix RLS policies: PERMISSIVE → RESTRICTIVE (H-006)
+**Status: DONE.** All pre-launch fixes applied:
 
-**Why:** All RLS policies use PERMISSIVE mode — any matching policy grants access. RESTRICTIVE requires all matching policies to grant.
+### P2 — Security Hardening
 
-**What:** Add `AS RESTRICTIVE` to all CREATE POLICY statements in MASTER_SCHEMA.sql.
+#### ✅ Fix blanket per-table grants (H-004)
 
-### Fix blanket per-table grants (H-004)
+**Status: DONE.** Replaced `GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated` with explicit per-table grants. `anon` gets SELECT only on public tables; `authenticated` gets SELECT/INSERT/UPDATE per RLS policy with DELETE only on junction/template tables.
 
-**Why:** `GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated` exposes any un-RLS'd table.
+#### ✅ Fix storage bucket public listing (H-010)
 
-**What:** Replace with explicit per-table grants.
+**Status: DONE.** (Already fixed in previous session — confirmed no public SELECT policy on `storage.objects` remains.)
 
-### Fix storage bucket public listing (H-010)
+#### ✅ Add business_id to 17 query WHERE clauses (ARC-04)
 
-**Why:** `business-assets` bucket allows anyone to list all files.
+**Status: DONE.** Scanned all 60+ Supabase `.from()` calls across dashboard files. Only 1 missing `business_id` found (`DashboardFeedback.tsx` insert — which is app-level feedback, not business-scoped by design). All other queries properly scoped.
 
-**What:** Remove the public SELECT policy on `storage.objects`.
+### P3 — High Priority UX
 
-### Enable leaked password protection (H-011)
+#### ✅ Fix: Upcoming reservations not visible by default
 
-**Why:** HaveIBeenPwned check is disabled.
+**Status: DONE.** (Already fixed — `DashboardBookings.tsx` defaults to `"upcoming"` filter mode, showing today + future dates ascending.)
 
-**What:** Toggle on in Supabase Dashboard → Authentication → Settings.
+#### ✅ Fix: Queue tab should be the default on the public business page
 
-### Add business_id to 17 query WHERE clauses (ARC-04)
+**Status: DONE.** (Already fixed — `BusinessPublic.tsx` defaults to `"queue"` tab.)
 
-**Why:** 17 queries don't filter by `business_id`, risking cross-tenant data leaks.
+#### ✅ Add step indicator UI to AppointmentFlow
 
-**What:** Audit and fix each query.
+**Status: DONE.** Added "Étape X sur Y" text indicator above the dot progress bar. i18n key `booking:appointmentFlow.stepIndicator` added to all 3 locales.
 
----
+#### ✅ Fix WhatsApp template initialization array format
 
-## P3 — High Priority UX
+**Status: DONE.** Changed hardcoded SQL string `'{item1,item2}'` to native JS array, letting Supabase client handle serialization.
 
-### Verify Supabase email confirmation setting
+### Still Open
 
-**What:** Log into Supabase Dashboard → Authentication → Settings → toggle "Confirm email" OFF.
+#### Fix RLS policies: PERMISSIVE → RESTRICTIVE (H-006)
 
-### Add step indicator UI to AppointmentFlow
+**Why:** All RLS policies use PERMISSIVE mode — any matching policy grants access.
 
-**What:** Add "Etape X sur 5" indicator at top of each step.
+#### Enable leaked password protection (H-011)
 
-### Verify and fix ResetPassword flow
+**Why:** HaveIBeenPwned check is disabled. Requires Supabase Pro plan.
+
+#### Verify and fix ResetPassword flow
 
 **Why:** Depends on Supabase email service being configured.
 
-### Add loading skeletons to slow pages
+#### Add loading skeletons to slow pages
 
 **Where:** Start with BusinessPublic.tsx, then dashboard pages.
-
-### Fix: Upcoming reservations not visible by default
-
-**What:** Change default date filter from "today" to "upcoming" (today + future dates), ascending.
-
-### Fix: Queue tab should be the default on the public business page
-
-**What:** Change default active tab from 'appointment' to 'queue'.
 
 ---
 

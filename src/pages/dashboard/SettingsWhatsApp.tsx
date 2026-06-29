@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { openWhatsApp } from '@/lib/whatsapp';
 import { Edit, RotateCcw, Eye, MessageCircle } from 'lucide-react';
 import { templatePreviews } from './whatsapp/templatePreviewData';
 import TemplateEditDialog from './whatsapp/TemplateEditDialog';
@@ -73,7 +74,7 @@ export default function SettingsWhatsApp() {
     if (!compiledMessage) return;
     const phone = business?.phone ? `213${business.phone.replace(/\D/g, "").replace(/^0?213?/, "")}` : "";
     const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(compiledMessage)}` : `https://api.whatsapp.com/send/?text=${encodeURIComponent(compiledMessage)}`;
-    window.open(url, '_blank');
+    openWhatsApp(url);
   };
 
   if (loading) {

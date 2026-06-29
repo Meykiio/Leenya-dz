@@ -8,7 +8,34 @@
 -- SCHEMA GRANTS (after DROP SCHEMA public CASCADE)
 -- ============================================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+
+-- Per-table grants (replaces blanket GRANT ALL — Phase 4 security hardening)
+-- anon: SELECT only on public-facing data
+GRANT SELECT ON TABLE public.businesses TO anon;
+GRANT SELECT ON TABLE public.services TO anon;
+GRANT SELECT ON TABLE public.staff_members TO anon;
+GRANT SELECT ON TABLE public.business_hours TO anon;
+GRANT SELECT ON TABLE public.reviews TO anon;
+GRANT SELECT ON TABLE public.feedback TO anon;
+-- No anon access to: bookings, queue_tickets, queue_counters, profiles, user_roles, whatsapp_templates, staff_services
+
+-- authenticated: per-RLS access (SELECT/INSERT/UPDATE; DELETE only where required)
+GRANT SELECT, INSERT, UPDATE ON TABLE public.businesses TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.services TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.staff_members TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.business_hours TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.bookings TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.queue_tickets TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.queue_counters TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.profiles TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.user_roles TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.reviews TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.whatsapp_templates TO authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.staff_services TO authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.feedback TO authenticated;
+-- service_role: full admin access (used by triggers and SECURITY DEFINER functions)
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 -- NOTE: Per-function EXECUTE granted explicitly below.
 -- DO NOT use GRANT ALL ON ALL FUNCTIONS — it would bypass SECURITY DEFINER restrictions.
@@ -1633,9 +1660,33 @@ USING (
 -- ============================================================
 -- BASE PRIVILEGES — required for REST API access
 -- Without these, RLS policies never get evaluated (403 error)
+-- Per-table only (no blanket grants — Phase 4 security hardening)
 -- ============================================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+
+-- anon: SELECT only on public-facing data
+GRANT SELECT ON TABLE public.businesses TO anon;
+GRANT SELECT ON TABLE public.services TO anon;
+GRANT SELECT ON TABLE public.staff_members TO anon;
+GRANT SELECT ON TABLE public.business_hours TO anon;
+GRANT SELECT ON TABLE public.reviews TO anon;
+GRANT SELECT ON TABLE public.feedback TO anon;
+
+-- authenticated: per-RLS access (SELECT/INSERT/UPDATE; DELETE only where required)
+GRANT SELECT, INSERT, UPDATE ON TABLE public.businesses TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.services TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.staff_members TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.business_hours TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.bookings TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.queue_tickets TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.queue_counters TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.profiles TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.user_roles TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.reviews TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.whatsapp_templates TO authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.staff_services TO authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.feedback TO authenticated;
+
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 
 -- ============================================================

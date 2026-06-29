@@ -88,7 +88,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">10. Contact</h2>
             <p>
-              For any questions regarding these terms, contact us at <a href="mailto:sifeddine.meb96@gmail.com" className="text-[var(--accent)] hover:underline">sifeddine.meb96@gmail.com</a> or on WhatsApp at <a href="https://wa.me/213542883297" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">+213 542 88 32 97</a>.
+              For any questions regarding these terms, contact us at <a href="mailto:sifeddine.meb96@gmail.com" className="text-[var(--accent)] hover:underline">sifeddine.meb96@gmail.com</a> or on WhatsApp at <a href="https://wa.me/213542883297" className="text-[var(--accent)] hover:underline">+213 542 88 32 97</a>.
             </p>
           </section>
         </div>
