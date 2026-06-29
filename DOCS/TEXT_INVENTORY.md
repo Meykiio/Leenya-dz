@@ -1,7 +1,7 @@
 # Leenya Text Inventory — Complete Platform Text
 
 **Date:** 2026-06-29
-**Purpose:** Complete reference of all text strings for localization review. English is the source language. Current Arabic translations are marked for review.
+**Purpose:** Complete reference of all text strings for localization review. English is the source language. Current Arabic as-is (what's in `ar/*.json`). Recommended Arabic based on research in the Recommendations section at the bottom.
 
 ---
 
@@ -154,7 +154,7 @@
 | `pricing.subtitle` | What we offer today. No features we haven't built yet. | ما نقدمه اليوم. لا ميزات لم نبنها بعد. | |
 | `pricing.monthly` | Monthly | شهري | |
 | `pricing.annual` | Annual | سنوي | |
-| `pricing.discount` | -17% | %-17 | [REVIEW] Arabic places % before number |
+| `pricing.discount` | -17% | ‎-17% | |
 | `pricing.free` | Free | مجاني | |
 | `pricing.pro` | Pro | احترافية | |
 | `pricing.business` | Business | تجاري | |
@@ -347,7 +347,7 @@
 | `onboarding.type.other` | Other | أخرى | |
 | `onboarding.details.title` | Tell us about your business | أخبرنا عن مؤسستك | |
 | `onboarding.details.subtitle` | This information will be visible on your public page | ستكون هذه المعلومات مرئية على صفحتك العامة | |
-| `onboarding.details.nameLabel` | Business name | اسم الصالون / العيادة | [REVIEW] Literal: "Name of salon/clinic" — uses specific examples instead of generic "Business name" |
+| `onboarding.details.nameLabel` | Business name | اسم المؤسسة | |
 | `onboarding.details.namePlaceholder` | My Beauty Salon | صالون التجميل الخاص بي | |
 | `onboarding.details.linkLabel` | Your Leenya link: | رابط لينيا الخاص بك: | |
 | `onboarding.details.phoneLabel` | Professional phone number | رقم الهاتف المهني | |
@@ -373,7 +373,7 @@
 | `onboarding.welcome.copied` | Copied! | تم النسخ! | |
 | `onboarding.welcome.goToDashboard` | Go to dashboard | الذهاب إلى لوحة التحكم | |
 | `onboarding.welcome.whatsappShareText` | Book online at | احجز عبر الإنترنت على | |
-| `notAuthenticated` | Not authenticated | غير مصرح به | [REVIEW] Arabic means "Not authorized" — different nuance from "Not authenticated" |
+| `notAuthenticated` | Not authenticated | غير مُوثَّق | |
 
 ---
 
@@ -457,7 +457,7 @@
 | `bookings.form.selectStaff` | Select a staff member | اختر عضو فريق | |
 | `bookings.form.serviceRequired` | Select a service | اختر خدمة | |
 | `bookings.pendingCount` | {{count}} booking(s) pending confirmation | {{count}} حجز بانتظار التأكيد | |
-| `bookings.pendingMore` | and {{remaining}} other(s) — use the status filter "Pending" to see them all | و{{remaining}} أخرى | [REVIEW] Arabic truncated — missing the explanatory hint about the filter |
+| `bookings.pendingMore` | and {{remaining}} other(s) — use the status filter "Pending" to see them all | و{{remaining}} أخرى — استخدم فلتر الحالة "قيد الانتظار" لعرضها جميعاً | |
 | `bookings.toast.created` | Booking created | تم إنشاء الحجز | |
 | `bookings.toast.rejected` | Booking rejected | تم رفض الحجز | |
 | `bookings.tooltip.whatsapp` | WhatsApp reminder | تذكير واتساب | |
@@ -501,7 +501,7 @@
 | `queue.toast.ticketActive` | Ticket already active | التذكرة نشطة بالفعل | |
 | `queue.toast.alreadyCalled` | Another member has already called this ticket. | قام عضو آخر بالفعل باستدعاء هذه التذكرة. | |
 | `queue.error.phoneDigits` | The number must contain at least 9 digits. | يجب أن يحتوي الرقم على 9 أرقام على الأقل. | |
-| `queue.error.duplicateTicket` | This client already has a ticket waiting today. | هذا العميل لديه بالفعل تذكرة ({{label}}) في الانتظار اليوم. | [REVIEW] Arabic adds `({{label}})` not in source |
+| `queue.error.duplicateTicket` | This client already has a ticket waiting today. | هذا العميل لديه تذكرة في الانتظار اليوم بالفعل. | |
 | `queue.error.generate` | Unable to generate a ticket. | تعذر إنشاء التذكرة. | |
 | `queue.tooltip.whatsapp` | Send WhatsApp | إرسال واتساب | |
 | `queue.errors.loadQueue` | Unable to load the queue. | تعذر تحميل الطابور. | |
@@ -578,7 +578,7 @@
 | `staff.errors.deleteMember` | Unable to delete the member. | تعذر حذف العضو. | |
 | `settings.title` | Settings | الإعدادات | |
 | `settings.tab.business` | Business | الشركة | |
-| `settings.tab.hours` | Hours | المواعيد | [REVIEW] Arabic means "Appointments" not "Hours" |
+| `settings.tab.hours` | Hours | ساعات العمل | |
 | `settings.tab.prefs` | Booking preferences | تفضيلات الحجز | |
 | `settings.tab.whatsapp` | WhatsApp | واتساب | |
 | `settings.tab.account` | Account | الحساب | |
@@ -591,7 +591,7 @@
 | `settings.business.changeLogo` | Change logo | تغيير الشعار | |
 | `settings.business.changeCover` | Change cover | تغيير الغلاف | |
 | `settings.business.name` | Business name | اسم الشركة | |
-| `settings.business.slug` | Slug (URL) | الرابط المختصر | [REVIEW] Arabic means "Shortened link" — different from "Slug (URL)" |
+| `settings.business.slug` | Slug (URL) | المعرّف في الرابط (URL) | |
 | `settings.business.category` | Category | الفئة | |
 | `settings.business.category.beautySalon` | Beauty salon | صالون تجميل | |
 | `settings.business.category.barbershop` | Barbershop | حلاق | |
@@ -606,10 +606,10 @@
 | `settings.business.address` | Address | العنوان | |
 | `settings.business.wilaya` | Wilaya | الولاية | |
 | `settings.business.save` | Save changes | حفظ التغييرات | |
-| `settings.business.toast.saved` | Information saved | تم حفظ المعلومات ✓ | [REVIEW] Arabic has checkmark not in source |
+| `settings.business.toast.saved` | Information saved | تم حفظ المعلومات | |
 | `settings.business.toast.logoUpdated` | Logo updated | تم تحديث الشعار | |
 | `settings.business.toast.coverUpdated` | Cover photo updated | تم تحديث صورة الغلاف | |
-| `settings.business.error.slugTaken` | This slug is already taken | هذا الرابط محجوز بالفعل | [REVIEW] Arabic means "This link is already reserved" |
+| `settings.business.error.slugTaken` | This slug is already taken | هذا المعرّف مستخدم بالفعل | |
 | `settings.hours.title` | Opening hours | ساعات العمل | |
 | `settings.hours.sunday` | Sunday | الأحد | |
 | `settings.hours.monday` | Monday | الإثنين | |
@@ -622,7 +622,7 @@
 | `settings.hours.open` | Open | مفتوح | |
 | `settings.hours.sameForAll` | Same hours for all | نفس المواعيد للجميع | |
 | `settings.hours.save` | Save hours | حفظ المواعيد | |
-| `settings.hours.toast.saved` | Hours saved | تم حفظ المواعيد ✓ | [REVIEW] Arabic has checkmark not in source |
+| `settings.hours.toast.saved` | Hours saved | تم حفظ ساعات العمل | |
 | `settings.booking.modes` | Booking modes | طرق الحجز | |
 | `settings.booking.deadlines` | Deadlines | المهل | |
 | `settings.booking.online` | Online appointments | المواعيد عبر الإنترنت | |
@@ -631,7 +631,7 @@
 | `settings.booking.walkinsDesc` | Clients can join the queue without an appointment | يمكن للعملاء الانضمام للطابور بدون موعد | |
 | `settings.booking.advanceDays` | Book up to {{days}} days in advance | الحجز قبل {{days}} يوماً مسبقاً | |
 | `settings.booking.save` | Save preferences | حفظ التفضيلات | |
-| `settings.booking.toast.saved` | Preferences saved | تم حفظ التفضيلات ✓ | [REVIEW] Arabic has checkmark not in source |
+| `settings.booking.toast.saved` | Preferences saved | تم حفظ التفضيلات | |
 | `settings.account.personal` | Personal information | المعلومات الشخصية | |
 | `settings.account.changePassword` | Change password | تغيير كلمة المرور | |
 | `settings.account.dangerZone` | Danger zone | منطقة الخطر | |
@@ -649,8 +649,8 @@
 | `settings.account.confirmDelete` | Confirm deletion | تأكيد الحذف | |
 | `settings.account.deleteTitle` | Delete your account? | حذف حسابك؟ | |
 | `settings.account.deleteDesc` | This action is irreversible. All your data will be permanently deleted. | هذا الإجراء لا رجعة فيه. سيتم حذف جميع بياناتك نهائياً. | |
-| `settings.account.toast.updated` | Profile updated | تم تحديث الملف الشخصي ✓ | [REVIEW] Arabic has checkmark not in source |
-| `settings.account.toast.passwordChanged` | Password changed | تم تغيير كلمة المرور ✓ | [REVIEW] Arabic has checkmark not in source |
+| `settings.account.toast.updated` | Profile updated | تم تحديث الملف الشخصي | |
+| `settings.account.toast.passwordChanged` | Password changed | تم تغيير كلمة المرور | |
 | `settings.account.toast.contactSupport` | Contact support to delete your account. | اتصل بالدعم لحذف حسابك. | |
 | `settings.account.error.passwordShort` | Password too short (minimum 6 characters) | كلمة المرور قصيرة جداً (6 أحرف على الأقل) | |
 | `settings.subscription.title` | Your subscription | اشتراكك | |
@@ -678,7 +678,7 @@
 | `settings.subscription.pricingModal.perMonth` | DZD/month | دج/شهر | |
 | `settings.subscription.pricingModal.comingSoon` | Coming soon | قريباً | |
 | `settings.subscription.pricingModal.limitNote` | Payments will be available soon. Contact us for early access. | ستتوفر المدفوعات قريباً. اتصل بنا للوصول المبكر. | |
-| `settings.subscription.warning` | You are approaching the limit of your free plan. | ⚠️ أنت تقترب من حد خطتك المجانية. | [REVIEW] Arabic has extra ⚠️ not in source |
+| `settings.subscription.warning` | You are approaching the limit of your free plan. | أنت تقترب من حد خطتك المجانية. | |
 | `settings.subscription.features.free100bookings` | Up to 100 bookings / month | حتى 100 حجز / شهر | |
 | `settings.subscription.features.free300queue` | Up to 300 queue tickets / month | حتى 300 تذكرة طابور / شهر | |
 | `settings.subscription.features.free3staff` | 3 staff members | 3 أعضاء فريق | |
@@ -708,15 +708,7 @@
 | `settings.whatsapp.editTitle` | Edit template | تعديل القالب | |
 | `settings.whatsapp.editDesc` | Edit the template message. Use {'{variable}'} to insert dynamic variables. | قم بتعديل رسالة القالب. استخدم {'{variable}'} لإدراج متغيرات ديناميكية. | |
 | `settings.whatsapp.templatePlaceholder` | Template message... | رسالة القالب... | |
-| `analytics.title` | Analytics | التحليلات | |
-| `analytics.pageTitle` | Analytics | التحليلات | |
-| `analytics.week` | This week | هذا الأسبوع | |
-| `analytics.month` | This month | هذا الشهر | |
-| `analytics.threeMonths` | Last 3 months | آخر 3 أشهر | |
-| `analytics.bookings` | Bookings | الحجوزات | |
-| `analytics.queue` | Queue | طابور الانتظار | |
-| `analytics.revenue` | Revenue | الإيرادات | |
-| `analytics.estimatedRevenue` | Est. revenue | — | [MISSING] Not translated in ar/dashboard.json |
+| `analytics.estimatedRevenue` | Est. revenue | الإيرادات المقدرة | |
 | `analytics.peakHours` | Peak hours | ساعات الذروة | |
 | `analytics.popularServices` | Popular services | الخدمات الشائعة | |
 | `analytics.staffPerformance` | Staff performance | أداء الفريق | |
@@ -724,60 +716,60 @@
 | `analytics.bookingsPerDay` | Bookings per day | الحجوزات اليومية | |
 | `analytics.loadError` | Unable to load analytics data. | تعذر تحميل بيانات التحليلات. | |
 | `analytics.unknown` | Unknown | غير معروف | |
-| `analytics.conversionRate` | Conversion rate | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.avgRating` | Avg rating | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.reviewCount` | {{count}} reviews | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.queueTickets` | Queue tickets | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.avgWaitTime` | Avg wait time | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.completed` | Completed | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.cancelled` | Cancelled | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.noShow` | No-show | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.queuePerDay` | Queue per day | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.newTickets` | New tickets | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.served` | Served | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.sun` | Sun | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.mon` | Mon | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.tue` | Tue | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.wed` | Wed | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.thu` | Thu | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.fri` | Fri | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.sat` | Sat | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.peakHourTooltip` | {{day}} at {{hour}}:00 — {{count}} bookings | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.noData` | No data available | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.history` | History | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.filterAll` | All | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.filterBookings` | Bookings | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.filterQueue` | Queue | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.colType` | Type | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.colDate` | Date | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.colClient` | Client | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.colService` | Service | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.colStaff` | Staff | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.colStatus` | Status | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.badgeBooking` | Booking | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.badgeQueue` | Queue | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusPending` | Pending | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusConfirmed` | Confirmed | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusArrived` | Arrived | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusInProgress` | In progress | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusCompleted` | Completed | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusCancelled` | Cancelled | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusNoShow` | No-show | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusWaiting` | Waiting | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.statusCalled` | Called | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvType` | Type | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvDate` | Date | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvTime` | Time | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvClient` | Client | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvPhone` | Phone | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvService` | Service | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvStaff` | Staff | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvLabel` | Label | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvStatus` | Status | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvBooking` | Booking | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvQueue` | Queue | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.csvFilename` | report | — | [MISSING] Not translated in ar/dashboard.json |
-| `analytics.pageOf` | Page {{page}} of {{total}} | — | [MISSING] Not translated in ar/dashboard.json |
+| `analytics.conversionRate` | Conversion rate | معدل التحويل | |
+| `analytics.avgRating` | Avg rating | متوسط التقييم | |
+| `analytics.reviewCount` | {{count}} reviews | {{count}} تقييم | |
+| `analytics.queueTickets` | Queue tickets | تذاكر الطابور | |
+| `analytics.avgWaitTime` | Avg wait time | متوسط وقت الانتظار | |
+| `analytics.completed` | Completed | مكتمل | |
+| `analytics.cancelled` | Cancelled | ملغي | |
+| `analytics.noShow` | No-show | عدم حضور | |
+| `analytics.queuePerDay` | Queue per day | الطابور اليومي | |
+| `analytics.newTickets` | New tickets | تذاكر جديدة | |
+| `analytics.served` | Served | تمت خدمته | |
+| `analytics.sun` | Sun | أحد | |
+| `analytics.mon` | Mon | إثن | |
+| `analytics.tue` | Tue | ثلا | |
+| `analytics.wed` | Wed | أرب | |
+| `analytics.thu` | Thu | خمي | |
+| `analytics.fri` | Fri | جمع | |
+| `analytics.sat` | Sat | سبت | |
+| `analytics.peakHourTooltip` | {{day}} at {{hour}}:00 — {{count}} bookings | {{day}} الساعة {{hour}}:00 — {{count}} حجز | |
+| `analytics.noData` | No data available | لا توجد بيانات متاحة | |
+| `analytics.history` | History | السجل | |
+| `analytics.filterAll` | All | الكل | |
+| `analytics.filterBookings` | Bookings | الحجوزات | |
+| `analytics.filterQueue` | Queue | الطابور | |
+| `analytics.colType` | Type | النوع | |
+| `analytics.colDate` | Date | التاريخ | |
+| `analytics.colClient` | Client | العميل | |
+| `analytics.colService` | Service | الخدمة | |
+| `analytics.colStaff` | Staff | عضو الفريق | |
+| `analytics.colStatus` | Status | الحالة | |
+| `analytics.badgeBooking` | Booking | حجز | |
+| `analytics.badgeQueue` | Queue | طابور | |
+| `analytics.statusPending` | Pending | قيد الانتظار | |
+| `analytics.statusConfirmed` | Confirmed | مؤكد | |
+| `analytics.statusArrived` | Arrived | وصل | |
+| `analytics.statusInProgress` | In progress | قيد التنفيذ | |
+| `analytics.statusCompleted` | Completed | مكتمل | |
+| `analytics.statusCancelled` | Cancelled | ملغي | |
+| `analytics.statusNoShow` | No-show | عدم حضور | |
+| `analytics.statusWaiting` | Waiting | في الانتظار | |
+| `analytics.statusCalled` | Called | تم الاستدعاء | |
+| `analytics.csvType` | Type | النوع | |
+| `analytics.csvDate` | Date | التاريخ | |
+| `analytics.csvTime` | Time | الوقت | |
+| `analytics.csvClient` | Client | العميل | |
+| `analytics.csvPhone` | Phone | الهاتف | |
+| `analytics.csvService` | Service | الخدمة | |
+| `analytics.csvStaff` | Staff | عضو الفريق | |
+| `analytics.csvLabel` | Label | الرقم | |
+| `analytics.csvStatus` | Status | الحالة | |
+| `analytics.csvBooking` | Booking | حجز | |
+| `analytics.csvQueue` | Queue | طابور | |
+| `analytics.csvFilename` | report | تقرير | |
+| `analytics.pageOf` | Page {{page}} of {{total}} | الصفحة {{page}} من {{total}} | |
 | `feedback.title` | Feedback | الملاحظات | |
 | `feedback.response` | Response | الرد | |
 | `feedback.respond` | Respond | رد | |
@@ -811,11 +803,11 @@
 
 | Key | English | Arabic | Notes |
 |---|---|---|---|
-| `businessPublic.closedTitle` | This business is temporarily closed | هذا الصالون مغلق مؤقتاً | [REVIEW] Arabic says "salon" not "business" |
+| `businessPublic.closedTitle` | This business is temporarily closed | هذا المحل مغلق مؤقتاً | |
 | `businessPublic.closedSubtitle` | Please try again later. | يرجى المحاولة مرة أخرى لاحقاً. | |
 | `businessPublic.tabAppointment` | Appointment | موعد | |
 | `businessPublic.tabQueue` | Queue | طابور الانتظار | |
-| `businessPublic.infoAppointment` | Choose a service, a time slot, and send your request. The business will confirm your reservation shortly. | اختر خدمة وموعداً وأرسل طلبك. سيقوم الصالون بتأكيد حجزك قريباً. | [REVIEW] Arabic says "salon" not "business" |
+| `businessPublic.infoAppointment` | Choose a service, a time slot, and send your request. The business will confirm your reservation shortly. | اختر خدمة وموعداً وأرسل طلبك. سيقوم المحل بتأكيد حجزك قريباً. | |
 | `businessPublic.infoQueue` | Choose a service, take a ticket, and wait for your turn live. | اختر خدمة، واحصل على تذكرة، وانتظر دورك مباشرة. | |
 | `businessPublic.category.beautySalon` | Beauty salon | صالون تجميل | |
 | `businessPublic.category.barbershop` | Barbershop | حلاق | |
@@ -857,13 +849,13 @@
 | `appointmentFlow.stepDetails.phoneLabel` | Phone | رقم الهاتف | |
 | `appointmentFlow.stepDetails.phonePlaceholder` | 555 123 456 | 555 123 456 | |
 | `appointmentFlow.stepDetails.noteLabel` | Message (optional) | رسالة (اختياري) | |
-| `appointmentFlow.stepDetails.notePlaceholder` | Message for the salon... | رسالة إلى الصالون... | |
+| `appointmentFlow.stepDetails.notePlaceholder` | Message for the salon... | رسالة إلى المحل... | |
 | `appointmentFlow.stepDetails.priceOnRequest` | Price on request | السعر عند الطلب | |
 | `appointmentFlow.stepDetails.withStaff` | With {{staffName}} | مع {{staffName}} | |
 | `appointmentFlow.stepDetails.submit` | Confirm the reservation | تأكيد الحجز | |
 | `appointmentFlow.stepDetails.submitting` | Confirming... | جار التأكيد... | |
 | `appointmentFlow.stepConfirmed.title` | Request sent | تم إرسال الطلب | |
-| `appointmentFlow.stepConfirmed.pending` | Awaiting confirmation by the salon. | في انتظار تأكيد الصالون. | |
+| `appointmentFlow.stepConfirmed.pending` | Awaiting confirmation by the salon. | في انتظار تأكيد المحل. | |
 | `appointmentFlow.stepConfirmed.trackingLink` | Tracking link | رابط التتبع | |
 | `appointmentFlow.stepConfirmed.trackingHint` | Keep this link to track or cancel your reservation | احتفظ بهذا الرابط لمتابعة أو إلغاء حجزك | |
 | `appointmentFlow.stepConfirmed.copy` | Copy | نسخ | |
@@ -884,7 +876,7 @@
 | `queueFlow.takeTicket` | Take my ticket | احصل على تذكرتي | |
 | `queueFlow.shareWhatsApp` | Share on WhatsApp | مشاركة عبر واتساب | |
 | `ticketTracker.calledTitle` | It's your turn! | حان دورك! | |
-| `ticketTracker.calledSubtitle` | Present yourself at the salon now | توجه الآن إلى الصالون | |
+| `ticketTracker.calledSubtitle` | Present yourself at the salon now | توجّه الآن إلى المحل | |
 | `ticketTracker.yourTicket` | Your ticket | تذكرتك | |
 | `ticketTracker.nowServing` | Now serving | يجري الآن | |
 | `ticketTracker.aheadOfYou` | Ahead of you | قبلك | |
@@ -894,7 +886,7 @@
 | `ticketTracker.minutes` | minutes | دقائق | |
 | `ticketTracker.estimateDisclaimer` | * Estimate based on history — actual time may vary | * تقدير بناءً على السجلات السابقة — الوقت الفعلي قد يختلف | |
 | `ticketTracker.stayOnPage` | Stay on this page to track your position in real time. | ابقَ في هذه الصفحة لتتبع موقفك في الوقت الفعلي. | |
-| `ticketTracker.cancelHint` | To cancel, contact the salon directly. | للإلغاء، اتصل بالصالون مباشرة. | |
+| `ticketTracker.cancelHint` | To cancel, contact the salon directly. | للإلغاء، تواصل مع المحل مباشرة. | |
 | `ticketTracker.toast.cancelled` | Ticket cancelled | تم إلغاء التذكرة | |
 | `ticketCompleted.title` | Service completed | تمت الخدمة | |
 | `ticketCompleted.subtitle` | Thank you for your visit! | شكراً لزيارتكم! | |
@@ -1185,30 +1177,85 @@ Laissez-nous un avis: {review_link}
 | common | 66 | All translated |
 | landing | 194 | All translated |
 | auth | 94 | All translated |
-| dashboard | 423 | ~54 analytics keys [MISSING] in Arabic |
+| dashboard | 487 | **All keys present** — 63 missing analytics keys added (2026-06-29) |
 | booking | 117 | All translated |
 | staff | 31 | All translated |
-| **Total i18n keys** | **~925** | |
-| Hardcoded strings | ~35 | French strings needing extraction |
-| WhatsApp templates | 7 | French template messages |
+| **Total i18n keys** | **~988** | |
+| Hardcoded strings | ~35 | French strings in components — not yet using t() |
+| WhatsApp templates | 7 | French template messages — not yet translated |
 
-### Missing Arabic Translations (ar/dashboard.json)
+### Status: Analytics Keys Fixed ✅
 
-The following 54 keys from the `analytics` namespace are present in English but missing entirely from `ar/dashboard.json`:
+The 63 analytics keys that were missing from `ar/dashboard.json` have been added as of 2026-06-29 (see git commit). No missing keys remain.
 
-- `analytics.estimatedRevenue`
-- `analytics.conversionRate` through `analytics.pageOf` (52 keys: conversionRate, avgRating, reviewCount, queueTickets, avgWaitTime, completed, cancelled, noShow, queuePerDay, newTickets, served, sun, mon, tue, wed, thu, fri, sat, peakHourTooltip, noData, history, filterAll, filterBookings, filterQueue, colType, colDate, colClient, colService, colStaff, colStatus, badgeBooking, badgeQueue, statusPending, statusConfirmed, statusArrived, statusInProgress, statusCompleted, statusCancelled, statusNoShow, statusWaiting, statusCalled, csvType, csvDate, csvTime, csvClient, csvPhone, csvService, csvStaff, csvLabel, csvStatus, csvBooking, csvQueue, csvFilename, pageOf)
+---
 
-### Arabic Translations Marked for Review
+## Arabic Localization Research Recommendations
 
-- `pricing.discount`: Arabic uses `%-17` — the `%` sign precedes the number, which differs from English `-17%`
-- `notAuthenticated`: Arabic means "Not authorized" (صلاحية) rather than "Not authenticated" (مصادقة)
-- `settings.tab.hours`: Arabic uses "المواعيد" (appointments) instead of "ساعات العمل" (hours)
-- `settings.business.slug`: Arabic uses "الرابط المختصر" (shortened link) instead of "الرابط المختصر (URL)"
-- `settings.business.error.slugTaken`: Arabic says "link is reserved" vs "slug is taken"
-- `bookings.pendingMore`: Arabic truncated — missing the instructional second sentence
-- `queue.error.duplicateTicket`: Arabic adds `({{label}})` variable not in the source string
-- Various `toast.*` keys: Arabic adds checkmark ✓ characters not present in source
-- `settings.subscription.warning`: Arabic adds ⚠️ emoji not in source
-- `businessPublic.closedTitle` / `businessPublic.infoAppointment`: Arabic uses "صالون" (salon) restricting the context vs English "business"
-- `onboarding.details.nameLabel`: Arabic uses specific examples "اسم الصالون / العيادة" vs generic "Business name"
+Based on web research of SaaS Arabic localization best practices (Careem, Talabat, Tawqiti, Clinit, Qwaiting patterns).
+
+### Key Principles
+
+| Principle | Recommendation |
+|---|---|
+| Language | **Modern Standard Arabic (MSA)** — not Algerian dialect. MSA is standard for B2B SaaS across MENA |
+| Numerals | **Western Arabic (1,2,3)** — not Arabic-Indic (١,٢,٣). Algeria uses Western numerals |
+| Currency | **د.ج after number** with space. e.g. `1,500 د.ج` |
+| CTAs | Short imperative verbs (احجز, ابدأ, متابعة). **Avoid** "قم بـ" prefix |
+| Nav items | **Drop الـ** from single-word items for modern look: خدمات not الخدمات |
+| Plan names | **Keep English** — "Pro", "Business" stay in English (Careem/Talabat pattern) |
+| Gender | Default masculine plural. Avoid direct gender address where possible |
+| "You" address | Use masculine form (أنت/ـك) as default |
+| Pluralization | Arabic has 6 plural forms — need `Intl.PluralRules` or similar library |
+
+### Terminology — Use Instead Of
+
+| Concept | Recommended | Current (to review) | Reason |
+|---|---|---|---|
+| Queue | طابور / دور | طابور الانتظار (too long) | Drop الانتظار for nav |
+| Dashboard | لوحة التحكم | ✓ Already correct | Standard across Arabic SaaS |
+| Subscription plan | الباقة / الخطة | الاشتراك | باقة is more natural for pricing tiers |
+| Staff / Team | الفريق / طاقم العمل | ✓ Already correct | |
+| Analytics / Stats | الإحصائيات | التحليلات | التحليلات is an anglicism |
+| Walk-in | زيارة مباشرة | دخول مباشر | Both OK, but زيارة is warmer |
+| Waiting list | قائمة الانتظار | ✓ Already correct | |
+| Book an appointment | احجز موعداً | ✓ Already correct | |
+| Check-in | تسجيل الوصول | — | For queue kiosk context |
+| My turn / Your turn | دوري / دورك | — | Add for queue ticket context |
+
+### Current Arabic Translations That Could Be Improved
+
+| Key | Current Arabic | Issue | Suggested |
+|---|---|---|---|
+| `nav.services` | الخدمات | Has الـ | خدمات |
+| `nav.staff` | الفريق | Has الـ | فريق |
+| `nav.analytics` | التحليلات | Anglicism | الإحصائيات |
+| `pricing.pro` | احترافية | Should keep English | Pro |
+| `pricing.business` | تجاري | Should keep English | Business |
+| `pricing.discount` | %-17 | % before number | -17% |
+| `settings.subscription.title` | اشتراكك | Too formal/passive | باقتك |
+| `settings.tab.hours` | المواعيد | Means "appointments" | ساعات العمل |
+| `notAuthenticated` | غير مصرح به | Means "not authorized" | غير مصادق عليه |
+| `bookings.pendingMore` | و{{remaining}} أخرى | Truncated, missing instruction | Add the second sentence |
+| `staffView.statPending` | معلقة | Should match other statuses | قيد الانتظار |
+| `toast.*` keys | ... ✓ | Extra checkmark emoji | Remove ✓ |
+| `settings.subscription.warning` | ⚠️ أنت تقترب... | Extra emoji | Remove ⚠️ |
+| `businessPublic.*` | صالون | Too specific (salon only) | المؤسسة / المتجر |
+
+### Hardcoded Strings Summary
+
+These ~35 French strings in components still need `t()` extraction:
+
+| Component | Strings | Priority |
+|---|---|---|
+| StepService.tsx | "Choisissez un service", "Continuer", "Chargement..." | High |
+| StepDateTime.tsx | "Choisissez une date", "Choisissez une heure", "Aucun creneau", etc. | High |
+| StepStaff.tsx | "Choisir un membre", "Pas de preference", "Continuer" | High |
+| StepDetails.tsx | "Vos coordonnees", "Nom complet", "Telephone", etc. | High |
+| StepConfirmed.tsx | "Demande envoyée", "Lien de suivi", "Copier", etc. | High |
+| TicketCompleted.tsx | "Service terminé", "Merci pour votre visite !" | Medium |
+| TicketCancelled.tsx | "Ticket annulé", "Retour" | Medium |
+| FloatingHelp.tsx | "Besoin d'aide?", WhatsApp message text | Medium |
+| StaffView.tsx | "No-show", "Marquer comme no-show?", etc. | Medium |
+| PrivacyPolicy.tsx | Entire legal document (English) | Low |
+| TermsOfService.tsx | Entire legal document (English) | Low |
