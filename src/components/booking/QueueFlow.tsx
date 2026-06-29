@@ -244,52 +244,36 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       return;
     }
 
-    const { data: ticketData, error: rpcError } = await supabase
-      .rpc("generate_ticket_number", { p_business_id: businessId });
-
-    if (rpcError || !ticketData || ticketData.length === 0) {
-      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
-      setSubmitting(false);
-      return;
-    }
-
-    const { ticket_num, ticket_lbl } = ticketData[0];
-
     const staffMemberId = selectedStaff && selectedStaff !== "no_preference" ? selectedStaff.id : null;
 
     const { data, error } = await supabase
-      .from("queue_tickets")
-      .insert({
-        business_id: businessId,
-        service_id: selectedService.id,
-        staff_member_id: staffMemberId,
-        client_name: name.trim(),
-        client_phone: normalizedPhone,
-        ticket_number: ticket_num,
-        ticket_label: ticket_lbl,
-        queue_date: today,
-        status: "waiting",
-        position_in_queue: ticket_num,
-        estimated_wait_minutes: estimatedWait,
+      .rpc("join_queue", {
+        p_business_id: businessId,
+        p_service_id: selectedService.id,
+        p_client_name: name.trim(),
+        p_client_phone: normalizedPhone,
+        p_staff_member_id: staffMemberId,
+        p_estimated_wait_minutes: estimatedWait,
       })
-      .select("id")
       .maybeSingle();
 
     setSubmitting(false);
-    if (error) {
+    if (error || !data) {
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
-    setJoinedTicketId(data.id);
+    const newId = data.ticket_id;
+    const newLabel = data.ticket_label;
+    setJoinedTicketId(newId);
     setJoinedServiceName(selectedService.name);
-    setJoinedLabel(ticket_lbl);
+    setJoinedLabel(newLabel);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        ticketId: data.id,
+        ticketId: newId,
         businessId,
         businessName,
         serviceName: selectedService.name,
-        ticketLabel: ticket_lbl,
+        ticketLabel: newLabel,
         phone,
         estimatedWait,
       }));

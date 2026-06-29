@@ -376,6 +376,56 @@ $$;
 GRANT EXECUTE ON FUNCTION public.generate_ticket_number(UUID) TO anon, authenticated;
 
 -- -----------------------------------------------------------
+-- join_queue — atomic ticket creation (counter + insert) bypassing RLS
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.join_queue(
+  p_business_id UUID,
+  p_service_id UUID,
+  p_client_name TEXT,
+  p_client_phone TEXT,
+  p_staff_member_id UUID DEFAULT NULL,
+  p_estimated_wait_minutes INT DEFAULT NULL
+)
+RETURNS TABLE(ticket_id UUID, ticket_label TEXT, ticket_number INT)
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_ticket_num INT;
+  v_ticket_lbl TEXT;
+  v_ticket_id UUID;
+BEGIN
+  INSERT INTO queue_counters (business_id, counter_date, last_number)
+  VALUES (p_business_id, CURRENT_DATE, 1)
+  ON CONFLICT (business_id, counter_date)
+  DO UPDATE SET last_number = queue_counters.last_number + 1
+  RETURNING last_number INTO v_ticket_num;
+
+  v_ticket_lbl := 'A-' || LPAD(v_ticket_num::TEXT, 3, '0');
+
+  INSERT INTO queue_tickets (
+    business_id, service_id, staff_member_id,
+    client_name, client_phone,
+    ticket_number, ticket_label,
+    queue_date, status, position_in_queue, estimated_wait_minutes
+  ) VALUES (
+    p_business_id, p_service_id, p_staff_member_id,
+    p_client_name, p_client_phone,
+    v_ticket_num, v_ticket_lbl,
+    CURRENT_DATE, 'waiting', v_ticket_num, p_estimated_wait_minutes
+  )
+  RETURNING id INTO v_ticket_id;
+
+  ticket_id := v_ticket_id;
+  ticket_label := v_ticket_lbl;
+  ticket_number := v_ticket_num;
+  RETURN NEXT;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.join_queue(UUID, UUID, TEXT, TEXT, UUID, INT) TO anon, authenticated;
+
+-- -----------------------------------------------------------
 -- handle_new_user — auto-create profile on signup
 -- -----------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.handle_new_user()
