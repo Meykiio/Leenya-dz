@@ -11,5 +11,6 @@ Completed:
   - [x] Phase 3D — Error boundaries (already wrapped globally in App.tsx)
   - [x] Phase 3F — ESLint (4 no-explicit-any replaced)
   - [x] Phase 4 — Docs sync (ARCHITECTURE, CHANGELOG, AI_CONTEXT, DISCOVERED_ISSUES, ENVIRONMENT)
-In Progress: []
-Blocked: [GitHub push blocked by DNS resolution failure — retry later]
+In Progress: [Phase 5 — PR not created (gh not authenticated)]
+Preview URL: https://leenya-main-2wm2vz8kw-sifeddinemeb96-9720s-projects.vercel.app
+PR: https://github.com/Meykiio/leenya/pull/new/fix/queue-skip-and-hardening (create manually)
