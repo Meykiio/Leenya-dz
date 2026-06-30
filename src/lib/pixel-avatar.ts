@@ -1,16 +1,13 @@
 const PALETTES = [
-  ["#F0EDF5", "#7C5CBF", "#5C3D99", "#B896E0", "#E8D5F5"],
-  ["#EDF5F0", "#2D8F6F", "#1A6B50", "#6BBF9E", "#B8E0D0"],
-  ["#F5F0ED", "#BF6B3A", "#994D1A", "#E0996B", "#F5D5B8"],
-  ["#F0F5ED", "#5F8F2D", "#3D6B1A", "#8FBF5F", "#C8E0B0"],
-  ["#EDF0F5", "#3A5FBF", "#1A3D99", "#6B8FE0", "#B8C8F5"],
-  ["#F5EDF0", "#BF3A5F", "#991A3D", "#E06B8F", "#F5B8C8"],
-  ["#F5F5ED", "#BF9F2D", "#997A1A", "#E0C06B", "#F0E8B8"],
-  ["#EDF5F5", "#2D8F8F", "#1A6B6B", "#6BBFBF", "#B8E8E8"],
+  ["#F5F3FF", "#8B5CF6", "#6D28D9", "#A78BFA", "#C4B5FD"],
+  ["#ECFDF5", "#10B981", "#059669", "#34D399", "#6EE7B7"],
+  ["#FFF7ED", "#F97316", "#C2410C", "#FB923C", "#FDBA74"],
+  ["#F7FEE7", "#84CC16", "#4D7C0F", "#A3E635", "#BEF264"],
+  ["#EFF6FF", "#3B82F6", "#1D4ED8", "#60A5FA", "#93C5FD"],
+  ["#FFF1F2", "#F43F5E", "#BE123C", "#FB7185", "#FDA4AF"],
+  ["#FFFBEB", "#F59E0B", "#B45309", "#FBBF24", "#FDE68A"],
+  ["#F0FDFA", "#14B8A6", "#0F766E", "#2DD4BF", "#5EEAD4"],
 ];
-
-const GRID = 8;
-const CELL = 10;
 
 function hashName(name: string): number {
   let hash = 0;
@@ -21,43 +18,23 @@ function hashName(name: string): number {
   return Math.abs(hash);
 }
 
-function pickByHash(seed: number, shift: number, max: number): number {
-  return ((seed >> shift) & 0xFF) % max;
-}
-
 export function generatePixelAvatar(name: string, outputSize = 80): string {
   const seed = hashName(name);
   const palette = PALETTES[seed % PALETTES.length];
+  const angle = ((seed * 13) % 360).toString();
+  const c1 = palette[1 + (seed % 3)];
+  const c2 = palette[3 + (seed % 2)];
 
-  const leftHalf: number[][] = [];
-  for (let row = 0; row < GRID; row++) {
-    const cols: number[] = [];
-    for (let col = 0; col < GRID / 2; col++) {
-      const cellSeed = ((seed + row * 13 + col * 37) * 31) | 0;
-      const fill = Math.abs(cellSeed) % 100;
-      if (fill > 25) {
-        cols.push((Math.abs(cellSeed >> 4) + row + col) % (palette.length - 1) + 1);
-      } else {
-        cols.push(0);
-      }
-    }
-    leftHalf.push(cols);
-  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="${outputSize}" height="${outputSize}">
+    <defs>
+      <linearGradient id="a" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate(${angle})">
+        <stop offset="0%" stop-color="${palette[0]}" />
+        <stop offset="50%" stop-color="${c1}" />
+        <stop offset="100%" stop-color="${c2}" />
+      </linearGradient>
+    </defs>
+    <rect width="80" height="80" rx="40" fill="url(#a)" />
+  </svg>`;
 
-  const size = GRID * CELL;
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${outputSize}" height="${outputSize}">`;
-  svg += `<rect width="${size}" height="${size}" rx="${CELL}" fill="${palette[0]}" />`;
-
-  for (let row = 0; row < GRID; row++) {
-    for (let col = 0; col < GRID; col++) {
-      const srcCol = col < GRID / 2 ? col : GRID - 1 - col;
-      const ci = leftHalf[row][srcCol];
-      if (ci > 0) {
-        svg += `<rect x="${col * CELL}" y="${row * CELL}" width="${CELL}" height="${CELL}" fill="${palette[ci]}" rx="1.5" />`;
-      }
-    }
-  }
-
-  svg += "</svg>";
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

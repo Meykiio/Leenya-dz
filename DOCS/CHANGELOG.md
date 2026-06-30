@@ -657,6 +657,23 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 
 ---
 
+## 2026-06-30 — UX Polish: State Stability, Greetings, Cover Preview, Revenue
+
+### Fixes
+- **Auth refresh loop fixed** — `onAuthStateChange` no longer toggles loading on `TOKEN_REFRESH` events, preventing the dashboard from unmounting/remounting every ~hour and cascading 20+ DB re-fetches across all sub-pages
+- **Business reference stabilized** — `use-business-info` return value wrapped in `useMemo` so downstream `useEffect([business])` hooks don't re-fire when data hasn't changed
+- **Profile name now shows full name** — fetches `full_name` from `profiles` table as primary source (was falling back to email prefix)
+- **Greeting changes by time of day** — morning / afternoon / evening messages with 5 variants each in all 3 languages; index is random but stable per page load
+- **Cover preview in settings matches profile** — changed from 80px to 140px height, added `overflow-hidden`, shows PixelCover fallback when no cover is set
+- **Revenue in analytics now includes queue tickets** — also counts completed queue tickets' service prices alongside completed bookings (was only counting bookings, showing 0 for walk-in businesses)
+- **Friday day-off & Sunday week-start verified** — already correctly configured
+
+### Build
+- `npm run build` passes with zero errors
+- Deployed to `https://leenya-dz.vercel.app`
+
+---
+
 ## Pre-2026-03-08 — Initial Scaffold
 
 - Project initialized with `vite_react_shadcn_ts` template

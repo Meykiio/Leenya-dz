@@ -232,6 +232,8 @@
   "settings.business.toast.saved": "تم حفظ المعلومات",
   "settings.business.toast.logoUpdated": "تم تحديث الشعار",
   "settings.business.toast.coverUpdated": "تم تحديث صورة الغلاف",
+  "settings.business.toast.coverRemoved": "تم إزالة صورة الغلاف",
+  "settings.business.toast.logoRemoved": "تم إزالة الشعار",
   "settings.business.error.slugTaken": "هذا الرابط محجوز بالفعل",
   "settings.hours.title": "ساعات العمل",
   "settings.hours.sunday": "الأحد",

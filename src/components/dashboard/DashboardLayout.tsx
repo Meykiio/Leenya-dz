@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,8 +57,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [profileFullName, setProfileFullName] = useState<string | null>(null);
 
-  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("common:user");
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (data?.full_name) setProfileFullName(data.full_name);
+    });
+  }, [user]);
+
+  const profileName = profileFullName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("common:user");
 
   // Fetch and subscribe to live queue count
   useEffect(() => {

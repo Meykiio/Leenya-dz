@@ -76,8 +76,8 @@ const DashboardAnalytics = () => {
       ] = await Promise.all([
         supabase.from("bookings").select("id, date, start_time, end_time, status, created_at, service_id, staff_member_id, services(name, price_dzd, duration_minutes), staff_members(display_name)").eq("business_id", business.id).gte("date", fmt(start)).lte("date", fmt(end)).order("date", { ascending: false }).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("bookings").select("id, status, service_id, services(price_dzd)").eq("business_id", business.id).gte("date", fmt(prev.start)).lte("date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
-        supabase.from("queue_tickets").select("*, services(name)").eq("business_id", business.id).gte("queue_date", fmt(start)).lte("queue_date", fmt(end)).order("queue_date", { ascending: false }).range(0, MAX_ANALYTICS_ROWS),
-        supabase.from("queue_tickets").select("id, status, service_id, called_at, completed_at").eq("business_id", business.id).gte("queue_date", fmt(prev.start)).lte("queue_date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("queue_tickets").select("*, services(name, price_dzd), staff_members(display_name)").eq("business_id", business.id).gte("queue_date", fmt(start)).lte("queue_date", fmt(end)).order("queue_date", { ascending: false }).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("queue_tickets").select("id, status, service_id, services(price_dzd), staff_members(display_name)").eq("business_id", business.id).gte("queue_date", fmt(prev.start)).lte("queue_date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("reviews").select("*, profiles(full_name)").eq("business_id", business.id).gte("created_at", start.toISOString()).lte("created_at", end.toISOString()).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("services").select("id, name").eq("business_id", business.id),
         supabase.from("staff_members").select("id, display_name").eq("business_id", business.id),
@@ -110,9 +110,11 @@ const DashboardAnalytics = () => {
 
   const totalBookings = bookings.length;
   const prevTotal = prevBookings.length;
-  const revenue = bookings.filter((b) => b.status === "completed").reduce((sum, b) => sum + (b.services?.price_dzd || 0), 0);
+  const queueRevenue = queueTickets.filter((t) => t.status === "completed").reduce((sum, t) => sum + (t.services?.price_dzd || 0), 0);
+  const revenue = bookings.filter((b) => b.status === "completed").reduce((sum, b) => sum + (b.services?.price_dzd || 0), 0) + queueRevenue;
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const prevRevenue = prevBookings.filter((b: any) => b.status === "completed").reduce((sum: number, b: any) => sum + (b.services?.price_dzd || 0), 0);
+  const prevQueueRevenue = (prevQueueTickets as any[]).filter((t: any) => t.status === "completed").reduce((sum: number, t: any) => sum + (t.services?.price_dzd || 0), 0);
+  const prevRevenue = (prevBookings as any[]).filter((b: any) => b.status === "completed").reduce((sum: number, b: any) => sum + (b.services?.price_dzd || 0), 0) + prevQueueRevenue;
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const successStatuses = new Set(["confirmed", "arrived", "in_service", "completed"]);
@@ -249,7 +251,7 @@ const DashboardAnalytics = () => {
       client_name: t.client_name,
       client_phone: t.client_phone,
       service_name: t.services?.name || null,
-      staff_name: null,
+      staff_name: t.staff_members?.display_name || null,
       status: t.status,
       label: t.ticket_label,
     }));

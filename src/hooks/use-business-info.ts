@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -89,7 +89,7 @@ export function useBusinessInfo() {
     fetchBusiness();
   }, [user, role, refreshKey]);
 
-  return { business, loading };
+  return useMemo(() => ({ business, loading }), [business, loading]);
 }
 
 /** Set the admin business override. Reloads the page to pick up the change cleanly. */

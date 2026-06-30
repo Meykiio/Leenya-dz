@@ -42,7 +42,7 @@ export interface QueueTicket {
   created_at: string;
   called_at: string | null;
   completed_at: string | null;
-  services?: Pick<Service, "name"> | null;
+  services?: Pick<Service, "name" | "price_dzd"> | null;
   staff_members?: Pick<StaffMember, "display_name"> | null;
 }
 

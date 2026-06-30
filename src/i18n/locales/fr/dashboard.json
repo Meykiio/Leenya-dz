@@ -233,6 +233,8 @@
   "settings.business.toast.saved": "Informations enregistrées ✓",
   "settings.business.toast.logoUpdated": "Logo mis à jour",
   "settings.business.toast.coverUpdated": "Photo de couverture mis à jour",
+  "settings.business.toast.coverRemoved": "Photo de couverture supprimée",
+  "settings.business.toast.logoRemoved": "Logo supprimé",
   "settings.business.error.slugTaken": "Ce slug est déjà pris",
   "settings.hours.title": "Horaires d'ouverture",
   "settings.hours.sunday": "Dimanche",

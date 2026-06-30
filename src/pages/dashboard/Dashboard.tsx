@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,10 +28,94 @@ const statusBadgeClasses: Record<string, string> = {
  * a greeting, quick-action buttons, and preview lists for today's bookings and queue.
  * @returns The dashboard overview page JSX
  */
+const GREETINGS: Record<string, Record<string, string[]>> = {
+  en: {
+    morning: [
+      "Good morning {{name}}! Ready for a great day?",
+      "Morning {{name}}! Let's make today count!",
+      "Rise and shine {{name}}!",
+      "Hey {{name}}, great morning to get things done!",
+      "Good morning {{name}}! Coffee's ready ☕",
+    ],
+    afternoon: [
+      "Good afternoon {{name}}! How's your day going?",
+      "Hey {{name}}! Hope the day's treating you well!",
+      "Afternoon {{name}}! Let's finish strong!",
+      "Keep it up {{name}}! You're doing great!",
+      "Hey {{name}}, still crushing it I see!",
+    ],
+    evening: [
+      "Good evening {{name}}! Almost there!",
+      "Hey {{name}}! Wrapping up a great day?",
+      "Evening {{name}}! One last push!",
+      "You made it through {{name}}! Well done!",
+      "Hey {{name}}! Time to close up shop!",
+    ],
+  },
+  fr: {
+    morning: [
+      "Bonjour {{name}} ! Prêt pour une belle journée ?",
+      "Salut {{name}} ! On va déchirer aujourd'hui !",
+      "Bien le bonjour {{name}} ! ☀️",
+      "Hey {{name}} ! Belle matinée pour tout déchirer !",
+      "Lever de soleil, lever de boss {{name}} !",
+    ],
+    afternoon: [
+      "Bon après-midi {{name}} ! Comment se passe la journée ?",
+      "Salut {{name}} ! J'espère que tout roule !",
+      "Hey {{name}} ! On continue sur la lancée !",
+      "Courage {{name}} ! La moitié est faite !",
+      "Toujours au top {{name}} !",
+    ],
+    evening: [
+      "Bonsoir {{name}} ! Presque fini !",
+      "Hey {{name}} ! Belle journée hein ?",
+      "Dernière ligne droite {{name}} !",
+      "Bravo {{name}} ! Tu as assuré aujourd'hui !",
+      "Il est l'heure de fermer {{name}} !",
+    ],
+  },
+  ar: {
+    morning: [
+      "صباح الخير {{name}}! مستعد ليوم رائع؟",
+      "صباح النور {{name}}! يوم جديد مليء بالنجاح!",
+      "هيا {{name}}! الصباح يبدأ بالإنجاز!",
+      "أهلاً {{name}}! صباح مليء بالنشاط!",
+      "يوم جديد {{name}}! لنصنع الفرق!",
+    ],
+    afternoon: [
+      "مساء الخير {{name}}! كيف يسير يومك؟",
+      "أهلاً {{name}}! نتمنى أن يومك جميل!",
+      "هيا {{name}}! لنكمل بقوة!",
+      "استمر {{name}}! أنت تبلي حسناً!",
+      "نصف الطريق {{name}}! استمر بنفس القوة!",
+    ],
+    evening: [
+      "مساء {{name}}! أوشكنا على الانتهاء!",
+      "أهلاً {{name}}! يوم حافل أليس كذلك؟",
+      "آخر جولة {{name}}! لنختم بقوة!",
+      "عمل رائع {{name}}! كنت مبدعاً اليوم!",
+      "حان وقت الإغلاق {{name}}!",
+    ],
+  },
+};
+
 const Dashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { business } = useBusinessInfo();
+  const hour = new Date().getHours();
+  const timeBlock = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+  const [greetingIndex] = useState(() => Math.floor(Math.random() * 5));
+  const [profileFullName, setProfileFullName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (data?.full_name) setProfileFullName(data.full_name);
+    });
+  }, [user]);
+
   const statusLabels: Record<string, string> = {
     pending: t("dashboard:bookings.status.pending"),
     confirmed: t("dashboard:bookings.status.confirmed"),
@@ -93,7 +177,7 @@ const Dashboard = () => {
   const noShows = bookings.filter((b) => b.status === "no_show").length;
   const noShowRate = bookings.length > 0 ? Math.round((noShows / bookings.length) * 100) : 0;
 
-  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("dashboard:overview.user");
+  const profileName = profileFullName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("dashboard:overview.user");
 
   const copyLink = async () => {
     if (!business) return;
@@ -154,8 +238,8 @@ const Dashboard = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
               <div>
-                <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">
-                  {t("dashboard:overview.greeting", { name: profileName })}
+                <h1 className="text-lg sm:text-[22px] font-semibold text-[var(--text-primary)] tracking-[-0.01em] break-words">
+                  {(GREETINGS[i18n.language] || GREETINGS.en)[timeBlock][greetingIndex].replace("{{name}}", profileName)}
                 </h1>
                 <p className="text-[13px] text-[var(--text-tertiary)] capitalize mt-0.5">
                   {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}

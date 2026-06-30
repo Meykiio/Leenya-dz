@@ -95,3 +95,12 @@ npx tsc --noEmit # Type-check only
 
 ### Phase 2d — Security Hardening (2026-06-27)
 - Sentry monitoring, CI/CD, CSP headers, Playwright E2E, RLS tests.
+
+### Bug Bash 2 — State Stability & UX Polish (2026-06-30)
+- **Auth token refresh no longer unmounts dashboard** — `onAuthStateChange` skips `setRoleReady(false)` on `TOKEN_REFRESH`
+- **Business reference stabilized** — `useMemo` prevents cascade re-fetches
+- **Profile name from DB** — fetches from `profiles.full_name`, shows real name not email
+- **Time-of-day greetings** — 5 variants per time block × 3 languages
+- **Cover preview matches profile** — same 140px height, PixelCover fallback in settings
+- **Revenue counts queue income** — completed queue tickets' service prices now included
+- **Cover images get cache-busting `?cb=`** on each upload to prevent stale browser cache

@@ -7,9 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Upload, Check, X } from "lucide-react";
+import { Copy, Upload, Check, X, Trash2 } from "lucide-react";
 import { wilayas } from "@/lib/wilayas";
+import { generatePixelAvatar } from "@/lib/pixel-avatar";
+import PixelCover from "@/components/booking/PixelCover";
 
 function slugify(text: string): string {
   return text
@@ -93,14 +96,23 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
   const uploadFile = async (file: File, type: "logo" | "cover") => {
     const ext = file.name.split(".").pop();
     const path = `${businessId}/${type}.${ext}`;
-    const { error } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true, cacheControl: "no-cache" });
     if (error) {       toast({ title: t("common:toast.error"), description: error.message, variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
+    const cacheBustedUrl = `${publicUrl}?cb=${Date.now()}`;
     const tKey = type === "logo" ? t("dashboard:settings.business.toast.logoUpdated") : t("dashboard:settings.business.toast.coverUpdated");
     toast({ title: tKey });
     const key = `${type}_url` as "logo_url" | "cover_url";
-    setForm((f) => ({ ...f, [key]: publicUrl }));
-    await supabase.from("businesses").update({ [key]: publicUrl }).eq("id", businessId);
+    setForm((f) => ({ ...f, [key]: cacheBustedUrl }));
+    await supabase.from("businesses").update({ [key]: cacheBustedUrl }).eq("id", businessId);
+  };
+
+  const removeImage = async (type: "logo" | "cover") => {
+    const key = `${type}_url` as "logo_url" | "cover_url";
+    setForm((f) => ({ ...f, [key]: "" }));
+    await supabase.from("businesses").update({ [key]: null }).eq("id", businessId);
+    const tKey = type === "logo" ? t("dashboard:settings.business.toast.logoRemoved") : t("dashboard:settings.business.toast.coverRemoved");
+    toast({ title: tKey });
   };
 
   const save = async () => {
@@ -149,23 +161,40 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
       <Card>
         <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.images")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center justify-items-center">
+            <div className="space-y-2 text-center">
               <Label>{t("dashboard:settings.business.logo")}</Label>
-              {form.logo_url && (
-                <img src={form.logo_url} alt={t("dashboard:settings.business.logo")} className="h-16 w-16 rounded-full object-cover border" />
-              )}
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
+              <div className="relative inline-block">
+                <Avatar className="h-16 w-16 border">
+                  <AvatarImage src={form.logo_url || generatePixelAvatar(form.name || " ", 64)} alt={t("dashboard:settings.business.logo")} />
+                  <AvatarFallback className="bg-muted" />
+                </Avatar>
+                {form.logo_url && (
+                  <button onClick={() => removeImage("logo")} className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90">
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline justify-center">
                 <Upload className="h-4 w-4" />
                 <span>{t("dashboard:settings.business.changeLogo")}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "logo")} />
               </label>
             </div>
-            <div className="space-y-2">
-              <Label>{t("dashboard:settings.business.cover")}</Label>
-              {form.cover_url && (
-                <img src={form.cover_url} alt={t("dashboard:settings.business.cover")} className="h-20 w-full rounded-md object-cover border" />
-              )}
+            <div className="space-y-2 w-full">
+              <Label className="text-center block">{t("dashboard:settings.business.cover")}</Label>
+              <div className="relative h-[140px] w-full overflow-hidden">
+                {form.cover_url ? (
+                  <>
+                    <img src={form.cover_url} alt={t("dashboard:settings.business.cover")} className="h-full w-full object-cover" />
+                    <button onClick={() => removeImage("cover")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 z-10">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <PixelCover name={form.name || " "} />
+                )}
+              </div>
               <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
                 <Upload className="h-4 w-4" />
                 <span>{t("dashboard:settings.business.changeCover")}</span>

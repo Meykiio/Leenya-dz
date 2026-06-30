@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import * as Sentry from "@sentry/react";
@@ -44,6 +44,7 @@ export const useAuth = () => useContext(AuthContext);
  * and exposes session, user, role, and auth actions to children.
  */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const userRef = useRef<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole>(null);
@@ -67,14 +68,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        const newUser = session?.user ?? null;
+        // Only update user state if the user ID actually changed — prevents cascade on TOKEN_REFRESH
+        if (newUser?.id !== userRef.current) {
+          setUser(newUser);
+          userRef.current = newUser?.id ?? null;
+        }
         if (session?.user) {
           Sentry.setUser({ id: session.user.id, email: session.user.email ?? undefined });
-          setRoleReady(false);
-          // setTimeout avoids Supabase client deadlock
-          setTimeout(() => fetchRole(), 0);
+          // Only fetch role on SIGNED_IN — skip TOKEN_REFRESH to avoid unmounting dashboard
+          if (event === "SIGNED_IN") {
+            setRoleReady(false);
+            setTimeout(() => fetchRole(), 0);
+          }
         } else {
           setRole(null);
           setRoleReady(true);

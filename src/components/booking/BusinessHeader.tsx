@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { generatePixelAvatar } from "@/lib/pixel-avatar";
 import PixelCover from "./PixelCover";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, Phone } from "lucide-react";
 
 interface BusinessHeaderProps {
   business: {
@@ -45,12 +45,7 @@ export default function BusinessHeader({ business, openStatus }: BusinessHeaderP
           <img src={business.cover_url} alt="" className="h-full w-full object-cover" />
         </div>
       ) : (
-        <PixelCover
-          name={business.name}
-          category={categoryLabel}
-          wilaya={business.wilaya_name}
-          phone={business.phone}
-        />
+        <PixelCover name={business.name} />
       )}
 
       {/* Info */}
@@ -61,10 +56,22 @@ export default function BusinessHeader({ business, openStatus }: BusinessHeaderP
           <AvatarFallback className="bg-muted" />
         </Avatar>
 
+        {/* Business name */}
+        <h1 className="text-lg font-bold mt-2.5">{business.name}</h1>
+
         {/* Category + location */}
         {locationParts.length > 0 && (
-          <p className="text-[13px] text-muted-foreground mt-2.5">
+          <p className="text-[13px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
             {locationParts.join(" · ")}
+          </p>
+        )}
+
+        {/* Phone */}
+        {business.phone && (
+          <p className="text-[13px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+            <Phone className="h-3.5 w-3.5 shrink-0" />
+            {business.phone}
           </p>
         )}
 

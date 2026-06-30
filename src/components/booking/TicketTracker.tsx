@@ -50,9 +50,12 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const businessIdRef = useRef<string | null>(null);
   const queueDateRef = useRef<string | null>(null);
   const serviceIdRef = useRef<string | null>(null);
+  const staffMemberIdRef = useRef<string | null>(null);
   const [showServicePicker, setShowServicePicker] = useState(false);
   const [availableServices, setAvailableServices] = useState<{ id: string; name: string }[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [availableStaff, setAvailableStaff] = useState<{ id: string; display_name: string }[]>([]);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
 
   useEffect(() => {
     const reviewed = localStorage.getItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
@@ -126,6 +129,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         businessIdRef.current = data.business_id;
         queueDateRef.current = data.queue_date;
         serviceIdRef.current = data.service_id;
+        staffMemberIdRef.current = data.staff_member_id;
 
         fetchHistoricalData(data.business_id, data.service_id);
         refreshQueueContext(data.business_id, data.queue_date, data.ticket_number).then((ctx) => {
@@ -401,15 +405,15 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           onClick={async () => {
             const bizId = businessIdRef.current;
             if (!bizId) return;
-            const { data, error } = await supabase
-              .from("services")
-              .select("id, name")
-              .eq("business_id", bizId)
-              .eq("is_active", true)
-              .order("display_order");
-            if (error) { console.error("fetchServices:", error); return; }
-            setAvailableServices(data || []);
+            const [svcResult, staffResult] = await Promise.all([
+              supabase.from("services").select("id, name").eq("business_id", bizId).eq("is_active", true).order("display_order"),
+              supabase.from("staff_members").select("id, display_name").eq("business_id", bizId).eq("is_active", true).order("display_name"),
+            ]);
+            if (svcResult.error) { console.error("fetchServices:", svcResult.error); return; }
+            setAvailableServices(svcResult.data || []);
+            setAvailableStaff(staffResult.data || []);
             setSelectedServiceId(serviceIdRef.current || "");
+            setSelectedStaffId(staffMemberIdRef.current || "");
             setShowServicePicker(true);
           }}
         >
@@ -426,26 +430,56 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           {availableServices.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">{t("common:loading")}</p>
           ) : (
-            <RadioGroup value={selectedServiceId} onValueChange={setSelectedServiceId}>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {availableServices.map((s) => (
-                  <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
-                    <RadioGroupItem value={s.id} id={s.id} />
-                    <Label htmlFor={s.id} className="flex-1 text-sm font-medium cursor-pointer">{s.name}</Label>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-2">{t("booking:ticketTracker.changeService")}</p>
+                <RadioGroup value={selectedServiceId} onValueChange={setSelectedServiceId}>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {availableServices.map((s) => (
+                      <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
+                        <RadioGroupItem value={s.id} id={s.id} />
+                        <Label htmlFor={s.id} className="flex-1 text-sm font-medium cursor-pointer">{s.name}</Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </RadioGroup>
               </div>
-            </RadioGroup>
+              {availableStaff.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">{t("booking:ticketTracker.changeStaff")}</p>
+                  <RadioGroup value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="flex items-center gap-3 rounded-md border border-border p-3">
+                        <RadioGroupItem value="" id="staff-none" />
+                        <Label htmlFor="staff-none" className="flex-1 text-sm font-medium cursor-pointer">{t("booking:appointmentFlow.stepStaff.noPreference")}</Label>
+                      </div>
+                      {availableStaff.map((s) => (
+                        <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
+                          <RadioGroupItem value={s.id} id={s.id} />
+                          <Label htmlFor={s.id} className="flex-1 text-sm font-medium cursor-pointer">{s.display_name}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+            </div>
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowServicePicker(false)}>{t("common:buttons.cancel")}</Button>
             <Button
-              disabled={!selectedServiceId || selectedServiceId === serviceIdRef.current}
+              disabled={!selectedServiceId || (selectedServiceId === serviceIdRef.current && selectedStaffId === (staffMemberIdRef.current || ""))}
               onClick={async () => {
                 if (!selectedServiceId) return;
+                const oldServiceId = serviceIdRef.current;
+                const oldStaffId = staffMemberIdRef.current;
+                const updates: Record<string, string | null> = { service_id: selectedServiceId };
+                if (selectedStaffId !== (oldStaffId || "")) {
+                  updates.staff_member_id = selectedStaffId || null;
+                }
                 const { error } = await supabase
                   .from("queue_tickets")
-                  .update({ service_id: selectedServiceId })
+                  .update(updates)
                   .eq("id", ticketId);
                 if (error) {
                   console.error("changeService:", error);
@@ -453,8 +487,12 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
                   return;
                 }
                 serviceIdRef.current = selectedServiceId;
+                staffMemberIdRef.current = selectedStaffId || null;
                 setShowServicePicker(false);
-                toast({ title: t("booking:ticketTracker.serviceChanged") });
+                const changedParts = [];
+                if (selectedServiceId !== oldServiceId) changedParts.push(t("booking:ticketTracker.serviceChanged"));
+                if (selectedStaffId !== (oldStaffId || "")) changedParts.push(t("booking:ticketTracker.staffChanged"));
+                toast({ title: changedParts.join(" + ") });
                 refetchAll();
               }}
             >
