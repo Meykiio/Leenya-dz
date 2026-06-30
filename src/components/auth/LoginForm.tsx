@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import ForgotPassword from "./ForgotPassword";
 const LoginForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { waitForRole } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,8 @@ const LoginForm = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data: roleData } = await supabase.rpc("get_user_role");
+    // Use AuthContext's waitForRole (single RPC code path, no race with fetchRole)
+    const roleData = await waitForRole();
 
     if (!roleData) {
       navigate("/onboarding");

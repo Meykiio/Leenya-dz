@@ -14,6 +14,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
+  waitForRole: () => Promise<AppRole>;
 }
 
 /**
@@ -133,10 +134,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await fetchRole();
   };
 
+  /** Fetch the role and return it — single code path shared with LoginForm to avoid the race where fetchRole and handlePostAuth call RPC independently */
+  const waitForRole = async (): Promise<AppRole> => {
+    try {
+      const { data, error } = await supabase.rpc("get_user_role");
+      if (error) throw error;
+      const newRole = (data as AppRole) ?? null;
+      setRole(newRole);
+      setRoleReady(true);
+      return newRole;
+    } catch (error) {
+      console.error("[AuthContext] waitForRole failed:", error);
+      setRole(null);
+      setRoleReady(true);
+      return null;
+    }
+  };
+
   const loading = !sessionReady || !roleReady;
 
   return (
-    <AuthContext.Provider value={{ session, user, role, loading, signOut, refreshRole }}>
+    <AuthContext.Provider value={{ session, user, role, loading, signOut, refreshRole, waitForRole }}>
       {children}
     </AuthContext.Provider>
   );
