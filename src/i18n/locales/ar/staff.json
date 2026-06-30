@@ -40,6 +40,10 @@
   "staffView.toast.updateError": "تعذر التحديث.",
   "staffView.toast.ticketTaken": "التذكرة تم أخذها بالفعل",
   "staffView.toast.ticketTakenDesc": "قام عضو آخر بالفعل باستدعاء هذه التذكرة.",
+  "staffView.statusPending": "قيد الانتظار",
+  "staffView.statusConfirmed": "مؤكد",
+  "staffView.statusArrived": "وصل",
+  "staffView.statusInProgress": "قيد التنفيذ",
   "staffView.since": "منذ",
   "staffView.timeJustNow": "الآن",
   "staffView.timeMin": "{{mins}} د"

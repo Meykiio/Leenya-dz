@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -11,15 +11,26 @@ export interface BusinessInfo {
   phone: string | null;
 }
 
+const ADMIN_BUSINESS_KEY = "leenya_admin_business_id";
+
 /**
- * Hook to fetch the current user's business info (name, slug, category, phone).
- * First checks `businesses` by owner_id, then falls back to `staff_members` join.
- * Returns the business data and a loading flag. Refetches when the user changes.
+ * Hook to fetch business info.
+ * - Normal flow: looks up by owner_id, then staff member fallback.
+ * - Superadmin override: if `leenya_admin_business_id` is set in localStorage,
+ *   fetches that business directly (ignores ownership).
  */
 export function useBusinessInfo() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [business, setBusiness] = useState<BusinessInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Listen for admin business ID changes
+  useEffect(() => {
+    const handler = () => setRefreshKey((k) => k + 1);
+    window.addEventListener("leenya-admin-switch", handler);
+    return () => window.removeEventListener("leenya-admin-switch", handler);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -27,12 +38,31 @@ export function useBusinessInfo() {
     const fetchBusiness = async () => {
       setLoading(true);
 
+      // Superadmin override: fetch any business by ID from localStorage
+      const adminBusinessId = localStorage.getItem(ADMIN_BUSINESS_KEY);
+      if (role === "superadmin" && adminBusinessId) {
+        const { data } = await supabase
+          .from("businesses")
+          .select("id, name, slug, category, phone")
+          .eq("id", adminBusinessId)
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          setBusiness(data as BusinessInfo);
+          setLoading(false);
+          return;
+        }
+        // Invalid override — clear it
+        localStorage.removeItem(ADMIN_BUSINESS_KEY);
+      }
+
       const { data: ownerBiz } = await supabase
         .from("businesses")
         .select("id, name, slug, category, phone")
         .eq("owner_id", user.id)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (ownerBiz) {
         setBusiness(ownerBiz as BusinessInfo);
@@ -45,7 +75,7 @@ export function useBusinessInfo() {
         .select("businesses!inner(id, name, slug, category, phone)")
         .eq("profile_id", user.id)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (staffBiz) {
         const biz = staffBiz.businesses as unknown as BusinessInfo;
@@ -57,7 +87,28 @@ export function useBusinessInfo() {
     };
 
     fetchBusiness();
-  }, [user]);
+  }, [user, role, refreshKey]);
 
   return { business, loading };
+}
+
+/** Set the admin business override. Reloads the page to pick up the change cleanly. */
+export function setAdminBusinessId(businessId: string | null) {
+  if (businessId) {
+    localStorage.setItem(ADMIN_BUSINESS_KEY, businessId);
+  } else {
+    localStorage.removeItem(ADMIN_BUSINESS_KEY);
+  }
+  window.dispatchEvent(new CustomEvent("leenya-admin-switch"));
+}
+
+/** Get the current admin business ID from localStorage. */
+export function getAdminBusinessId(): string | null {
+  return localStorage.getItem(ADMIN_BUSINESS_KEY);
+}
+
+/** Clear the admin override. */
+export function clearAdminBusinessId() {
+  localStorage.removeItem(ADMIN_BUSINESS_KEY);
+  window.dispatchEvent(new CustomEvent("leenya-admin-switch"));
 }

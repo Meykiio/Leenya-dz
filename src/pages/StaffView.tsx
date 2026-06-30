@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,39 +8,44 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Play, CheckCircle, XCircle, Users, LogOut, Ticket, CalendarDays, MessageCircle } from "lucide-react";
+import {
+  Play, CheckCircle, XCircle, Users, LogOut, Ticket,
+  CalendarDays, MessageCircle, Clock, ArrowRight, UserCheck,
+  Phone,
+} from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { openWhatsApp, buildQueueCalledUrl, buildBookingConfirmationUrl } from "@/lib/whatsapp";
+import { generatePixelAvatar } from "@/lib/pixel-avatar";
 import type { Business, QueueTicket, Booking } from "@/types";
 import type { BookingStatus } from "@/integrations/supabase/types";
 
 type Tab = "queue" | "bookings";
 
-/**
- * Staff view — live dashboard for staff members to manage queue tickets and day bookings.
- * Supports calling tickets, updating booking statuses, sending WhatsApp notifications.
- * @returns The staff view page JSX
- */
 const StaffView = () => {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const [business, setBusiness] = useState<Pick<Business, "id" | "name" | "slug"> | null>(null);
   const [staffMemberId, setStaffMemberId] = useState<string | null>(null);
+  const [staffName, setStaffName] = useState<string>("");
   const [tickets, setTickets] = useState<QueueTicket[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [tab, setTab] = useState<Tab>("queue");
   const today = format(new Date(), "yyyy-MM-dd");
+  const calledRef = useRef<HTMLDivElement>(null);
+  const inServiceRef = useRef<HTMLDivElement>(null);
+  const waitingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
     supabase
       .from("staff_members")
-      .select("id, business_id, businesses(id, name, slug)")
+      .select("id, display_name, business_id, businesses(id, name, slug)")
       .eq("profile_id", user.id)
       .eq("is_active", true)
       .limit(1)
@@ -55,8 +60,8 @@ const StaffView = () => {
         if (data) {
           setBusiness(data.businesses);
           setStaffMemberId(data.id);
-        }
-        else {
+          setStaffName(data.display_name);
+        } else {
           setAccessDenied(true);
           setLoading(false);
         }
@@ -66,16 +71,14 @@ const StaffView = () => {
   const fetchTickets = useCallback(async () => {
     if (!business || !staffMemberId) return;
     const { data, error } = await supabase
-      .from("queue_tickets")
-      .select("*, services(name)")
-      .eq("business_id", business.id)
-      .eq("queue_date", today)
-      .in("status", ["waiting", "called", "in_service"])
-      .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
-      .order("ticket_number");
+      .rpc("get_staff_queue", { p_staff_member_id: staffMemberId, p_queue_date: today });
 
-    if (error) { console.error("fetchTickets:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.loadQueueError"), variant: "destructive" }); }
-    setTickets(data || []);
+    if (error) { console.error("fetchTickets:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.queueLoadError"), variant: "destructive" }); }
+    const mapped = (data || []).map((t: Record<string, unknown>) => ({
+      ...t,
+      services: t.service_name ? { name: t.service_name } : null,
+    }));
+    setTickets(mapped as unknown as QueueTicket[]);
     setLoading(false);
   }, [business, staffMemberId, today, t]);
 
@@ -90,7 +93,7 @@ const StaffView = () => {
       .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("start_time");
 
-    if (error) { console.error("fetchBookings:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.loadBookingsError"), variant: "destructive" }); }
+    if (error) { console.error("fetchBookings:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.bookingsLoadError"), variant: "destructive" }); }
     setBookings(data || []);
     setLoading(false);
   }, [business, staffMemberId, today, t]);
@@ -112,9 +115,11 @@ const StaffView = () => {
     if (!ticket) return;
     const currentStatus = ticket.status;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updates: any = { status };
-    if (status === "called") updates.called_at = new Date().toISOString();
+    const updates: Record<string, unknown> = { status };
+    if (status === "called") {
+      updates.called_at = new Date().toISOString();
+      if (!ticket.staff_member_id) updates.staff_member_id = staffMemberId;
+    }
     if (status === "completed" || status === "no_show") updates.completed_at = new Date().toISOString();
 
     const { data, error } = await supabase
@@ -127,11 +132,11 @@ const StaffView = () => {
 
     if (error) {
       console.error("updateTicketStatus:", error);
-      toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateTicketError"), variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" });
       return;
     }
     if (!data || data.length === 0) {
-      toast({ title: t("staff:staffView.toast.ticketTakenTitle"), description: t("staff:staffView.toast.ticketTakenDesc"), variant: "destructive" });
+      toast({ title: t("staff:staffView.toast.ticketTaken"), description: t("staff:staffView.toast.ticketTakenDesc"), variant: "destructive" });
       fetchTickets();
       return;
     }
@@ -157,15 +162,14 @@ const StaffView = () => {
 
     if (error) {
       console.error("updateBookingStatus:", error);
-      toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateBookingError"), variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" });
       return;
     }
     fetchBookings();
   };
 
   const sendBookingWhatsApp = (booking: Booking) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serviceName = (booking.services as any)?.name || t("staff:staffView.serviceDefault");
+    const serviceName = (booking.services as unknown as { name?: string })?.name || t("staff:staffView.serviceDefault");
     const url = buildBookingConfirmationUrl(
       booking.client_phone, business!.name, booking.date,
       booking.start_time.slice(0, 5), serviceName, null, booking.id
@@ -180,6 +184,122 @@ const StaffView = () => {
   const timeAgo = (dateStr: string) => {
     const mins = differenceInMinutes(new Date(), new Date(dateStr));
     return mins < 1 ? t("staff:staffView.timeJustNow") : t("staff:staffView.timeMin", { mins });
+  };
+
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const StatCard = ({ label, count, icon: Icon, color, ref: sectionRef }: {
+    label: string; count: number; icon: React.ElementType; color: string; ref?: React.RefObject<HTMLDivElement | null>;
+  }) => (
+    <button
+      onClick={() => sectionRef && scrollToSection(sectionRef)}
+      className={`flex flex-col items-center justify-center rounded-xl ${color} p-3 min-h-[72px] active:scale-95 transition-transform`}
+    >
+      <Icon className="h-5 w-5 mb-0.5 opacity-70" />
+      <span className="text-xl font-bold leading-tight">{count}</span>
+      <span className="text-[10px] font-medium opacity-80">{label}</span>
+    </button>
+  );
+
+  const TicketCard = ({ ticket, actions }: { ticket: QueueTicket; actions: React.ReactNode }) => (
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 shadow-sm">
+      <div className="flex flex-col items-center justify-center min-w-[48px]">
+        <span className="font-mono text-lg font-bold text-[var(--accent)] leading-none">{ticket.ticket_label}</span>
+        <span className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{t("staff:staffView.since")} {timeAgo(ticket.created_at)}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{ticket.client_name}</p>
+        <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"}</p>
+        {ticket.client_phone && (
+          <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{ticket.client_phone}</p>
+        )}
+      </div>
+      <div className="flex gap-1.5 shrink-0">
+        {actions}
+      </div>
+    </div>
+  );
+
+  const BookingCard = ({ booking }: { booking: Booking }) => {
+    const statusColors: Record<string, string> = {
+      pending: "border-amber-200 bg-amber-50 text-amber-700",
+      confirmed: "border-blue-200 bg-blue-50 text-blue-700",
+      arrived: "border-green-200 bg-green-50 text-green-700",
+      in_service: "border-purple-200 bg-purple-50 text-purple-700",
+    };
+    const statusClass = statusColors[booking.status] || "";
+    return (
+      <div className="flex items-start gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 shadow-sm">
+        <div className="flex flex-col items-center min-w-[44px] pt-0.5">
+          <span className="text-sm font-bold text-[var(--text-primary)]">{booking.start_time.slice(0, 5)}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{booking.client_name}</p>
+          <p className="text-xs text-[var(--text-secondary)]">{booking.services?.name || "—"}</p>
+          {booking.client_phone && (
+            <p className="text-[10px] text-[var(--text-tertiary)]">{booking.client_phone}</p>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusClass}`}>
+            {booking.status === "pending" ? t("staff:staffView.statusPending") :
+             booking.status === "confirmed" ? t("staff:staffView.statusConfirmed") :
+             booking.status === "arrived" ? t("staff:staffView.statusArrived") :
+             t("staff:staffView.statusInProgress")}
+          </span>
+          <div className="flex gap-1">
+            <Button size="sm" variant="ghost" onClick={() => sendBookingWhatsApp(booking)} className="h-8 w-8 p-0">
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+            {booking.status === "pending" && (
+              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")} className="h-8 text-xs px-2.5">
+                {t("staff:staffView.buttonAccept")}
+              </Button>
+            )}
+            {booking.status === "confirmed" && (
+              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "arrived")} className="h-8 text-xs px-2.5">
+                {t("staff:staffView.buttonArrived")}
+              </Button>
+            )}
+            {booking.status === "arrived" && (
+              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "in_service")} className="h-8 text-xs px-2.5">
+                {t("staff:staffView.buttonStart")}
+              </Button>
+            )}
+            {booking.status === "in_service" && (
+              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")} className="h-8 text-xs px-2.5">
+                <CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("staff:staffView.buttonComplete")}
+              </Button>
+            )}
+            {(booking.status === "pending" || booking.status === "confirmed") && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive">
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("staff:staffView.dialogCancelBooking")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("staff:staffView.dialogCancelBookingDesc", { name: booking.client_name, time: booking.start_time.slice(0, 5) })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => updateBookingStatus(booking.id, "cancelled")} className="bg-destructive text-destructive-foreground">
+                      {t("staff:staffView.dialogYesCancel")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (!business) {
@@ -205,275 +325,244 @@ const StaffView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-base)] px-4 py-3">
-        <div>
-          <h1 className="text-lg font-bold text-[var(--text-primary)]">{business.name}</h1>
-          <p className="text-xs text-[var(--text-secondary)] capitalize">{format(new Date(), "EEEE d MMMM", { locale: fr })}</p>
+    <div className="min-h-screen bg-[var(--bg-base)] pb-24">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-[var(--bg-base)] border-b border-[var(--border-subtle)]">
+        <div className="flex items-center gap-3 px-4 h-14">
+          <img
+            src={generatePixelAvatar(staffName || "Staff", 32)}
+            alt=""
+            className="h-8 w-8 rounded-full shrink-0 ring-2 ring-[var(--accent-light)]"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold text-[var(--text-primary)] truncate">{staffName}</h1>
+              <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full shrink-0">
+                On duty
+              </span>
+            </div>
+            <p className="text-[11px] text-[var(--text-tertiary)] truncate">{business.name} • {format(new Date(), "EEEE d MMMM", { locale: fr })}</p>
+          </div>
+          <button
+            onClick={signOut}
+            className="h-9 w-9 flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:text-[var(--error)] hover:bg-[var(--bg-overlay)] transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
-        <Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
+
+        {/* Tabs */}
+        <div className="flex px-4 gap-1">
+          <button
+            onClick={() => setTab("queue")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
+              tab === "queue"
+                ? "border-[var(--accent)] text-[var(--accent)]"
+                : "border-transparent text-[var(--text-tertiary)]"
+            }`}
+          >
+            <Ticket className="h-4 w-4" />
+            {t("staff:staffView.tabQueue")}
+            {waiting.length > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[var(--accent)] text-white text-[10px] font-semibold px-1.5">
+                {waiting.length > 99 ? "99+" : waiting.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setTab("bookings")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
+              tab === "bookings"
+                ? "border-[var(--accent)] text-[var(--accent)]"
+                : "border-transparent text-[var(--text-tertiary)]"
+            }`}
+          >
+            <CalendarDays className="h-4 w-4" />
+            {t("staff:staffView.tabBookings")}
+            {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-amber-500 text-white text-[10px] font-semibold px-1.5">
+                {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
-      {/* Tabs */}
-      <div className="flex border-b border-[var(--border-default)] px-4">
-        <button
-          onClick={() => setTab("queue")}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-            tab === "queue"
-              ? "border-primary text-[var(--text-primary)]"
-              : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-          }`}
-        >
-          <Ticket className="h-4 w-4" />
-          {t("staff:staffView.tabQueue")}
-          {waiting.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{waiting.length}</Badge>
-          )}
-        </button>
-        <button
-          onClick={() => setTab("bookings")}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-            tab === "bookings"
-              ? "border-primary text-[var(--text-primary)]"
-              : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-          }`}
-        >
-          <CalendarDays className="h-4 w-4" />
-          {t("staff:staffView.tabBookings")}
-          {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length > 0 && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length}
-            </Badge>
-          )}
-        </button>
-      </div>
-
-      <main className="p-4 space-y-4 max-w-2xl mx-auto">
+      <main className="px-4 pt-4 space-y-4">
         {tab === "queue" ? (
           <>
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 text-center">
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{waiting.length}</p>
-                <p className="text-xs text-[var(--text-secondary)]">{t("staff:staffView.statWaiting")}</p>
-              </div>
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-4 text-center">
-                <p className="text-2xl font-bold text-[var(--text-primary)]">{called.length + inService.length}</p>
-                <p className="text-xs text-[var(--text-secondary)]">{t("staff:staffView.statInService")}</p>
-              </div>
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-2.5">
+              <StatCard
+                label={t("staff:staffView.statWaiting")}
+                count={waiting.length}
+                icon={Users}
+                color="bg-blue-50 text-blue-700 border border-blue-200"
+                ref={waitingRef}
+              />
+              <StatCard
+                label={t("staff:staffView.sectionCalled")}
+                count={called.length}
+                icon={Phone}
+                color="bg-amber-50 text-amber-700 border border-amber-200"
+                ref={calledRef}
+              />
+              <StatCard
+                label={t("staff:staffView.statInService")}
+                count={inService.length}
+                icon={Play}
+                color="bg-green-50 text-green-700 border border-green-200"
+                ref={inServiceRef}
+              />
             </div>
 
-            {/* Called — waiting to be served */}
+            {/* Called section */}
             {called.length > 0 && (
-              <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">{t("staff:staffView.sectionCalled")}</h3>
+              <div ref={calledRef} className="space-y-2 scroll-mt-20">
+                <h3 className="text-sm font-bold text-amber-700 flex items-center gap-1.5 px-0.5">
+                  <ArrowRight className="h-4 w-4" /> {t("staff:staffView.sectionCalled")} ({called.length})
+                </h3>
                 {called.map((ticket) => (
-                  <div key={ticket.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
-                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{ticket.ticket_label}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"} • {ticket.called_at ? timeAgo(ticket.called_at) : ""}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "in_service")} className="gap-1">
-                        <Play className="h-3 w-3" /> {t("staff:staffView.buttonStart")}
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-destructive">{t("staff:staffView.dialogNoShowButton")}</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t("staff:staffView.dialogNoShow")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { clientName: ticket.client_name })}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "no_show")}>{t("common:buttons.confirm")}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    actions={
+                      <>
+                        <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "in_service")} className="h-9 gap-1">
+                          <Play className="h-3.5 w-3.5" /> {t("staff:staffView.buttonStart")}
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" className="h-9 text-destructive border-destructive/30">
+                              {t("staff:staffView.dialogNoShowButton")}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("staff:staffView.dialogNoShow")}</AlertDialogTitle>
+                              <AlertDialogDescription>{t("staff:staffView.dialogNoShowDesc", { name: ticket.client_name })}</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "no_show")}>{t("common:buttons.confirm")}</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    }
+                  />
                 ))}
               </div>
             )}
 
-            {/* Currently in service */}
+            {/* In service section */}
             {inService.length > 0 && (
-              <div className="rounded-lg border border-[var(--accent)] bg-[var(--accent-light)] p-4 space-y-2">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">{t("staff:staffView.sectionInProgress")}</h3>
+              <div ref={inServiceRef} className="space-y-2 scroll-mt-20">
+                <h3 className="text-sm font-bold text-green-700 flex items-center gap-1.5 px-0.5">
+                  <CheckCircle className="h-4 w-4" /> {t("staff:staffView.sectionInProgress")} ({inService.length})
+                </h3>
                 {inService.map((ticket) => (
-                  <div key={ticket.id} className="flex items-center gap-3 rounded-lg border border-[var(--accent-muted)] p-3">
-                    <span className="font-mono text-lg font-bold text-[var(--accent)]">{ticket.ticket_label}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"} • {ticket.called_at ? timeAgo(ticket.called_at) : ""}</p>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => updateTicketStatus(ticket.id, "completed")} className="gap-1">
-                      <CheckCircle className="h-3 w-3" /> {t("staff:staffView.buttonComplete")}
-                    </Button>
-                  </div>
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    actions={
+                      <Button size="sm" variant="outline" onClick={() => updateTicketStatus(ticket.id, "completed")} className="h-9 gap-1">
+                        <CheckCircle className="h-3.5 w-3.5" /> {t("staff:staffView.buttonComplete")}
+                      </Button>
+                    }
+                  />
                 ))}
               </div>
             )}
 
             {/* Waiting queue */}
-            <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)]">
-              <div className="p-4 border-b border-[var(--border-subtle)]">
-                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Ticket className="h-4 w-4" /> {t("staff:staffView.sectionQueue", { count: waiting.length })}
-                </h3>
-              </div>
-              <div className="p-4 space-y-2">
-                {loading ? (
-                  <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
-                ) : waiting.length === 0 ? (
-                  <div className="text-center py-8 space-y-2">
-                    <Users className="h-8 w-8 text-[var(--text-tertiary)] mx-auto" />
-                    <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoClients")}</p>
-                  </div>
-                ) : (
-                  waiting.map((ticket) => (
-                    <div key={ticket.id} className="flex items-center gap-3 rounded-lg border border-[var(--border-default)] p-3">
-                      <span className="font-mono text-lg font-bold text-[var(--accent)] shrink-0">{ticket.ticket_label}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>
-                        <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"} • {t("staff:staffView.since")} {timeAgo(ticket.created_at)}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "called")} className="gap-1">
-                          <Play className="h-3 w-3" /> {t("staff:staffView.buttonCall")}
+            <div ref={waitingRef} className="space-y-2 scroll-mt-20">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5 px-0.5">
+                <Users className="h-4 w-4" /> {t("staff:staffView.sectionQueue")} ({waiting.length})
+              </h3>
+              {loading ? (
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-xl" />)}</div>
+              ) : waiting.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <Users className="h-10 w-10 text-[var(--text-tertiary)] mx-auto" />
+                  <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoClients")}</p>
+                </div>
+              ) : (
+                waiting.map((ticket) => (
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    actions={
+                      <>
+                        <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "called")} className="h-9 gap-1">
+                          <Phone className="h-3.5 w-3.5" /> {t("staff:staffView.buttonCall")}
                         </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="text-destructive"><XCircle className="h-3 w-3" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t("staff:staffView.dialogCancelTicketTitle")}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("staff:staffView.dialogCancelTicketDesc", { ticketLabel: ticket.ticket_label, clientName: ticket.client_name })}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "cancelled")} className="bg-destructive text-destructive-foreground">{t("staff:staffView.dialogYesCancel")}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive">
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("staff:staffView.dialogCancelTicketTitle")}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("staff:staffView.dialogCancelTicketDesc", { label: ticket.ticket_label, name: ticket.client_name })}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "cancelled")} className="bg-destructive text-destructive-foreground">
+                                {t("staff:staffView.dialogYesCancel")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    }
+                  />
+                ))
+              )}
             </div>
           </>
         ) : (
           <>
             {/* Bookings stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-3 text-center">
-                <p className="text-xl font-bold text-[var(--text-primary)]">{bookings.filter((b) => b.status === "pending").length}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">{t("staff:staffView.statPending")}</p>
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="flex flex-col items-center justify-center rounded-xl bg-amber-50 border border-amber-200 text-amber-700 p-3 min-h-[72px]">
+                <Clock className="h-5 w-5 mb-0.5 opacity-70" />
+                <span className="text-xl font-bold leading-tight">{bookings.filter((b) => b.status === "pending").length}</span>
+                <span className="text-[10px] font-medium opacity-80">{t("staff:staffView.statPending")}</span>
               </div>
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-3 text-center">
-                <p className="text-xl font-bold text-[var(--text-primary)]">{bookings.filter((b) => b.status === "confirmed").length}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">{t("staff:staffView.statConfirmed")}</p>
+              <div className="flex flex-col items-center justify-center rounded-xl bg-blue-50 border border-blue-200 text-blue-700 p-3 min-h-[72px]">
+                <UserCheck className="h-5 w-5 mb-0.5 opacity-70" />
+                <span className="text-xl font-bold leading-tight">{bookings.filter((b) => b.status === "confirmed").length}</span>
+                <span className="text-[10px] font-medium opacity-80">{t("staff:staffView.statConfirmed")}</span>
               </div>
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] p-3 text-center">
-                <p className="text-xl font-bold text-[var(--text-primary)]">{bookings.filter((b) => b.status === "arrived" || b.status === "in_service").length}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">{t("staff:staffView.statInProgress")}</p>
+              <div className="flex flex-col items-center justify-center rounded-xl bg-green-50 border border-green-200 text-green-700 p-3 min-h-[72px]">
+                <Play className="h-5 w-5 mb-0.5 opacity-70" />
+                <span className="text-xl font-bold leading-tight">{bookings.filter((b) => b.status === "arrived" || b.status === "in_service").length}</span>
+                <span className="text-[10px] font-medium opacity-80">{t("staff:staffView.statInProgress")}</span>
               </div>
             </div>
 
             {/* Bookings list */}
-            <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)]">
-              <div className="p-4 border-b border-[var(--border-subtle)]">
-                <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" /> {t("staff:staffView.sectionTodayBookings")}
-                </h3>
-              </div>
-              <div className="p-4 space-y-2">
-                {loading ? (
-                  <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
-                ) : bookings.length === 0 ? (
-                  <div className="text-center py-8 space-y-2">
-                    <CalendarDays className="h-8 w-8 text-[var(--text-tertiary)] mx-auto" />
-                    <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoBookings")}</p>
-                  </div>
-                ) : (
-                  bookings.map((b) => (
-                    <div key={b.id} className="flex items-center gap-3 rounded-lg border border-[var(--border-default)] p-3">
-                      <div className="shrink-0 text-center min-w-[40px]">
-                        <p className="text-sm font-bold text-[var(--text-primary)]">{b.start_time.slice(0, 5)}</p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--text-primary)] truncate">{b.client_name}</p>
-                        <p className="text-xs text-[var(--text-secondary)]">
-                          {b.services?.name || "—"}
-                          {b.staff_members?.display_name && ` • avec ${b.staff_members.display_name}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] px-1.5 py-0 ${
-                            b.status === "pending" ? "border-amber-300 text-amber-600" :
-                            b.status === "confirmed" ? "border-blue-300 text-blue-600" :
-                            b.status === "arrived" ? "border-green-300 text-green-600" :
-                            "border-purple-300 text-purple-600"
-                          }`}
-                        >
-                          {b.status === "pending" ? t("staff:staffView.statusPending") :
-                           b.status === "confirmed" ? t("staff:staffView.statusConfirmed") :
-                           b.status === "arrived" ? t("staff:staffView.statusArrived") : t("staff:staffView.statusInProgress")}
-                        </Badge>
-                        <Button size="sm" variant="ghost" onClick={() => sendBookingWhatsApp(b)} className="h-7 w-7 p-0">
-                          <MessageCircle className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        {b.status === "pending" && (
-                          <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "confirmed")} className="text-xs h-7 px-2">
-                            {t("staff:staffView.buttonAccept")}
-                          </Button>
-                        )}
-                        {b.status === "confirmed" && (
-                          <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "arrived")} className="text-xs h-7 px-2">
-                            {t("staff:staffView.buttonArrived")}
-                          </Button>
-                        )}
-                        {b.status === "arrived" && (
-                          <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "in_service")} className="text-xs h-7 px-2">
-                            {t("staff:staffView.buttonStart")}
-                          </Button>
-                        )}
-                        {b.status === "in_service" && (
-                          <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, "completed")} className="text-xs h-7 px-2">
-                            {t("staff:staffView.buttonComplete")}
-                          </Button>
-                        )}
-                        {(b.status === "pending" || b.status === "confirmed") && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="ghost" className="text-destructive h-7 px-2 text-xs">{t("staff:staffView.buttonCancel")}</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("staff:staffView.dialogCancelBookingTitle")}</AlertDialogTitle>
-                                <AlertDialogDescription>{t("staff:staffView.dialogCancelBookingDesc", { clientName: b.client_name, time: b.start_time.slice(0, 5) })}</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => updateBookingStatus(b.id, "cancelled")} className="bg-destructive text-destructive-foreground">{t("staff:staffView.dialogYesCancel")}</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5 px-0.5">
+                <CalendarDays className="h-4 w-4" /> {t("staff:staffView.sectionTodayBookings")}
+              </h3>
+              {loading ? (
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-xl" />)}</div>
+              ) : bookings.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <CalendarDays className="h-10 w-10 text-[var(--text-tertiary)] mx-auto" />
+                  <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoBookings")}</p>
+                </div>
+              ) : (
+                bookings.map((b) => (
+                  <BookingCard key={b.id} booking={b} />
+                ))
+              )}
             </div>
           </>
         )}

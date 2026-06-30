@@ -64,6 +64,10 @@
   "languages.english": "English",
   "languages.french": "Français",
   "languages.arabic": "العربية",
+  "admin": {
+    "search": "Search businesses...",
+    "noResults": "No businesses found"
+  },
   "validation": {
     "phone": {
       "invalidPrefix": "Must start with 05, 06, or 07",

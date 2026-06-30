@@ -40,6 +40,10 @@
   "staffView.toast.updateError": "Unable to update.",
   "staffView.toast.ticketTaken": "Ticket already taken",
   "staffView.toast.ticketTakenDesc": "Another staff member has already called this ticket.",
+  "staffView.statusPending": "Pending",
+  "staffView.statusConfirmed": "Confirmed",
+  "staffView.statusArrived": "Arrived",
+  "staffView.statusInProgress": "In progress",
   "staffView.since": "Since",
   "staffView.timeJustNow": "Just now",
   "staffView.timeMin": "{{mins}} min"

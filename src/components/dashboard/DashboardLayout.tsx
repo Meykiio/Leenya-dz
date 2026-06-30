@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBusinessInfo } from "@/hooks/use-business-info";
+import { useBusinessInfo, getAdminBusinessId, clearAdminBusinessId } from "@/hooks/use-business-info";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -23,7 +23,9 @@ import {
   Menu,
   X,
   Copy,
+  Building2,
 } from "lucide-react";
+import { generatePixelAvatar } from "@/lib/pixel-avatar";
 import FloatingHelp from "@/components/FloatingHelp";
 
 const mainNav = [
@@ -46,8 +48,9 @@ import { Suspense } from "react";
 
 /** @description Owner dashboard shell with responsive sidebar navigation, mobile drawer, bottom nav, live queue/pending badges, user profile, and copy-business-link action. */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
   const { business } = useBusinessInfo();
+  const isAdminMode = role === "superadmin" && !!getAdminBusinessId();
   const { t } = useTranslation();
   useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -55,7 +58,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [pendingCount, setPendingCount] = useState(0);
 
   const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t("common:user");
-  const initials = profileName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
 
   // Fetch and subscribe to live queue count
   useEffect(() => {
@@ -156,7 +158,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="px-3 pt-3 pb-3 flex items-center gap-2">
         <img src="/logo.svg" alt="Leenya" className="size-7 shrink-0" />
         <div className="min-w-0">
-          <h1 className="text-[15px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">Leenya</h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-[15px] font-semibold text-[var(--text-primary)] tracking-[-0.01em]">Leenya</h1>
+            {isAdminMode && (
+              <span className="text-[10px] font-semibold text-[var(--accent)] bg-[var(--accent-light)] px-1.5 py-0.5 rounded-[4px] leading-none">
+                Admin
+              </span>
+            )}
+          </div>
           {business && (
             <p className="text-xs text-[var(--text-tertiary)] truncate max-w-[140px] mt-0.5">
               {business.name}
@@ -173,14 +182,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {renderNavSection(mainNav)}
         <div className="mx-0 my-2 border-t border-[var(--border-default)]" />
         {renderNavSection(secondaryNav)}
+        {isAdminMode && (
+          <>
+            <div className="mx-0 my-2 border-t border-[var(--border-default)]" />
+            <button
+              onClick={() => {
+                clearAdminBusinessId();
+                window.location.href = "/admin";
+              }}
+              className={navDefault + " w-full"}
+            >
+              <Building2 className="h-[15px] w-[15px] shrink-0" />
+              <span className="flex-1">{t("dashboard:nav.allBusinesses")}</span>
+            </button>
+          </>
+        )}
       </nav>
 
       {/* User profile */}
       <div className="px-2.5 pb-3 pt-2.5 border-t border-[var(--border-default)]">
+        {isAdminMode && (
+          <button
+            onClick={() => {
+              clearAdminBusinessId();
+              window.location.href = "/dashboard";
+            }}
+            className="flex items-center gap-2 w-full mb-2 rounded-[6px] px-2.5 h-8 text-[13px] font-medium text-[var(--text-tertiary)] hover:text-[var(--error)] hover:bg-[var(--bg-overlay)] transition-all duration-150"
+          >
+            <LogOut className="h-[15px] w-[15px] shrink-0" />
+            <span>{t("dashboard:nav.exitAdmin")}</span>
+          </button>
+        )}
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-light)] text-[var(--accent)] text-[11px] font-semibold shrink-0">
-            {initials}
-          </div>
+          <img
+            src={generatePixelAvatar(profileName, 28)}
+            alt=""
+            className="h-7 w-7 rounded-full shrink-0"
+          />
           <span className="flex-1 text-xs font-medium text-[var(--text-primary)] truncate">{profileName}</span>
           <button
             onClick={signOut}

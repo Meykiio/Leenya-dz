@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Clock, Users, Share2, ChevronRight } from "lucide-react";
+import { Clock, Users, Share2, ChevronRight, XCircle, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import TicketTracker from "./TicketTracker";
 import StepStaff from "@/components/booking/steps/StepStaff";
@@ -51,6 +51,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const [joinedServiceName, setJoinedServiceName] = useState("");
   const [joinedLabel, setJoinedLabel] = useState("");
   const [restored, setRestored] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const today = formatDateForDB(new Date());
 
@@ -284,7 +285,39 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     setJoinedTicketId(null);
     setJoinedServiceName("");
     setJoinedLabel("");
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  };
+
+  const handleRestoreTicket = useCallback(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      if (saved.businessId === businessId) {
+        setJoinedTicketId(saved.ticketId);
+        setJoinedServiceName(saved.serviceName);
+        setJoinedLabel(saved.ticketLabel);
+        setPhone(saved.phone || "");
+      }
+    } catch { /* ignore */ }
+  }, [businessId]);
+
+  const handleCancelTicket = async () => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    let ticketId: string;
+    try { ticketId = JSON.parse(raw).ticketId; } catch { return; }
+    if (!ticketId) return;
+    setCancelling(true);
+    const { data, error } = await supabase
+      .rpc("cancel_queue_ticket", { p_ticket_id: ticketId })
+      .maybeSingle();
+    setCancelling(false);
+    if (error || !data) {
+      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
+      return;
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    toast({ title: t("booking:queueFlow.cancelled") });
   };
 
   if (!restored) {
@@ -313,8 +346,29 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     );
   }
 
+  const cachedRaw = !joinedTicketId ? localStorage.getItem(STORAGE_KEY) : null;
+  let cachedData: { ticketLabel?: string; serviceName?: string } | null = null;
+  if (cachedRaw) {
+    try { const p = JSON.parse(cachedRaw); if (p.businessId === businessId) cachedData = p; } catch { /* ignore */ }
+  }
+
   return (
     <div className="px-5 py-5 space-y-5">
+      {cachedData && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-4 space-y-3">
+          <p className="text-[13px] font-medium text-foreground">
+            {t("booking:queueFlow.activeTicketBanner", { label: cachedData.ticketLabel ?? "" })}
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="default" className="flex-1 h-[36px] gap-1.5" onClick={handleRestoreTicket}>
+              <Eye className="h-3.5 w-3.5" /> {t("booking:queueFlow.viewStatus")}
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1 h-[36px] gap-1.5" onClick={handleCancelTicket} disabled={cancelling}>
+              <XCircle className="h-3.5 w-3.5" /> {cancelling ? t("common:loading") : t("booking:queueFlow.cancelTicket")}
+            </Button>
+          </div>
+        </div>
+      )}
       {/* Live stats */}
       <div className="rounded-md border border-border p-4 space-y-2">
         <div className="flex items-center gap-2">

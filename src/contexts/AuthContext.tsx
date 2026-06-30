@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import * as Sentry from "@sentry/react";
 
 /** User role within the app: business owner, staff member, or client. */
-type AppRole = "owner" | "staff" | "client" | null;
+type AppRole = "owner" | "staff" | "client" | "superadmin" | null;
 
 /** Shape of the authentication context exposed to consumers. */
 interface AuthContextType {

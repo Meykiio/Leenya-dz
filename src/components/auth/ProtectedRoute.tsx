@@ -3,10 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles: ("owner" | "staff" | "client")[];
+  allowedRoles: ("owner" | "staff" | "client" | "superadmin")[];
 }
 
-/** @description Route guard that redirects unauthenticated users to /login, users without a role to /onboarding, and users without the required role to their appropriate area. */
+/** @description Route guard that redirects unauthenticated users to /login, users without a role to /onboarding, and users without the required role to their appropriate area. Superadmin can access any protected route. */
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
 
@@ -24,6 +24,11 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   if (!role) {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Superadmin can access any protected route
+  if (role === "superadmin") {
+    return <>{children}</>;
   }
 
   if (!allowedRoles.includes(role)) {

@@ -9,11 +9,18 @@ import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { openWhatsApp, buildQueueCalledUrl } from "@/lib/whatsapp";
 import { validateAlgerianPhone } from "@/lib/phone/validation";
-import { Plus, Tv, Users2 } from "lucide-react";
+import { Plus, Tv, Users2, UserCheck } from "lucide-react";
 import type { QueueTicket, Service } from "@/types";
 import QueueWaitingList from "./queue/QueueWaitingList";
 import QueueServingList from "./queue/QueueServingList";
 import AddToQueueDialog from "./queue/AddToQueueDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 /**
  * Dashboard queue — live queue management with waiting and serving lists,
@@ -25,23 +32,21 @@ const DashboardQueue = () => {
   const { business } = useBusinessInfo();
   const [tickets, setTickets] = useState<QueueTicket[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [staffMembers, setStaffMembers] = useState<{ id: string; display_name: string }[]>([]);
+  const [staffMembers, setStaffMembers] = useState<{ id: string; display_name: string; profile_id: string | null }[]>([]);
   const [showAddClient, setShowAddClient] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", phone: "", service_id: "", staff_member_id: "" });
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+  const [staffPickerOpen, setStaffPickerOpen] = useState(false);
+  const [pickingTicketId, setPickingTicketId] = useState<string | null>(null);
   const today = format(new Date(), "yyyy-MM-dd");
 
   const fetchTickets = useCallback(async () => {
     if (!business) return;
     const { data, error: fetchError } = await supabase
-      .from("queue_tickets")
-      .select("*, services(name), staff_members(display_name)")
-      .eq("business_id", business.id)
-      .eq("queue_date", today)
-      .in("status", ["waiting", "called", "in_service", "completed"])
-      .order("created_at");
+      .rpc("get_dashboard_queue", { p_business_id: business.id, p_queue_date: today });
 
     if (fetchError) {
       setError(t("dashboard:queue.errors.loadQueue"));
@@ -50,7 +55,12 @@ const DashboardQueue = () => {
     } else {
       setError(null);
     }
-    setTickets(data || []);
+    const mapped = (data || []).map((t: Record<string, unknown>) => ({
+      ...t,
+      services: t.service_name ? { name: t.service_name } : null,
+      staff_members: t.staff_name ? { display_name: t.staff_name } : null,
+    }));
+    setTickets(mapped as typeof data);
     setInitialLoading(false);
   }, [business, today, t]);
 
@@ -80,7 +90,7 @@ const DashboardQueue = () => {
     const fetchStaff = async () => {
       const { data, error } = await supabase
         .from("staff_members")
-        .select("id, display_name")
+        .select("id, display_name, profile_id")
         .eq("business_id", business.id)
         .eq("is_active", true);
 
@@ -90,6 +100,10 @@ const DashboardQueue = () => {
         setStaffMembers(data || []);
       }
     };
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentProfileId(user.id);
+    });
     
     fetchServices();
     fetchStaff();
@@ -108,14 +122,17 @@ const DashboardQueue = () => {
   const serving = tickets.filter((t) => t.status === "called" || t.status === "in_service");
   const completedToday = tickets.filter((t) => t.status === "completed");
 
-  const updateTicketStatus = async (id: string, status: string) => {
+  const updateTicketStatus = async (id: string, status: string, staffMemberId?: string) => {
     const ticket = tickets.find(t => t.id === id);
     if (!ticket) return;
     const currentStatus = ticket.status;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: any = { status };
-    if (status === "called") updates.called_at = new Date().toISOString();
+    if (status === "called") {
+      updates.called_at = new Date().toISOString();
+      if (staffMemberId) updates.staff_member_id = staffMemberId;
+    }
     if (status === "in_service") updates.called_at = updates.called_at || new Date().toISOString();
     if (status === "completed" || status === "no_show") updates.completed_at = new Date().toISOString();
 
@@ -225,6 +242,18 @@ const DashboardQueue = () => {
     return t("dashboard:queue.minutes", { minutes: mins });
   };
 
+  const handleCall = (id: string) => {
+    setPickingTicketId(id);
+    setStaffPickerOpen(true);
+  };
+
+  const confirmCall = async (staffMemberId: string) => {
+    if (!pickingTicketId) return;
+    await updateTicketStatus(pickingTicketId, "called", staffMemberId);
+    setStaffPickerOpen(false);
+    setPickingTicketId(null);
+  };
+
   const currentTicket = serving.find((t) => t.status === "called") || serving[0];
 
   const openDisplayMode = () => {
@@ -306,7 +335,7 @@ const DashboardQueue = () => {
                 <QueueWaitingList
                   tickets={waiting}
                   businessName={business!.name}
-                  onCall={(id) => updateTicketStatus(id, "called")}
+                  onCall={handleCall}
                   onCancel={(id) => updateTicketStatus(id, "cancelled")}
                   timeAgo={timeAgo}
                 />
@@ -328,6 +357,38 @@ const DashboardQueue = () => {
             </div>
           </div>
         )}
+
+        {/* Staff picker dialog — shown when owner clicks "Call" on a waiting ticket */}
+        <Dialog open={staffPickerOpen} onOpenChange={(open) => { if (!open) { setStaffPickerOpen(false); setPickingTicketId(null); } }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("dashboard:queue.assignStaff")}</DialogTitle>
+              <DialogDescription>{t("dashboard:queue.assignStaffDesc")}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-1.5 py-2">
+              {staffMembers.map((sm) => {
+                const isMe = currentProfileId && sm.profile_id === currentProfileId;
+                return (
+                  <button
+                    key={sm.id}
+                    onClick={() => confirmCall(sm.id)}
+                    className="w-full flex items-center gap-3 rounded-md border border-[var(--border-default)] px-4 py-3 text-left text-sm hover:bg-[var(--bg-subtle)] transition-colors"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-light)] text-accent">
+                      <UserCheck className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-[var(--text-primary)]">{sm.display_name}</p>
+                      {isMe && (
+                        <p className="text-xs text-[var(--accent)]">{t("dashboard:queue.assignedToYou")}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <AddToQueueDialog
           open={showAddClient}

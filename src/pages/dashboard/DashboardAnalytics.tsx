@@ -18,6 +18,7 @@ import {
   eachDayOfInterval, subDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Star, MessageSquareText } from "lucide-react";
 import type { Booking, QueueTicket, Review, Service, StaffMember } from "@/types";
 
 type Range = "week" | "month" | "3months";
@@ -77,7 +78,7 @@ const DashboardAnalytics = () => {
         supabase.from("bookings").select("id, status, service_id, services(price_dzd)").eq("business_id", business.id).gte("date", fmt(prev.start)).lte("date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("queue_tickets").select("*, services(name)").eq("business_id", business.id).gte("queue_date", fmt(start)).lte("queue_date", fmt(end)).order("queue_date", { ascending: false }).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("queue_tickets").select("id, status, service_id, called_at, completed_at").eq("business_id", business.id).gte("queue_date", fmt(prev.start)).lte("queue_date", fmt(prev.end)).range(0, MAX_ANALYTICS_ROWS),
-        supabase.from("reviews").select("*").eq("business_id", business.id).gte("created_at", start.toISOString()).lte("created_at", end.toISOString()).range(0, MAX_ANALYTICS_ROWS),
+        supabase.from("reviews").select("*, profiles(full_name)").eq("business_id", business.id).gte("created_at", start.toISOString()).lte("created_at", end.toISOString()).range(0, MAX_ANALYTICS_ROWS),
         supabase.from("services").select("id, name").eq("business_id", business.id),
         supabase.from("staff_members").select("id, display_name").eq("business_id", business.id),
       ]);
@@ -325,6 +326,51 @@ const DashboardAnalytics = () => {
             <StaffPerformance data={staffStats} />
 
             <BookingHistoryTable data={tableRows} />
+
+            {/* Reviews list */}
+            {reviews.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">{t("dashboard:analytics.reviewsList")}</h3>
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[var(--accent-light)] text-accent font-mono text-[10px] font-semibold px-1.5">
+                    {reviews.length}
+                  </span>
+                </div>
+                <div className="rounded-lg border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
+                  {reviews.map((r) => {
+                    const client = (r as Record<string, unknown>).profiles as { full_name: string } | null;
+                    return (
+                      <div key={r.id} className="flex items-start gap-3 px-4 py-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--warning-bg)]">
+                          <MessageSquareText className="h-4 w-4 text-[var(--warning)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-medium text-[var(--text-primary)]">
+                              {client?.full_name || "—"}
+                            </span>
+                            <div className="flex items-center gap-0.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${i < r.rating ? "fill-amber-400 text-amber-400" : "text-[var(--text-tertiary)]/20"}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          {r.comment && (
+                            <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 line-clamp-2">{r.comment}</p>
+                          )}
+                          <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+                            {format(new Date(r.created_at), "d MMM yyyy · HH:mm", { locale: fr })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

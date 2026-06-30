@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, ChevronRight } from "lucide-react";
-import { getInitials, getAvatarColor } from "@/lib/avatar";
+import { generatePixelAvatar } from "@/lib/pixel-avatar";
 
 interface StaffMember {
   id: string;
@@ -64,16 +64,11 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
               }`}
             >
               <div className="flex items-center gap-3">
-                {s.avatar_url ? (
-                  <img src={s.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-                ) : (
-                  <div
-                    className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-                    style={{ backgroundColor: getAvatarColor(s.display_name), color: "#1a1a2e" }}
-                  >
-                    {getInitials(s.display_name)}
-                  </div>
-                )}
+                <img
+                  src={s.avatar_url || generatePixelAvatar(s.display_name, 40)}
+                  alt=""
+                  className="h-10 w-10 rounded-full object-cover shrink-0"
+                />
                 <div>
                   <p className={`text-[14px] font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
                     {s.display_name}

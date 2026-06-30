@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, WifiOff } from "lucide-react";
+import { ChevronLeft, WifiOff, XCircle, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import TicketCompleted from "./TicketCompleted";
@@ -190,6 +190,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
+    localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
     localStorage.setItem(`${CACHE_PREFIX}${ticketId}_reviewed`, "1");
     setSubmittedReview(true);
   };
@@ -257,7 +258,16 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </div>
       );
     }
-    return <TicketCompleted />;
+    return (
+      <div className="flex flex-col px-5 py-4">
+        <div className="flex-1">
+          <TicketCompleted />
+        </div>
+        <Button onClick={() => { localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`); localStorage.removeItem(`${CACHE_PREFIX}${ticketId}_reviewed`); localStorage.removeItem("leenya_queue_active"); onBack(); }} className="w-full mt-4 h-[44px]">
+          {t("booking:ticketTracker.done")}
+        </Button>
+      </div>
+    );
   }
 
   if (ticket.status === "cancelled") return <TicketCancelled onBack={onBack} />;
@@ -358,9 +368,40 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </p>
       </div>
 
-      <p className="text-[12px] text-muted-foreground text-center mt-4">
-        {t("booking:ticketTracker.cancelHint")}
-      </p>
+      <div className="flex gap-3 mt-5">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 gap-1.5 h-[40px] text-[13px]"
+          onClick={async () => {
+            const { data } = await supabase.rpc("cancel_queue_ticket", { p_ticket_id: ticketId }).maybeSingle();
+            if (data) {
+              localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
+              localStorage.removeItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
+              localStorage.removeItem("leenya_queue_active");
+              onBack();
+            }
+          }}
+        >
+          <XCircle className="h-4 w-4" /> {t("booking:ticketTracker.cancelTicket")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-1 gap-1.5 h-[40px] text-[13px]"
+          onClick={async () => {
+            const { data } = await supabase.rpc("cancel_queue_ticket", { p_ticket_id: ticketId }).maybeSingle();
+            if (data) {
+              localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
+              localStorage.removeItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
+              localStorage.removeItem("leenya_queue_active");
+              onBack();
+            }
+          }}
+        >
+          <RefreshCw className="h-4 w-4" /> {t("booking:ticketTracker.changeService")}
+        </Button>
+      </div>
     </div>
   );
 }

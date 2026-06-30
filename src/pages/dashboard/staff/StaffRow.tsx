@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Camera, Wrench, Trash2 } from "lucide-react";
-import { getInitials, getAvatarColor } from "@/lib/avatar";
+import { generatePixelAvatar } from "@/lib/pixel-avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -32,16 +32,11 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
       <div className="relative shrink-0">
-        {member.avatar_url ? (
-          <img src={member.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-        ) : (
-          <div
-            className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold"
-            style={{ backgroundColor: getAvatarColor(member.display_name), color: "#1a1a2e" }}
-          >
-            {getInitials(member.display_name)}
-          </div>
-        )}
+        <img
+          src={member.avatar_url || generatePixelAvatar(member.display_name, 40)}
+          alt=""
+          className="h-10 w-10 rounded-full object-cover"
+        />
         <label className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-[var(--bg-base)] border border-[var(--border-default)] shadow-sm">
           <Camera className="h-2.5 w-2.5 text-[var(--text-tertiary)]" />
           <input

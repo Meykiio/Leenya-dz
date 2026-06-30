@@ -343,7 +343,16 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT role FROM public.user_roles WHERE user_id = auth.uid() LIMIT 1
+  SELECT role FROM public.user_roles WHERE user_id = auth.uid()
+  ORDER BY
+    CASE role
+      WHEN 'superadmin' THEN 1
+      WHEN 'owner' THEN 2
+      WHEN 'staff' THEN 3
+      WHEN 'client' THEN 4
+      ELSE 5
+    END
+  LIMIT 1
 $$;
 
 -- -----------------------------------------------------------
@@ -389,6 +398,7 @@ CREATE OR REPLACE FUNCTION public.join_queue(
 RETURNS TABLE(ticket_id UUID, ticket_label TEXT, ticket_number INT)
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path TO 'public'
+SET timezone = 'Africa/Algiers'
 AS $$
 DECLARE
   v_ticket_num INT;
@@ -424,6 +434,101 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.join_queue(UUID, UUID, TEXT, TEXT, UUID, INT) TO anon, authenticated;
+
+-- -----------------------------------------------------------
+-- get_staff_queue — SECURITY DEFINER RPC bypassing RLS for staff
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_staff_queue(
+  p_staff_member_id UUID,
+  p_queue_date DATE
+)
+RETURNS TABLE(
+  id UUID, ticket_label TEXT, ticket_number INT, status queue_status,
+  staff_member_id UUID, client_name TEXT, client_phone TEXT,
+  service_id UUID, service_name TEXT, estimated_wait_minutes INT,
+  position_in_queue INT, queue_date DATE
+)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT qt.id, qt.ticket_label, qt.ticket_number, qt.status,
+         qt.staff_member_id, qt.client_name, qt.client_phone,
+         qt.service_id, s.name, qt.estimated_wait_minutes,
+         qt.position_in_queue, qt.queue_date
+  FROM queue_tickets qt
+  LEFT JOIN services s ON s.id = qt.service_id
+  WHERE qt.business_id = (SELECT business_id FROM staff_members WHERE id = p_staff_member_id)
+    AND qt.queue_date = p_queue_date
+    AND qt.status IN ('waiting', 'called', 'in_service')
+    AND (qt.staff_member_id IS NULL OR qt.staff_member_id = p_staff_member_id)
+  ORDER BY qt.ticket_number ASC;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_staff_queue(UUID, DATE) TO authenticated;
+
+-- -----------------------------------------------------------
+-- get_dashboard_queue — SECURITY DEFINER RPC bypassing RLS for owners
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_dashboard_queue(
+  p_business_id UUID,
+  p_queue_date DATE
+)
+RETURNS TABLE(
+  id UUID, ticket_label TEXT, ticket_number INT, status queue_status,
+  staff_member_id UUID, client_name TEXT, client_phone TEXT,
+  service_id UUID, service_name TEXT, staff_name TEXT,
+  estimated_wait_minutes INT, position_in_queue INT,
+  queue_date DATE, created_at TIMESTAMPTZ, called_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ
+)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT qt.id, qt.ticket_label, qt.ticket_number, qt.status,
+         qt.staff_member_id, qt.client_name, qt.client_phone,
+         qt.service_id, s.name, sm.display_name,
+         qt.estimated_wait_minutes, qt.position_in_queue,
+         qt.queue_date, qt.created_at, qt.called_at, qt.completed_at
+  FROM queue_tickets qt
+  LEFT JOIN services s ON s.id = qt.service_id
+  LEFT JOIN staff_members sm ON sm.id = qt.staff_member_id
+  WHERE qt.business_id = p_business_id
+    AND qt.queue_date = p_queue_date
+    AND qt.status IN ('waiting', 'called', 'in_service', 'completed')
+  ORDER BY qt.created_at ASC;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_dashboard_queue(UUID, DATE) TO authenticated;
+
+-- -----------------------------------------------------------
+-- cancel_queue_ticket — SECURITY DEFINER RPC for anon/authenticated
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.cancel_queue_ticket(p_ticket_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_old_status queue_status;
+BEGIN
+  SELECT status INTO v_old_status FROM queue_tickets WHERE id = p_ticket_id;
+
+  IF v_old_status IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  IF v_old_status NOT IN ('waiting', 'called') THEN
+    RETURN FALSE;
+  END IF;
+
+  UPDATE queue_tickets SET status = 'cancelled', updated_at = NOW()
+  WHERE id = p_ticket_id AND status IN ('waiting', 'called');
+
+  RETURN FOUND;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.cancel_queue_ticket(UUID) TO anon, authenticated;
 
 -- -----------------------------------------------------------
 -- handle_new_user — auto-create profile on signup
@@ -887,11 +992,14 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_queue_ticket(UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_staff_queue(UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_dashboard_queue(UUID, DATE) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_business_queue(UUID, DATE) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_completed_ticket_stats(UUID, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_queue_context(UUID, DATE, INTEGER) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_booking_by_token(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cancel_booking_by_token(UUID, UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cancel_queue_ticket(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authenticated;
 
 -- Authenticated-only RPCs
@@ -1916,6 +2024,273 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_ticket_per_phone
 -- ============================================================
 -- REALTIME PUBLICATION
 -- ============================================================
+-- Ensure owner has staff_member record (migration ensure_owner_staff_member)
+INSERT INTO staff_members (business_id, profile_id, display_name, is_active, accepts_bookings)
+SELECT 
+  b.id,
+  b.owner_id,
+  COALESCE(p.full_name, 'Owner'),
+  true,
+  true
+FROM businesses b
+JOIN profiles p ON p.id = b.owner_id
+WHERE NOT EXISTS (
+  SELECT 1 FROM staff_members sm
+  WHERE sm.profile_id = b.owner_id AND sm.business_id = b.id
+);
+
+-- Link the owner-staff to all active services
+INSERT INTO staff_services (staff_member_id, service_id)
+SELECT 
+  sm.id,
+  s.id
+FROM staff_members sm
+JOIN businesses b ON b.id = sm.business_id
+JOIN services s ON s.business_id = b.id AND s.is_active = true
+WHERE sm.profile_id = b.owner_id
+  AND NOT EXISTS (
+    SELECT 1 FROM staff_services ss
+    WHERE ss.staff_member_id = sm.id AND ss.service_id = s.id
+  );
+
 ALTER PUBLICATION supabase_realtime ADD TABLE public.queue_tickets;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.bookings;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.whatsapp_templates;
+
+-- ============================================================
+-- SUPERADMIN ROLE (migration add_superadmin_enum_value)
+-- ============================================================
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'superadmin';
+
+-- ============================================================
+-- SUPERADMIN HELPER (migration create_superadmin_helper)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.is_superadmin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'superadmin'
+  );
+$$;
+
+-- ============================================================
+-- SUPERADMIN RLS POLICIES (migration superadmin_rls_policies)
+-- ============================================================
+
+-- Profiles
+DROP POLICY IF EXISTS "Superadmin can view all profiles" ON public.profiles;
+CREATE POLICY "Superadmin can view all profiles" ON public.profiles
+  FOR SELECT USING (public.is_superadmin());
+
+-- User roles
+DROP POLICY IF EXISTS "Users can read their own roles" ON public.user_roles;
+CREATE POLICY "Users can read their own roles" ON public.user_roles
+  FOR SELECT USING (auth.uid() = user_id OR public.is_superadmin());
+
+-- Businesses
+DROP POLICY IF EXISTS "Owners can view own business" ON public.businesses;
+CREATE POLICY "Owners can view own business" ON public.businesses
+  FOR SELECT USING (auth.uid() = owner_id OR public.is_superadmin());
+
+DROP POLICY IF EXISTS "Owners can insert their business" ON public.businesses;
+CREATE POLICY "Owners can insert their business" ON public.businesses
+  FOR INSERT WITH CHECK (auth.uid() = owner_id OR public.is_superadmin());
+
+DROP POLICY IF EXISTS "Owners can update their business" ON public.businesses;
+CREATE POLICY "Owners can update their business" ON public.businesses
+  FOR UPDATE USING (auth.uid() = owner_id OR public.is_superadmin());
+
+DROP POLICY IF EXISTS "Owners can delete their business" ON public.businesses;
+CREATE POLICY "Owners can delete their business" ON public.businesses
+  FOR DELETE USING (auth.uid() = owner_id OR public.is_superadmin());
+
+-- Business hours
+DROP POLICY IF EXISTS "Owners can manage business hours" ON public.business_hours;
+CREATE POLICY "Owners can manage business hours" ON public.business_hours
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+-- Services
+DROP POLICY IF EXISTS "Owners can manage services" ON public.services;
+CREATE POLICY "Owners can manage services" ON public.services
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+-- Staff members
+DROP POLICY IF EXISTS "Owners can manage staff" ON public.staff_members;
+CREATE POLICY "Owners can manage staff" ON public.staff_members
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+-- Staff services
+DROP POLICY IF EXISTS "owners_manage_staff_services" ON public.staff_services;
+CREATE POLICY "owners_manage_staff_services"
+ON public.staff_services
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1 FROM public.staff_members sm
+    JOIN public.businesses b ON sm.business_id = b.id
+    WHERE sm.id = staff_services.staff_member_id
+    AND b.owner_id = auth.uid()
+  )
+  OR public.is_superadmin()
+);
+
+-- Bookings
+DROP POLICY IF EXISTS "Business owners can view bookings" ON public.bookings;
+CREATE POLICY "Business owners can view bookings" ON public.bookings
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can manage bookings" ON public.bookings;
+CREATE POLICY "Business owners can manage bookings" ON public.bookings
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can insert bookings" ON public.bookings;
+CREATE POLICY "Business owners can insert bookings"
+  ON public.bookings FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM businesses
+      WHERE businesses.id = bookings.business_id
+      AND businesses.owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+-- Queue tickets
+DROP POLICY IF EXISTS "Business owners can view queue" ON public.queue_tickets;
+CREATE POLICY "Business owners can view queue" ON public.queue_tickets
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can manage queue" ON public.queue_tickets;
+CREATE POLICY "Business owners can manage queue" ON public.queue_tickets
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can insert queue tickets" ON public.queue_tickets;
+CREATE POLICY "Business owners can insert queue tickets"
+  ON public.queue_tickets FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM businesses
+      WHERE businesses.id = queue_tickets.business_id
+      AND businesses.owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+-- Queue counters
+DROP POLICY IF EXISTS "Business owners can manage counters" ON public.queue_counters;
+CREATE POLICY "Business owners can manage counters" ON public.queue_counters
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+-- Feedback
+DROP POLICY IF EXISTS "Owners can delete feedback" ON public.feedback;
+CREATE POLICY "Owners can delete feedback" ON public.feedback
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE id = feedback.business_id AND owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Owners can view their feedback" ON public.feedback;
+CREATE POLICY "Owners can view their feedback" ON public.feedback
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE id = feedback.business_id AND owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+-- WhatsApp templates
+DROP POLICY IF EXISTS "Business owners can view templates" ON public.whatsapp_templates;
+CREATE POLICY "Business owners can view templates"
+  ON public.whatsapp_templates
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE public.businesses.id = public.whatsapp_templates.business_id
+      AND public.businesses.owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can insert templates" ON public.whatsapp_templates;
+CREATE POLICY "Business owners can insert templates"
+  ON public.whatsapp_templates
+  FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE public.businesses.id = public.whatsapp_templates.business_id
+      AND public.businesses.owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can update templates" ON public.whatsapp_templates;
+CREATE POLICY "Business owners can update templates"
+  ON public.whatsapp_templates
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE public.businesses.id = public.whatsapp_templates.business_id
+      AND public.businesses.owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Business owners can delete templates" ON public.whatsapp_templates;
+CREATE POLICY "Business owners can delete templates"
+  ON public.whatsapp_templates
+  FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.businesses
+      WHERE public.businesses.id = public.whatsapp_templates.business_id
+      AND public.businesses.owner_id = auth.uid()
+    )
+    OR public.is_superadmin()
+  );
+
+-- Reviews
+DROP POLICY IF EXISTS "Owners can view their reviews" ON public.reviews;
+CREATE POLICY "Owners can view their reviews" ON public.reviews
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );
+
+DROP POLICY IF EXISTS "Owners can reply to reviews" ON public.reviews;
+CREATE POLICY "Owners can reply to reviews" ON public.reviews
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    OR public.is_superadmin()
+  );

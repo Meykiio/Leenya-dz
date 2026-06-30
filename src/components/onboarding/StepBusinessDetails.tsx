@@ -113,7 +113,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="bizPhone">{t("auth:onboarding.phoneLabel")}</Label>
+          <Label htmlFor="bizPhone">{t("auth:onboarding.details.phoneLabel")}</Label>
           <div className="flex gap-2">
             <div className="flex items-center gap-1.5 rounded-md border bg-muted px-3 text-sm text-muted-foreground shrink-0">
               🇩🇿 +213
@@ -131,7 +131,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="address">{t("auth:onboarding.addressLabel")}</Label>
+          <Label htmlFor="address">{t("auth:onboarding.details.addressLabel")}</Label>
           <Input
             id="address"
             placeholder={t("auth:onboarding.details.addressPlaceholder")}
@@ -142,7 +142,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2 relative">
-          <Label>{t("auth:onboarding.wilayaLabel")}</Label>
+          <Label>{t("auth:onboarding.details.wilayaLabel")}</Label>
           <Input
             placeholder={t("auth:onboarding.details.wilayaPlaceholder")}
             value={showWilayaDropdown ? wilayaSearch : (selectedWilaya ? `${selectedWilaya.code} — ${selectedWilaya.name}` : "")}

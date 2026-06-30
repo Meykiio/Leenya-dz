@@ -22,6 +22,7 @@ const ResetPassword = React.lazy(() => import("@/pages/ResetPassword"));
 const BookingTrack = React.lazy(() => import("@/pages/BookingTrack"));
 const TermsOfService = React.lazy(() => import("@/pages/TermsOfService"));
 const PrivacyPolicy = React.lazy(() => import("@/pages/PrivacyPolicy"));
+const Admin = React.lazy(() => import("@/pages/Admin"));
 
 // Dashboard pages
 const Dashboard = React.lazy(() => import("@/pages/dashboard/Dashboard"));
@@ -68,11 +69,14 @@ const App = () => (
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/booking/track/:token" element={<BookingTrack />} />
 
+                    {/* Admin routes */}
+                    <Route path="/admin" element={<ProtectedRoute allowedRoles={["superadmin"]}><Admin /></ProtectedRoute>} />
+
                     {/* Client routes */}
-                    <Route path="/mes-reservations" element={<ProtectedRoute allowedRoles={["client"]}><MyBookings /></ProtectedRoute>} />
+                    <Route path="/mes-reservations" element={<ProtectedRoute allowedRoles={["client", "superadmin"]}><MyBookings /></ProtectedRoute>} />
 
                     {/* Owner dashboard routes — layout route keeps DashboardLayout + sidebar mounted */}
-                    <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["owner"]}><DashboardLayout><Outlet /></DashboardLayout></ProtectedRoute>}>
+                    <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["owner", "superadmin"]}><DashboardLayout><Outlet /></DashboardLayout></ProtectedRoute>}>
                       <Route index element={<Dashboard />} />
                       <Route path="bookings" element={<DashboardBookings />} />
                       <Route path="queue" element={<DashboardQueue />} />
@@ -85,7 +89,7 @@ const App = () => (
                     </Route>
 
                     {/* Staff routes */}
-                    <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff", "owner"]}><StaffView /></ProtectedRoute>} />
+                    <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff", "owner", "superadmin"]}><StaffView /></ProtectedRoute>} />
 
                     {/* TV display mode */}
                     <Route path="/display/:slug" element={<QueueDisplay />} />

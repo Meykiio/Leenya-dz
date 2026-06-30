@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import BusinessHeader from "@/components/booking/BusinessHeader";
 import AppointmentFlow from "@/components/booking/AppointmentFlow";
 import QueueFlow from "@/components/booking/QueueFlow";
-import ReviewsSection from "@/components/booking/ReviewsSection";
 
 interface Business {
   id: string;
@@ -38,13 +37,6 @@ interface BusinessHour {
   is_closed: boolean | null;
 }
 
-interface Review {
-  id: string;
-  rating: number;
-  comment: string | null;
-  created_at: string | null;
-}
-
 /**
  * Public business page — displays a business's profile, services, and booking/queue flows.
  * Uses the URL slug to fetch business data and shows appointment or walk-in tabs.
@@ -59,7 +51,6 @@ const BusinessPublic = () => {
   const [business, setBusiness] = useState<Business | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [hours, setHours] = useState<BusinessHour[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   
   // Read tab from URL params, default to queue
   const defaultTab = searchParams.get('tab') === 'appointment' ? 'appointment' : 'queue';
@@ -86,7 +77,7 @@ const BusinessPublic = () => {
 
       setBusiness(biz as Business);
 
-      const [servicesRes, hoursRes, reviewsRes] = await Promise.all([
+      const [servicesRes, hoursRes] = await Promise.all([
         supabase
           .from("services")
           .select("id, name, duration_minutes, price_dzd")
@@ -97,11 +88,6 @@ const BusinessPublic = () => {
           .from("business_hours")
           .select("day_of_week, opens_at, closes_at, is_closed")
           .eq("business_id", biz.id),
-        supabase
-          .from("reviews")
-          .select("id, rating, comment, created_at")
-          .eq("business_id", biz.id)
-          .order("created_at", { ascending: false }),
       ]);
 
       if (servicesRes.error) {
@@ -110,13 +96,9 @@ const BusinessPublic = () => {
       if (hoursRes.error) {
         if (import.meta.env.DEV) console.error('[BusinessPublic] failed to fetch hours:', hoursRes.error.message);
       }
-      if (reviewsRes.error) {
-        if (import.meta.env.DEV) console.error('[BusinessPublic] failed to fetch reviews:', reviewsRes.error.message);
-      }
 
       setServices((servicesRes.data ?? []) as Service[]);
       setHours((hoursRes.data ?? []) as BusinessHour[]);
-      setReviews((reviewsRes.data ?? []) as Review[]);
       setLoading(false);
     };
 
@@ -164,8 +146,6 @@ const BusinessPublic = () => {
     );
   }
 
-  const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : null;
-
   const now = new Date();
   const currentDow = now.getDay();
   const currentHour = hours.find((h) => h.day_of_week === currentDow);
@@ -190,8 +170,6 @@ const BusinessPublic = () => {
       <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50">
         <BusinessHeader
           business={business}
-          avgRating={avgRating}
-          reviewCount={reviews.length}
           openStatus={openStatus}
         />
 
@@ -264,7 +242,6 @@ const BusinessPublic = () => {
           </>
         )}
 
-        <ReviewsSection reviews={reviews} />
       </div>
     </div>
   );

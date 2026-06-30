@@ -158,10 +158,10 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
         {/* Add custom */}
         {showCustom ? (
           <div className="rounded-lg border bg-card p-4 space-y-3">
-            <Input placeholder={t("auth:onboarding.serviceNamePlaceholder")} value={customName} onChange={(e) => setCustomName(e.target.value)} />
+            <Input placeholder={t("auth:onboarding.services.namePlaceholder")} value={customName} onChange={(e) => setCustomName(e.target.value)} />
             <div className="flex gap-2">
-              <Input placeholder={t("auth:onboarding.durationPlaceholder")} type="number" value={customDuration} onChange={(e) => setCustomDuration(e.target.value)} />
-              <Input placeholder={t("auth:onboarding.pricePlaceholder")} type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} />
+              <Input placeholder={t("auth:onboarding.services.durationPlaceholder")} type="number" value={customDuration} onChange={(e) => setCustomDuration(e.target.value)} />
+              <Input placeholder={t("auth:onboarding.services.pricePlaceholder")} type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={addCustom} disabled={!customName.trim()}>{t("auth:onboarding.add")}</Button>
@@ -174,7 +174,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
             onClick={() => setShowCustom(true)}
             className="flex items-center gap-2 text-sm text-primary hover:underline"
           >
-            <Plus className="h-4 w-4" /> {t("auth:onboarding.addCustomService")}
+            <Plus className="h-4 w-4" /> {t("auth:onboarding.services.customLink")}
           </button>
         )}
       </div>

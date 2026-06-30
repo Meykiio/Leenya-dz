@@ -46,12 +46,12 @@ const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
           </Button>
           <Button onClick={handleWhatsApp} className="gap-2">
             <MessageCircle className="h-4 w-4" />
-            {t("auth:onboarding.shareWhatsApp")}
+            {t("auth:onboarding.welcome.shareWhatsApp")}
           </Button>
         </div>
 
         <Button variant="ghost" onClick={onClose} className="text-muted-foreground">
-          {t("auth:onboarding.goToDashboard")} →
+          {t("auth:onboarding.welcome.goToDashboard")} →
         </Button>
       </div>
     </div>
