@@ -35,6 +35,9 @@ export default function QueueWaitingList({ tickets, businessName, onCall, onCanc
           {ticket.checked_in_at && (
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 text-[10px]" title={t("dashboard:queue.checkedIn")}>✓</span>
           )}
+          {ticket.skip_count > 0 && (
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold" title={t("dashboard:queue.skipCountTooltip", { count: ticket.skip_count })}>{ticket.skip_count}</span>
+          )}
           <span className="font-mono text-[15px] font-semibold text-[var(--text-primary)] shrink-0 w-14">{ticket.ticket_label}</span>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{ticket.client_name}</p>

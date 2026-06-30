@@ -80,6 +80,7 @@
   "queueFlow.duplicateTicket": "لديك بالفعل تذكرة نشطة. تحقق من حالتك.",
   "queueFlow.queuePaused": "الطابور متوقف حالياً. يرجى العودة لاحقاً.",
   "ticketTracker.checkIn": "أنا هنا!",
+  "ticketTracker.checkInHint": "اضغط هنا عند وصولك حتى يعرف الموظفون أنك هنا.",
   "ticketTracker.calledTitle": "حان دورك!",
   "ticketTracker.calledSubtitle": "توجه الآن إلى الصالون",
   "ticketTracker.yourTicket": "تذكرتك",

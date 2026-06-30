@@ -80,6 +80,7 @@
   "queueFlow.duplicateTicket": "You already have an active ticket. Check your status.",
   "queueFlow.queuePaused": "Queue is currently paused. Please check back later.",
   "ticketTracker.checkIn": "I'm here!",
+  "ticketTracker.checkInHint": "Tap this when you've arrived so staff know you're here.",
   "ticketTracker.calledTitle": "It's your turn!",
   "ticketTracker.calledSubtitle": "Present yourself at the salon now",
   "ticketTracker.yourTicket": "Your ticket",

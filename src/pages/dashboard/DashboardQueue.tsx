@@ -238,7 +238,12 @@ const DashboardQueue = () => {
 
   const skipTicket = async (id: string) => {
     const { error } = await supabase.rpc("skip_queue_ticket", { p_ticket_id: id });
-    if (error) { if (import.meta.env.DEV) console.error("skipTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    if (error) {
+      if (import.meta.env.DEV) console.error("skipTicket:", error);
+      toast({ title: t("dashboard:labels.error"), description: error.message.includes("skip_last_in_queue") ? t("dashboard:queue.errors.lastInQueue") : t("dashboard:queue.errors.updateTicket"), variant: "destructive" });
+      return;
+    }
+    toast({ title: t("dashboard:queue.toast.skipped") });
     fetchTickets();
   };
 

@@ -112,7 +112,12 @@ const StaffView = () => {
 
   const skipTicket = async (id: string) => {
     const { error } = await supabase.rpc("skip_queue_ticket", { p_ticket_id: id });
-    if (error) { if (import.meta.env.DEV) console.error("skipTicket:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
+    if (error) {
+      if (import.meta.env.DEV) console.error("skipTicket:", error);
+      toast({ title: t("common:toast.error"), description: error.message.includes("skip_last_in_queue") ? t("dashboard:queue.errors.lastInQueue") : t("staff:staffView.toast.updateError"), variant: "destructive" });
+      return;
+    }
+    toast({ title: t("dashboard:queue.toast.skipped") });
     fetchTickets();
   };
 
@@ -223,6 +228,11 @@ const StaffView = () => {
       {ticket.checked_in_at && (
         <div className="shrink-0" title={t("staff:staffView.checkedIn")}>
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs">✓</span>
+        </div>
+      )}
+      {ticket.skip_count > 0 && (
+        <div className="shrink-0" title={t("dashboard:queue.skipCountTooltip", { count: ticket.skip_count })}>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{ticket.skip_count}</span>
         </div>
       )}
       <div className="flex flex-col items-center justify-center min-w-[48px]">

@@ -397,6 +397,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           >
             {t("booking:ticketTracker.checkIn")}
           </Button>
+          <p className="text-xs text-[var(--text-tertiary)] mt-1.5 text-center">
+            {t("booking:ticketTracker.checkInHint")}
+          </p>
         </div>
       )}
 
