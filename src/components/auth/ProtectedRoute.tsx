@@ -6,7 +6,7 @@ interface ProtectedRouteProps {
   allowedRoles: ("owner" | "staff" | "client" | "superadmin")[];
 }
 
-/** @description Route guard that redirects unauthenticated users to /login, users without a role to /onboarding, and users without the required role to their appropriate area. Superadmin can access any protected route. */
+/** @description Route guard that redirects unauthenticated users to /login, users without a role to /, and users without the required role to their appropriate area. Superadmin can access any protected route. */
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
 
@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (!role) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Superadmin can access any protected route

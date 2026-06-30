@@ -110,6 +110,18 @@ const StaffView = () => {
     return () => { supabase.removeChannel(channel); };
   }, [business, fetchTickets, fetchBookings]);
 
+  const skipTicket = async (id: string) => {
+    const { error } = await supabase.rpc("skip_queue_ticket", { p_ticket_id: id });
+    if (error) { console.error("skipTicket:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
+    fetchTickets();
+  };
+
+  const sendBackToQueue = async (id: string) => {
+    const { error } = await supabase.rpc("send_ticket_back_to_queue", { p_ticket_id: id });
+    if (error) { console.error("sendBackToQueue:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
+    fetchTickets();
+  };
+
   const updateTicketStatus = async (id: string, status: string) => {
     const ticket = tickets.find(t => t.id === id);
     if (!ticket) return;
@@ -193,7 +205,7 @@ const StaffView = () => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const StatCard = ({ label, count, icon: Icon, color, ref: sectionRef }: {
+  const StatCard = ({ label, count, icon: Icon, color, sectionRef }: {
     label: string; count: number; icon: React.ElementType; color: string; ref?: React.RefObject<HTMLDivElement | null>;
   }) => (
     <button
@@ -208,6 +220,11 @@ const StaffView = () => {
 
   const TicketCard = ({ ticket, actions }: { ticket: QueueTicket; actions: React.ReactNode }) => (
     <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 shadow-sm">
+      {ticket.checked_in_at && (
+        <div className="shrink-0" title={t("staff:staffView.checkedIn")}>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs">✓</span>
+        </div>
+      )}
       <div className="flex flex-col items-center justify-center min-w-[48px]">
         <span className="font-mono text-lg font-bold text-[var(--accent)] leading-none">{ticket.ticket_label}</span>
         <span className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{t("staff:staffView.since")} {timeAgo(ticket.called_at || ticket.created_at)}</span>
@@ -401,21 +418,21 @@ const StaffView = () => {
                 count={waiting.length}
                 icon={Users}
                 color="bg-blue-50 text-blue-700 border border-blue-200"
-                ref={waitingRef}
+                sectionRef={waitingRef}
               />
               <StatCard
                 label={t("staff:staffView.sectionCalled")}
                 count={called.length}
                 icon={Phone}
                 color="bg-amber-50 text-amber-700 border border-amber-200"
-                ref={calledRef}
+                sectionRef={calledRef}
               />
               <StatCard
                 label={t("staff:staffView.statInService")}
                 count={inService.length}
                 icon={Play}
                 color="bg-green-50 text-green-700 border border-green-200"
-                ref={inServiceRef}
+                sectionRef={inServiceRef}
               />
             </div>
 
@@ -431,6 +448,9 @@ const StaffView = () => {
                     ticket={ticket}
                     actions={
                       <>
+                        <Button size="sm" onClick={() => sendBackToQueue(ticket.id)} variant="ghost" className="h-9 text-xs">
+                          {t("staff:staffView.buttonSendBack")}
+                        </Button>
                         <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "in_service")} className="h-9 gap-1">
                           <Play className="h-3.5 w-3.5" /> {t("staff:staffView.buttonStart")}
                         </Button>
@@ -499,6 +519,9 @@ const StaffView = () => {
                       <>
                         <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "called")} className="h-9 gap-1">
                           <Phone className="h-3.5 w-3.5" /> {t("staff:staffView.buttonCall")}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => skipTicket(ticket.id)} className="h-9 text-xs text-amber-600">
+                          {t("staff:staffView.buttonSkip")}
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

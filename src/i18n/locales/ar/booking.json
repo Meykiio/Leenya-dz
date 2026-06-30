@@ -78,6 +78,8 @@
   "queueFlow.cancelTicket": "إلغاء التذكرة",
   "queueFlow.cancelled": "تم إلغاء التذكرة",
   "queueFlow.duplicateTicket": "لديك بالفعل تذكرة نشطة. تحقق من حالتك.",
+  "queueFlow.queuePaused": "الطابور متوقف حالياً. يرجى العودة لاحقاً.",
+  "ticketTracker.checkIn": "أنا هنا!",
   "ticketTracker.calledTitle": "حان دورك!",
   "ticketTracker.calledSubtitle": "توجه الآن إلى الصالون",
   "ticketTracker.yourTicket": "تذكرتك",

@@ -197,12 +197,13 @@ Shadows are tinted to the neutral base hue — never pure black.
 
 ## Dark Mode
 
-- Toggled via `.dark` class on `<html>` element
-- Uses `next-themes` (already integrated)
+- Toggled via `.dark` class on `<html>` element (`darkMode: ["class"]` in tailwind config)
+- CSS variables defined in `index.css` (lines 146-194) but **no dark mode toggle UI exists**
+- `next-themes` is a dependency (used by `sonner.tsx` toast component) but no theme switcher is implemented
 - Linear Purple accent is lighter on dark (`#8780F8` vs `#6B63F6`)
 - Backgrounds are never pure black — use `#0C0C0A` base
 - Shadows reduce/eliminate on dark (ambient light is from UI, not environment)
-- All components tested in both modes independently
+- **All code paths only tested in light mode** — dark mode is aspirational
 
 ---
 
@@ -241,11 +242,11 @@ Shadows are tinted to the neutral base hue — never pure black.
 ## Multi-language Support (Implemented)
 
 - **react-i18next** + `i18next-browser-languagedetector` + `i18next-http-backend`
-- **Status:** Done — all ~60+ components use `t()` calls. ~590 keys per locale. 6 namespaces × 3 languages.
+- **Status:** Done — all ~60+ components use `t()` calls. ~992 keys (EN), 937 (FR, missing 55 analytics keys), 988 (AR). 6 namespaces × 3 languages.
 - **Default:** French (Algeria)
 - **Languages:** French (fr), Arabic (ar), English (en)
-- **Translation files:** `public/locales/{fr,ar,en}/{namespace}.json`
-- **Namespaces:** `common`, `dashboard`, `booking`, `queue`, `staff`, `landing`
+- **Translation files:** `src/i18n/locales/{fr,ar,en}/{namespace}.json`
+- **Namespaces:** `auth`, `booking`, `common`, `dashboard`, `landing`, `staff`
 - **Language switcher:** In navbar on landing page, in footer on other pages
 - **Arabic:** RTL layout via `dir="rtl"`, mirrored spacing (`ms-*` / `me-*`), flipped icons. All 35+ components RTL-patched.
 - **Arabic font:** IBM Plex Sans Arabic (loaded via Google Fonts)

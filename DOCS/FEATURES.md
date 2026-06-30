@@ -96,6 +96,10 @@
   - `src/components/booking/TicketTracker.tsx` — Real-time ticket status display (uses `get_queue_ticket`, `get_completed_ticket_stats`, `get_queue_context` RPCs)
 - **Notes:** Shows live stats (waiting count, estimated wait, current serving) with realtime subscription. Ticket number generated via `generate_ticket_number()` RPC (atomic UPSERT). TicketTracker stores state in localStorage for resilience. Shows different screens for waiting/called/completed/cancelled. "Called" has a pulsing animation. **Data access via RPC** — anon direct table queries revoked for security. Cancel button removed for anonymous users (C-003 fix).
 - **Queue double-join prevention:** Partial unique index `idx_one_active_ticket_per_phone` on `queue_tickets(business_id, client_phone, queue_date) WHERE status IN ('waiting', 'called', 'in_service')` prevents the same phone from having multiple active tickets at the DB level. Additional app-level pre-insert check in QueueFlow.tsx and DashboardQueue.tsx queries for existing active tickets on same phone+date+business before generation — defense in depth.
+- **Skip + Send Back (2026-06-30):** Skip moves ticket to end of queue (NULL position → renumber others → set to MAX+1). Send Back moves called tickets back to waiting. Both clear stale positions on non-waiting tickets first to prevent 409 unique constraint violations. UI buttons in StaffView + DashboardQueue.
+- **Check-in (2026-06-30):** "I'm here" button in TicketTracker sets `checked_in_at` timestamp. Staff see green checkmark indicator in waiting lists. No state machine change — lightweight timestamp only.
+- **Queue pause toggle (2026-06-30):** Dashboard settings switch sets `is_queue_paused` on businesses table. QueueFlow fetches on mount, shows amber notice, hides join form when paused.
+- **Position calculation (2026-06-30):** `get_queue_context` uses `position_in_queue` instead of `ticket_number` for `waiting_ahead` count — accurate even after skip/send-back operations.
 
 ---
 
@@ -204,7 +208,7 @@
   - `src/pages/dashboard/whatsapp/TemplatePreviewDialog.tsx` — Preview with sample data compilation
   - `src/hooks/useWhatsAppTemplates.ts` — CRUD operations, compilation, initialization
   - `src/lib/whatsapp/` — Default templates (7 types), URL builders, message builders
-- **Notes:** 7 template types: booking_new, booking_accepted, booking_cancelled, booking_reminder, queue_called, queue_joined, booking_completed. Edit dialog shows available variables as badges. Preview compiles with sample data. Reset restores defaults (delete + re-insert). Variable insertion uses string replacement for Postgres array format (potential bug).
+- **Notes:** 7 template types: booking_new, booking_accepted, booking_cancelled, booking_reminder, queue_called, queue_joined, booking_completed. Edit dialog shows available variables as badges. Preview compiles with sample data. Reset restores defaults (delete + re-insert via `get_default_whatsapp_templates` SQL function + app-layer insert). Variable insertion uses string replacement for Postgres array format (potential bug).
 
 ---
 

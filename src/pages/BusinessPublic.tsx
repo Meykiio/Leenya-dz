@@ -178,18 +178,6 @@ const BusinessPublic = () => {
             {/* Custom sticky tab bar */}
             <div className="sticky top-0 z-10 bg-background border-b border-border px-5">
               <div className="flex">
-                {showAppointments && (
-                  <button
-                    onClick={() => setActiveTab("appointment")}
-                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
-                      activeTab === "appointment"
-                        ? "text-foreground border-foreground"
-                        : "text-muted-foreground border-transparent hover:text-foreground/70"
-                    }`}
-                  >
-                    {t("booking:businessPublic.tabAppointment")}
-                  </button>
-                )}
                 {showQueue && (
                   <button
                     onClick={() => setActiveTab("queue")}
@@ -200,6 +188,18 @@ const BusinessPublic = () => {
                     }`}
                   >
                     {t("booking:businessPublic.tabQueue")}
+                  </button>
+                )}
+                {showAppointments && (
+                  <button
+                    onClick={() => setActiveTab("appointment")}
+                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
+                      activeTab === "appointment"
+                        ? "text-foreground border-foreground"
+                        : "text-muted-foreground border-transparent hover:text-foreground/70"
+                    }`}
+                  >
+                    {t("booking:businessPublic.tabAppointment")}
                   </button>
                 )}
               </div>

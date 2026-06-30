@@ -33,3 +33,28 @@ Then ask "Want me to test anything or look at something else?"
 - **Remove cover/logo** — X button on previews, `removeImage()` sets `null` in DB
 - **Staff picker in Change Service** — `TicketTracker.tsx`: also change `staff_member_id` alongside `service_id`
 - **Daily docs**: CHANGELOG.md + CLAUDE.md updated
+
+### 2026-06-30 — Queue Edge Cases: Skip, Check-in, Pause + Bug Fixes
+- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten to clear stale positions on non-waiting tickets before renumbering; skip actually moves ticket to end
+- **Check-in button** — `TicketTracker.tsx`: "I'm here" button sets `checked_in_at`, staff see green checkmark
+- **Queue pause toggle** — `BusinessInfoTab.tsx` + `QueueFlow.tsx`: owners flip switch, customers see amber "paused" notice
+- **StatCard ref warning** — renamed `ref` → `sectionRef` in `StaffView.tsx`
+- **Staff onboarding redirect fixed** — `ProtectedRoute.tsx`: `!role` → `/` not `/onboarding`; `LoginForm.tsx`: uses `get_user_role` RPC instead of direct table `.single()` query
+- **Daily docs**: CHANGELOG.md + CLAUDE.md + all other DOCS files updated
+
+### 2026-06-30 — Full Doc Audit: Cross-Reference Against Codebase
+- **ARCHITECTURE.md:** Fixed wrong table name (`waiting_counters` → `queue_counters`), removed non-existent `ThemeContext.tsx` and `/forgot-password` route, added 3 missing tables + 8 missing businesses columns + full queue_tickets columns, corrected routes (`/my-bookings` → `/mes-reservations`, added `/admin`, `/:slug/queue`), updated trigger list (replaced `check_plan_booking_limit` with `check_business_limits`)
+- **AI_CONTEXT.md:** Fixed "French-only" → multilingual, i18n key count ~590 → ~992, tables 10 → 13, accent color blue → purple, security gaps updated (H-004/H-010 fixed, .env never committed), session history restructured
+- **CLAUDE.md:** Fixed `/queue/:slug` → `/:slug/queue`, locale path `public/locales/` → `src/i18n/locales/`
+- **DESIGN.md:** Fixed locale path, namespace list (removed "queue"), key count, dark mode description (no toggle, class-based)
+- **ENVIRONMENT.md:** Fixed locale path, removed "`.env` committed" lie, added latest DB migrations table
+- **SYSTEM_INSTRUCTIONS.md:** Fixed `@tanstack/react-query` removal claim (still in deps), added queue features, removed stale `doctor/` references
+- **CHANGELOG.md:** Fixed `@tanstack/react-query` removal claim (still in deps)
+- **Schema drift FIXED this session:** backported `checked_in_at`, `is_queue_paused`, 5 missing RPCs from live DB to MASTER_SCHEMA.sql — single source of truth restored
+
+### 2026-06-30 — Schema Backport: MASTER_SCHEMA.sql ↔ Live DB Sync
+- **Drift analysis:** Compared all 18 queue_tickets columns, 22 businesses columns, 38 functions, 21 triggers, 27 indexes between MASTER_SCHEMA.sql and live Supabase DB
+- **Columns backported:** `checked_in_at` (queue_tickets), `is_queue_paused` (businesses)
+- **Functions backported:** `check_in_ticket`, `reassign_queue_ticket`, `recalculate_queue_positions`, `send_ticket_back_to_queue`, `skip_queue_ticket`
+- **Logic fixes:** `join_queue` — added `is_queue_paused` check; `get_queue_ticket` — added `checked_in_at` + `staff_member_id` to return; `get_queue_context` — uses `position_in_queue` instead of `ticket_number`; `join_queue` params made optional with DEFAULT NULL
+- **All docs updated:** Removed stale "schema drift" warnings from AI_CONTEXT.md, AGENTS.md

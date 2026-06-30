@@ -41,9 +41,10 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 
 ### Block C — Cleanup
 
-**C1: Removed unused @tanstack/react-query**
+**C1: @tanstack/react-query flagged as unused (NOT removed from deps)**
 - Removed import, `queryClient` creation, and `QueryClientProvider` wrapper from `App.tsx`
 - Saves +13kB of bundle weight (dead code)
+- ⚠️ Package still in `package.json` (`^5.83.0`) — not actually removed from dependencies
 
 **C2: .env already in .gitignore** — confirmed present
 
@@ -328,7 +329,7 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 - Confirmed **active PII exposure** on queue_tickets (C-001) and bookings (C-002) via anon key
 - Confirmed **anon booking cancel** (C-003/H-008), **SECURITY DEFINER functions callable by anon** (H-009)
 - **Final score: 3.1/10 → 4.5/10 after fixes — verdict: DO NOT SHIP**
-- All findings filed: `doctor/findings/CRITICAL.md`, `HIGH.md`, `MEDIUM.md`, `LOW.md`, `RESOLVED.md`
+- All findings were filed in `doctor/findings/` directory (since deleted — changes backported to MASTER_SCHEMA.sql)
 
 ### Phase 2a — Immediate Security Fixes (applied to live Supabase)
 
@@ -671,6 +672,90 @@ Dates are approximate, reconstructed from migration timestamps and documentation
 ### Build
 - `npm run build` passes with zero errors
 - Deployed to `https://leenya-dz.vercel.app`
+
+---
+
+## 2026-06-30 — Queue Edge Cases: Skip/Check-in/Pause + Bug Fixes
+
+### Database — Migration `add_queue_skip_checkin_features`
+- Added `checked_in_at TIMESTAMPTZ` to `queue_tickets` — lightweight timestamp for customer arrival, no status change
+- Added `is_queue_paused BOOLEAN DEFAULT false` to `businesses` — toggle to block new queue joins
+- New RPCs: `recalculate_queue_positions`, `skip_queue_ticket`, `send_ticket_back_to_queue`, `check_in_ticket`, `reassign_queue_ticket`
+- Updated `join_queue` to check `is_queue_paused` (throws with HINT `'queue_paused'`)
+- Updated `get_queue_context` to use `position_in_queue` instead of `ticket_number` for `waiting_ahead` count
+
+### Database — Migration `fix_get_queue_ticket_add_checked_in`
+- `get_queue_ticket` DROP'd and recreated to include `checked_in_at` and `staff_member_id` in return type
+
+### Database — Migration `fix_queue_position_conflicts`
+- **`recalculate_queue_positions`** now NULLs out `position_in_queue` on non-waiting tickets before renumbering — fixes 409 conflict when old completed/called tickets held stale positions
+- **`skip_queue_ticket`** fixed: removes duplicate recalc call, actually moves the skipped ticket to end of queue (NULL its position → renumber others → set to MAX+1)
+- **`send_ticket_back_to_queue`** fixed: clears `position_in_queue` before status change to avoid unique constraint conflicts during recalculate
+
+### Queue UI — Skip, Send Back, Check-in
+- **StaffView.tsx**: Skip button on waiting tickets, "Send back" on called tickets, green checkmark indicator for checked-in customers
+- **DashboardQueue.tsx**: skipTicket, sendBackToQueue, reassignTicket functions wired to sub-components
+- **QueueWaitingList.tsx**: Skip button per waiting row + checked-in indicator
+- **QueueServingList.tsx**: "Send back" button for called tickets
+- **TicketTracker.tsx**: "I'm here" check-in button when status is `waiting` and `checked_in_at` is null; staff picker in Change Service
+
+### Queue Pause Toggle
+- **BusinessInfoTab.tsx**: Added "Queue settings" card with Switch toggle for `is_queue_paused` — saves to DB
+- **QueueFlow.tsx**: Fetches `is_queue_paused` on mount, shows amber notice and hides join form when paused
+
+### StaffView Fixes
+- **StatCard ref warning fixed**: Renamed `ref` prop to `sectionRef` in both definition and all 3 usage sites — React was complaining about passing `ref` to a plain function component
+
+### Onboarding Redirect Fix
+- **ProtectedRoute.tsx**: Changed `!role` redirect from `/onboarding` → `/` (homepage) — onboarding is owner-only business setup, staff should never land there
+- **LoginForm.tsx**: `handlePostAuth` now uses `get_user_role` RPC (same priority-ordered RPC as AuthContext) instead of direct `user_roles` table query with `.single()` — ensures staff role is correctly detected over client role, avoids 406 errors on 0 rows
+
+### i18n — New Keys Added
+- **booking.json** (EN/FR/AR): `ticketTracker.checkIn`, `queueFlow.queuePaused`
+- **staff.json** (EN/FR/AR): `staffView.buttonSkip`, `staffView.buttonSendBack`, `staffView.checkedIn`
+- **dashboard.json** (EN/FR/AR): `queue.skip`, `queue.sendBack`, `queue.checkedIn`, `settings.business.queueSettings`, `settings.business.pauseQueue`, `settings.business.pauseQueueHint`
+
+### Types (`src/types/booking.ts`)
+- `checked_in_at: string | null` added to `QueueTicket` and `TicketData` interfaces
+
+### Build
+- `npm run build` passes with zero errors
+
+---
+
+## 2026-06-30 — Schema Sync: MASTER_SCHEMA.sql Backport from Live DB
+
+### Drift Analysis
+- Compared all 18 queue_tickets columns, 22 businesses columns, 38 functions, 21 triggers, 27 indexes between MASTER_SCHEMA.sql and live Supabase DB
+
+### Columns Backported
+- `checked_in_at TIMESTAMPTZ` added to `queue_tickets`
+- `is_queue_paused BOOLEAN DEFAULT false` added to `businesses`
+
+### Functions Backported (5 new RPCs)
+- `check_in_ticket` — staff marks customer as arrived (sets checked_in_at)
+- `reassign_queue_ticket` — staff reassigns ticket to another staff member
+- `recalculate_queue_positions` — renumber waiting tickets 1..N (clears stale positions first)
+- `send_ticket_back_to_queue` — puts a called ticket back to waiting, recalculates positions
+- `skip_queue_ticket` — moves a ticket to the end of the queue
+
+### Existing Functions Fixed
+- `join_queue` — added `is_queue_paused` check (block join when paused), made 3 params optional with DEFAULT NULL
+- `get_queue_ticket` — return type now includes `checked_in_at` and `staff_member_id`
+- `get_queue_context` — uses `position_in_queue` instead of `ticket_number` for accurate "waiting ahead" count
+
+### GRANTs Added
+- `check_in_ticket(UUID)`, `reassign_queue_ticket(UUID, UUID)` — TO authenticated
+- `recalculate_queue_positions(UUID, DATE)` — TO authenticated
+- `send_ticket_back_to_queue(UUID)`, `skip_queue_ticket(UUID)` — TO authenticated
+
+### Docs Updated
+- AGENTS.md: Added session context, removed stale schema drift alert
+- AI_CONTEXT.md: Removed schema drift from Known Tech Debt, added Session 7 entry
+- All schema drift warnings cleared (single source of truth restored)
+
+### Build
+- `npm run build` passes with zero errors
 
 ---
 

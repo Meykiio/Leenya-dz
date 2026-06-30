@@ -27,32 +27,27 @@ const LoginForm = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .limit(1)
-      .single();
+    const { data: roleData } = await supabase.rpc("get_user_role");
 
     if (!roleData) {
       navigate("/onboarding");
       return;
     }
 
-    if (roleData.role === "owner") {
+    if (roleData === "owner") {
       const { data: biz } = await supabase
         .from("businesses")
         .select("id")
         .eq("owner_id", user.id)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!biz) {
         navigate("/onboarding");
         return;
       }
       navigate("/dashboard");
-    } else if (roleData.role === "staff") {
+    } else if (roleData === "staff") {
       navigate("/staff");
     } else {
       navigate("/");

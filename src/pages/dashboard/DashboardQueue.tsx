@@ -236,6 +236,24 @@ const DashboardQueue = () => {
     setLoading(false);
   };
 
+  const skipTicket = async (id: string) => {
+    const { error } = await supabase.rpc("skip_queue_ticket", { p_ticket_id: id });
+    if (error) { console.error("skipTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    fetchTickets();
+  };
+
+  const sendBackToQueue = async (id: string) => {
+    const { error } = await supabase.rpc("send_ticket_back_to_queue", { p_ticket_id: id });
+    if (error) { console.error("sendBackToQueue:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    fetchTickets();
+  };
+
+  const reassignTicket = async (id: string, staffMemberId: string) => {
+    const { error } = await supabase.rpc("reassign_queue_ticket", { p_ticket_id: id, p_staff_member_id: staffMemberId });
+    if (error) { console.error("reassignTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    fetchTickets();
+  };
+
   const timeAgo = (dateStr: string) => {
     const mins = differenceInMinutes(new Date(), new Date(dateStr));
     if (mins < 1) return t("dashboard:queue.justNow");
@@ -337,6 +355,7 @@ const DashboardQueue = () => {
                   businessName={business!.name}
                   onCall={handleCall}
                   onCancel={(id) => updateTicketStatus(id, "cancelled")}
+                  onSkip={skipTicket}
                   timeAgo={timeAgo}
                 />
               </div>
@@ -351,6 +370,7 @@ const DashboardQueue = () => {
                   tickets={serving}
                   onComplete={(id) => updateTicketStatus(id, "completed")}
                   onNoShow={(id) => updateTicketStatus(id, "no_show")}
+                  onSendBack={sendBackToQueue}
                   timeAgo={timeAgo}
                 />
               </div>

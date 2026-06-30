@@ -4,17 +4,18 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CheckCircle, Users2 } from "lucide-react";
+import { CheckCircle, ArrowLeftFromLine, Users2 } from "lucide-react";
 import type { QueueTicket } from "@/types";
 
 interface Props {
   tickets: QueueTicket[];
   onComplete: (id: string) => void;
   onNoShow: (id: string) => void;
+  onSendBack?: (id: string) => void;
   timeAgo: (date: string) => string;
 }
 
-export default function QueueServingList({ tickets, onComplete, onNoShow, timeAgo }: Props) {
+export default function QueueServingList({ tickets, onComplete, onNoShow, onSendBack, timeAgo }: Props) {
   const { t } = useTranslation();
   if (tickets.length === 0) {
     return (
@@ -39,6 +40,16 @@ export default function QueueServingList({ tickets, onComplete, onNoShow, timeAg
             </div>
           </div>
           <div className="flex gap-2 mt-3">
+            {ticket.status === "called" && onSendBack && (
+              <Button
+                size="sm" variant="ghost"
+                onClick={() => onSendBack(ticket.id)}
+                className="gap-1 text-xs"
+                title={t("dashboard:queue.sendBack")}
+              >
+                <ArrowLeftFromLine className="h-3 w-3" /> {t("dashboard:queue.sendBack")}
+              </Button>
+            )}
             <Button
               size="sm" variant="outline"
               onClick={() => onComplete(ticket.id)}

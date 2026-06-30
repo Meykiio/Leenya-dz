@@ -53,9 +53,16 @@ Complete guide for setting up Leenya in any environment.
 - [x] RLS: Enabled on ALL tables (⚠️ PERMISSIVE mode — RESTRICTIVE is Phase 2b)
 - [ ] Edge Functions: None deployed currently
 
-### Phase 2a Security Changes
+### Phase 2a Security Changes (June 27)
 - Anon direct table access revoked on `queue_tickets` and `bookings` — public data access via parameterized RPCs only
 - SECURITY DEFINER EXECUTE restricted: anon can call exactly 7 public RPCs, not the full function list
+
+### Latest DB Migrations Applied (June 30)
+| Migration | Purpose |
+|---|---|
+| `add_queue_skip_checkin_features` | Added `checked_in_at` to queue_tickets, `is_queue_paused` to businesses, and new RPCs for skip/check-in/reassign |
+| `fix_get_queue_ticket_add_checked_in` | Recreated `get_queue_ticket` RPC with `checked_in_at` and `staff_member_id` in return type |
+| `fix_queue_position_conflicts` | Rewrote 3 RPCs to prevent 409 unique constraint violations on skip/send-back |
 
 ## Additional Services
 
@@ -67,16 +74,16 @@ Complete guide for setting up Leenya in any environment.
 
 ## i18n / Translation Notes
 
-- 6 translation namespaces × 3 languages (fr/ar/en) in `public/locales/`
+- 6 translation namespaces × 3 languages (fr/ar/en) in `src/i18n/locales/`
 - Default language: French (Algeria) via `src/i18n/index.ts`
-- To add a new language: create `public/locales/{lang}/` with all 6 namespace JSON files, add to `supportedLngs` in `src/i18n/index.ts`
+- To add a new language: create `src/i18n/locales/{lang}/` with all 6 namespace JSON files, add to `supportedLngs` in `src/i18n/index.ts`
 - Arabic uses RTL layout (`dir="rtl"`) — mirrored Tailwind classes via `rtl:` variant in `tailwind.config.ts`
 
 ## Local Development Notes
 
 - `src/integrations/supabase/client.ts` and `types.ts` are auto-generated — never edit them.
 - DB schema is managed via `supabase/schema/MASTER_SCHEMA.sql` — run manually in Supabase SQL Editor.
-- `.env` file is committed to repo (contains real anon key — public by design). ⚠️ Should be in `.gitignore`.
+- `.env` file is gitignored and was never committed.
 - Build: `npm run build` (tsc + vite), Dev: `npm run dev`, Test: `npx vitest run`, E2E: `npx playwright test`
 - Supabase MCP connected via OAuth for database inspection (uses linked project from `.env`).
 

@@ -1,10 +1,10 @@
 # Leenya — AI Context File
 
-Last updated: 2026-06-28
+Last updated: 2026-06-30
 
 ## Project in One Paragraph
 
-Leenya is a queue and appointment management SaaS for Algerian service businesses (barbershops, salons, clinics, dental offices, physiotherapy, veterinary). Built with React 18 + TypeScript + Vite on the frontend and Supabase (PostgreSQL, Auth, Realtime, Storage) on the backend. UI is French-language only, prices in DZD, covers all 58 wilayas. Styled with Tailwind CSS + shadcn/ui, fonts are Sora / JetBrains Mono / IBM Plex Sans Arabic. Currently pre-revenue — subscription plans are displayed but no payment processing exists.
+Leenya is a queue and appointment management SaaS for Algerian service businesses (barbershops, salons, clinics, dental offices, physiotherapy, veterinary). Built with React 18 + TypeScript + Vite on the frontend and Supabase (PostgreSQL, Auth, Realtime, Storage) on the backend. UI supports French (default), English, and Arabic. Prices in DZD, covers all 58 wilayas. Styled with Tailwind CSS + shadcn/ui, fonts are Sora / JetBrains Mono / IBM Plex Sans Arabic. Currently pre-revenue — subscription plans are displayed but no payment processing exists.
 
 ---
 
@@ -20,7 +20,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 8. **Import the Supabase client from** `@/integrations/supabase/client` — never create a new client
 9. **Roles are in `user_roles` table** — never store roles on profiles or in localStorage
 10. **No DELETE on bookings, queue_tickets, profiles, reviews, user_roles** — only status changes (cancel, no-show)
-11. **RLS policies are PERMISSIVE (default)** — switching to RESTRICTIVE is Phase 2b. Public data access (queue, booking) uses RPCs, not direct tables. See `doctor/plans/MASTER_REMEDIATION_PLAN.md`
+11. **RLS policies are PERMISSIVE (default)** — switching to RESTRICTIVE is Phase 2b. Public data access (queue, booking) uses RPCs, not direct tables.
 
 ---
 
@@ -38,7 +38,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 | Service suggestions by category | `src/lib/serviceSuggestions.ts` |
 | Wilaya list (58 wilayas) | `src/lib/wilayas.ts` |
 | Routing (all routes) | `src/App.tsx` |
-| i18n / translations | `src/i18n/index.ts` (6 namespaces × 3 languages, ~590 keys) |
+| i18n / translations | `src/i18n/index.ts` (6 namespaces × 3 languages, ~992 keys EN) |
 | RTL utility classes | Tailwind config `rtl:` variant, `ms-*`/`me-*` spacing |
 | Language switcher hook | `src/hooks/useLanguage.ts` |
 | Dashboard sidebar + layout | `src/components/dashboard/DashboardLayout.tsx` |
@@ -76,7 +76,7 @@ Leenya is a queue and appointment management SaaS for Algerian service businesse
 
 ## Database Quick Reference
 
-**Tables** (10): `businesses`, `services`, `staff_members`, `business_hours`, `bookings`, `queue_tickets`, `queue_counters`, `profiles`, `user_roles`, `reviews`
+**Tables** (13): `profiles`, `user_roles`, `businesses`, `business_hours`, `services`, `staff_members`, `staff_services`, `bookings`, `queue_counters`, `queue_tickets`, `reviews`, `feedback`, `whatsapp_templates`
 
 **View**: `booking_availability` — simplified non-cancelled bookings for availability checks
 
@@ -144,9 +144,9 @@ user_roles.user_id → auth.users.id
 | `--text-primary` | #0C0C0A | #F5F5F3 |
 | `--text-secondary` | #4A4A45 | #A8A8A2 |
 | `--text-tertiary` | #9A9A92 | #6A6A64 |
-| `--accent` | #1A56DB | (same) |
-| `--accent-hover` | #1447C0 | (same) |
-| `--accent-light` | #EBF2FF | (same) |
+| `--accent` | hsl(260 97% 61%) | (same) |
+| `--accent-hover` | hsl(260 90% 55%) | (same) |
+| `--accent-light` | hsl(260 80% 95%) | (same) |
 | `--border-default` | #E5E5E2 | #2A2A27 |
 | `--border-strong` | #CBCBC5 | #3A3A36 |
 | `--success` | #187A4A | `--error` #C42B1C | `--warning` #B45309 | `--info` #0369A1 |
@@ -181,13 +181,13 @@ user_roles.user_id → auth.users.id
 
 ### Security Gaps (Phase 2b)
 1. RLS policies are `PERMISSIVE` — need `AS RESTRICTIVE` (H-006)
-2. Blanket `GRANT ALL ON ALL TABLES` — need per-table grants (H-004)
-3. Storage bucket `business-assets` allows public listing (H-010) — files are still accessible via public URLs if SELECT policy removed
-4. Leaked password protection disabled in Supabase Auth (H-011) — requires Pro plan
-5. Error messages leak schema details (SEC-01)
-6. 38 lint errors (all `no-explicit-any`) (H-002)
-7. `.env` in git history not purged (C-004)
-8. `@tanstack/react-query` imported but unused (+13 kB dead bundle)
+2. Leaked password protection disabled in Supabase Auth (H-011) — requires Pro plan
+3. Error messages leak schema details (SEC-01) — `USING HINT` values in triggers expose internal identifiers
+
+### Known Tech Debt
+1. `@tanstack/react-query` in package.json but unused (+13 kB dead bundle)
+2. 56 suppressed ESLint messages (36 `no-explicit-any`, 20 other)
+3. **Schema drift (FIXED 2026-06-30):** `checked_in_at` and `is_queue_paused` columns, plus 5 queue RPCs were missing from MASTER_SCHEMA.sql — all backported from live Supabase DB; MASTER_SCHEMA.sql is now the single source of truth again
 
 ### Supabase Linter Warnings (Intentional)
 These warnings are by design, not security issues:
@@ -199,90 +199,48 @@ These warnings are by design, not security issues:
 
 ## What Was Recently Changed (Last 3 Sessions)
 
-### Session 3 (2026-06-27, current)
-- **Full Doctor audit completed:** All 30 specialist reviews + Red Team runtime tests against live Supabase
-- **Phase 2a remediation applied (release blockers):**
-  - C-001: queue_tickets anon SELECT revoked → `get_queue_ticket`/`get_business_queue` RPCs (no PII)
-  - C-002: bookings anon SELECT/UPDATE revoked → `get_booking_by_token`/`cancel_booking_by_token` RPCs
-  - C-003: queue_tickets anon UPDATE policy dropped
-  - H-001: user_roles self-insert policy dropped
-  - H-005: `check_business_hours_trigger` added (BEFORE INSERT on bookings)
-  - H-007: `check_queue_ticket_state_transition_trigger` + `check_booking_state_transition_trigger` + `check_past_booking_trigger` added
-  - H-008: bookings anon UPDATE revoked → `cancel_booking_by_token` RPC requires token
-  - H-009: EXECUTE revoked from anon on all SECURITY DEFINER functions except 7 public RPCs
-  - C-005: vitest updated (critical CVE)
-  - H-003: `npm audit fix` reduced 19→2 vulns
-  - Fixed missing `buildQueueCalledUrl` import in DashboardQueue.tsx
-- **Client code updated:** QueueDisplay, TicketTracker, BookingTrack use RPCs instead of direct table queries
-- **Runtime retest:** 3/3 direct table queries blocked for anon. RPCs functional. No PII exposed.
-- **Final score:** 3.1/10 — DO NOT SHIP (improved from 3.4 after fixes, ratings held pending full Phase 2b)
+### Session 5 — Bug Bash 2: State Stability & UX Polish (2026-06-30)
+- **Auth token refresh no longer unmounts dashboard** — `onAuthStateChange` skips `setRoleReady(false)` on `TOKEN_REFRESH`. Used `userRef.current` comparison to prevent spurious `setUser()` calls.
+- **Business reference stabilized** — `useMemo` wrap on return value of `use-business-info.ts` prevents cascade re-fetches in all dashboard pages.
+- **Profile name from DB** — `Dashboard.tsx` + `DashboardLayout.tsx` fetch `full_name` from `profiles` table, fall back to `user_metadata.full_name` then email prefix.
+- **Time-of-day greetings** — 5 variants per time block (morning/afternoon/evening) × 3 languages, random index stable per page load.
+- **Cover preview matches profile** — same 140px height, PixelCover fallback in settings.
+- **Revenue includes completed queue tickets** — `DashboardAnalytics.tsx`: `queueRevenue` from completed queue tickets' `services.price_dzd`.
+- **Cache busting on uploads** — `?cb=timestamp` appended to image URLs, `cacheControl: "no-cache"` on Supabase upload.
+- **Remove cover/logo** — X button on previews, `removeImage()` sets `null` in DB.
+- **Staff picker in Change Service** — TicketTracker can also change `staff_member_id` alongside `service_id`.
+- **Duplicate labels fixed** — "Phone" → "Business phone" in settings (EN/FR/AR).
+- **Queue tab left on public page** — swapped button order so Queue appears before Appointments.
+- **Build:** `npm run build` zero errors.
 
-### Phase 3d — Final Pricing Limits & Polish (2026-06-28)
+### Session 6 — Queue Edge Cases: Skip, Check-in, Pause + Bug Fixes (2026-06-30)
+- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` NULLs non-waiting positions first; `skip_queue_ticket` moves ticket to end (position NULL → renumber → MAX+1); `send_ticket_back_to_queue` clears position before status change. Migration `fix_queue_position_conflicts` applied.
+- **Check-in button** — `TicketTracker.tsx`: "I'm here" button sets `checked_in_at` timestamp; staff see green checkmark in waiting lists. No state machine change.
+- **Queue pause toggle** — `BusinessInfoTab.tsx`: owner flips `is_queue_paused` switch on businesses table. `QueueFlow.tsx`: fetches on mount, shows amber notice, hides join form when paused.
+- **DB migrations applied:** `add_queue_skip_checkin_features`, `fix_get_queue_ticket_add_checked_in`, `fix_queue_position_conflicts`.
+- **StatCard ref warning fixed** — renamed `ref` → `sectionRef` prop in StaffView.tsx (3 usage sites).
+- **Staff onboarding redirect fixed** — `ProtectedRoute.tsx`: `!role` → `/` not `/onboarding`; `LoginForm.tsx`: uses `get_user_role` RPC instead of direct table `.single()` query.
+- **i18n:** 10+ new keys added for skip, send back, check-in, queue pause (EN/FR/AR).
+- **Position calculation fixed** — `get_queue_context` now uses `position_in_queue` instead of `ticket_number` for accurate "X ahead" count after skip/send-back.
+- **Schema drift fixed:** `checked_in_at`, `is_queue_paused`, and 5 missing RPC functions backported from live DB to MASTER_SCHEMA.sql — now fully in sync.
+
+### Session 4 — Phase 3d: Final Pricing Limits & Polish (2026-06-28)
 - **Final pricing limits (Algerian market):** Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
 - **Legal pages:** TermsOfService + PrivacyPolicy (Algerian Law 18-07), routes before `/:slug` catch-all
 - **Footer:** Instagram removed, email → sifeddine.meb96@gmail.com
-- **Missing i18n keys:** subscription upgrade, WhatsApp init, 404 (20 keys), common buttons fixed — ~590 keys per locale now
-- **Navbar:** "Reviews" → "Approach"
-- **RTL polish:** ~20 items across 18 files. All 35+ components now RTL-patched (dialog, toast, dashboard, breadcrumb, carousel, calendar, pagination, navigation-menu, alert, select, testimonials, how-it-works, CTA, WhatsApp, all arrow icons)
+- **Missing i18n keys:** subscription upgrade, WhatsApp init, 404 (20 keys), common buttons fixed — ~992 keys per locale now
+- **RTL polish:** ~20 items across 18 files. All 35+ components RTL-patched + all arrow icons flipped.
 - **Back-to-top button:** new component, appears after 400px scroll
+- **SubscriptionTab:** Fixed RPC array bug, real-time subscriptions, staff limit frontend enforcement
 - **Demo components:** accent color fix, i18n (20 new keys), equal min-height
 - **Testimonials:** 3 new messages across EN/FR/AR
-- **HowItWorks step circles:** opacity fix
-- **SubscriptionTab:** Fixed RPC array bug (showed /100 instead of 0/100). Real-time subscriptions for booking+queue counts. Staff limit frontend enforcement with i18n
-- **Table layout fix:** BookingRow columns consistent width
-- **bg-[var(--accent)] → bg-accent:** Fixed invalid CSS across 8 files (BookingFilters, Analytics, PricingSection, etc.)
+- **bg-[var(--accent)] → bg-accent:** Fixed invalid CSS across 8 files
 - **Database cleanup:** All data wiped (development/test entries removed)
-- **Build:** tsc + build pass zero errors
 
-### Phase 3c — 1-Month Trial & Honest Limits (2026-06-28)
-- **`trial_ends_at`** column on businesses — 30-day trial skip for all limits
-- **`check_business_limits`** trigger — enforces booking/queue/staff caps per plan
-- **`check_staff_plan_limit`** trigger — staff count enforcement
-- **`get_monthly_business_counts`** RPC — returns booking + queue + staff counts
-- **SubscriptionTab rewrite** — trial countdown + 2 progress bars
-- **Landing page** — Pro "Coming soon" in all 3 locales
-
-### Phase 3b — Concurrency & Production Readiness (2026-06-27)
-- Database indexes added (`idx_bookings_overlap_check`, `idx_queue_tickets_business_date_ticket`, `idx_bookings_staff_date`, `idx_queue_tickets_staff_date`)
-- Advisory locks for rate limiting and plan enforcement
-- Optimistic locking via `.eq("status", currentStatus)` on all status transitions
-- Analytics pagination via `.range(0, 1000)`
-- Playwright smoke tests for 6 public pages
-
-### Phase 3a — Staff Auth & EWT (2026-06-27)
-- **Staff auth login:** `create_staff_user` RPC works end-to-end. BCrypt cost 10, all auth.users columns correct, duplicate email handled.
-- **EWT formula improved:** Historical 30-day window, staff count divisor, fallback, stored in DB, WhatsApp URL param
-- **QueueDisplay sound:** Singleton AudioContext, click-to-unlock overlay, muted hint
-- **Staff delete:** Trash icon + AlertDialog confirmation
-- **AddStaffForm** wrapped in `<form>` (fixes console warning)
-- **Onboarding auth guard** redirects to /login if not authenticated
-
-### Phase 2d — Security Hardening (2026-06-27)
-- **Security audit:** `FINAL_AUDIT.md` — score 7.5/10
-- **Sentry monitoring** integrated (`@sentry/react` + `@sentry/vite-plugin`)
-- **CI/CD pipelines** (`.github/workflows/ci.yml` + `e2e.yml`)
-- **CSP headers** for dev + production
-- **Playwright E2E tests** (3 tests: booking track, queue display, staff view)
-- **RLS integration tests** (`supabase/tests/rls_policies.sql`)
-- **Bug fixes:** CSP WebSocket, StaffView state machine, WhatsApp 404
-
-### Session 2 (2026-06-26)
-- **File splits completed:** All 6 remaining large files split into domain subdirectories (queue/, staff/, bookings/, steps/)
-- **Booking visibility:** PendingApprovals section, sidebar pending badge, dashboard pending stat, real-time booking subscription
-- **Queue double-join app-level fix:** Pre-insert phone check in QueueFlow + DashboardQueue
-- **Auth fixes:** `refreshRole()` in AuthContext, auto-login on signup (email confirmation off mode)
-- **Database reset:** Full wipe + MASTER_SCHEMA.sql re-applied
-- **Docs audit:** All 10 DOCS files reviewed and corrected against actual codebase
-
-### Session 1 (2026-06-26, earlier)
-- **MASTER_SCHEMA.sql** becomes single source of truth (replaces loose SCHEMA.sql and individual migrations)
-- **Queue double-join DB fix:** Partial unique index `idx_one_active_ticket_per_phone`
-- **GRANT statements** added to MASTER_SCHEMA (fixes 403 on fresh projects)
-- **Root cleaned:** Loose files moved to DOCS/ or deleted
-- **Types split:** `src/types/` into domain files
-- **WhatsApp lib split:** `src/lib/whatsapp/` into `index.ts`, `templates.ts`, `urls.ts`
-- Phone OTP removed entirely (previous session)
-- Staff avatars + service assignment (previous session)
+### Session 7 — Schema Sync & Enterprise README (2026-06-30)
+- **MASTER_SCHEMA.sql fully synced** with live Supabase DB — `checked_in_at` + `is_queue_paused` columns backported, 5 missing RPCs added (`check_in_ticket`, `reassign_queue_ticket`, `recalculate_queue_positions`, `send_ticket_back_to_queue`, `skip_queue_ticket`), `get_queue_ticket` return type updated, `join_queue` now checks pause status, `get_queue_context` uses position-based waiting count
+- **All docs audited:** 9 DOCS files corrected (ARCHITECTURE.md, AI_CONTEXT.md, CLAUDE.md, DESIGN.md, ENVIRONMENT.md, SYSTEM_INSTRUCTIONS.md, CHANGELOG.md, AGENTS.md, AUDIT.md)
+- **Schema drift alert cleared:** Single source of truth restored
 
 ---
 
@@ -291,7 +249,7 @@ These warnings are by design, not security issues:
 - [ ] Automated SMS reminders (Twilio integration)
 - [ ] Online payments (BaridiMob / CCP / Stripe)
 - [ ] Multi-location support
-- [ ] Arabic RTL interface (85% — 35+ components patched)
+- [ ] Arabic RTL interface (95% — 35+ components patched, all arrow icons flipped)
 - [ ] Enhanced PWA with offline queue tracking
 - [ ] Email notification templates
 - [ ] Staff-specific availability schedules

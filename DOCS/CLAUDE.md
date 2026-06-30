@@ -40,7 +40,7 @@ Read these 4 files in order:
 - Key files: `src/i18n/index.ts`, `src/hooks/useLanguage.ts`
 - Language switcher in navbar (landing) and footer (other pages)
 - RTL: `dir="rtl"` on `<html>`, mirrored Tailwind classes (`ms-*`/`me-*`)
-- All ~590 keys per locale in `public/locales/{lang}/{namespace}.json`
+- All ~992 keys per locale in `src/i18n/locales/{lang}/{namespace}.json`
 
 ## Key Pages Added Recently
 
@@ -48,7 +48,7 @@ Read these 4 files in order:
 |---|---|---|
 | `/terms` | TermsOfService | Legal, before /:slug |
 | `/privacy` | PrivacyPolicy | Legal, before /:slug |
-| `/queue/:slug` | QueuePublic | Public queue view |
+| `/:slug/queue` | QueuePublic | Public queue view |
 
 ## Key paths for new features
 
@@ -104,3 +104,11 @@ npx tsc --noEmit # Type-check only
 - **Cover preview matches profile** — same 140px height, PixelCover fallback in settings
 - **Revenue counts queue income** — completed queue tickets' service prices now included
 - **Cover images get cache-busting `?cb=`** on each upload to prevent stale browser cache
+
+### Queue Edge Cases — Skip, Send Back, Check-in, Pause (2026-06-30)
+- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` now NULLs non-waiting positions first; `skip_queue_ticket` actually moves ticket to end (was duplicate recalc with no skip logic); `send_ticket_back_to_queue` clears position before recalculating
+- **Check-in button** in TicketTracker — "I'm here" sets `checked_in_at` timestamp, staff see green ✓
+- **Queue pause toggle** in dashboard settings — owners flip switch, QueueFlow shows amber notice, join form hidden
+- **StatCard ref warning fixed** — renamed `ref` → `sectionRef` prop
+- **Staff onboarding redirect fixed** — ProtectedRoute sends `!role` to `/` not `/onboarding`; LoginForm uses `get_user_role` RPC instead of direct table `.single()` query
+- **i18n:** 10+ new keys added for skip, send back, check-in, queue pause (EN/FR/AR)

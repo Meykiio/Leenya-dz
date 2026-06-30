@@ -78,6 +78,8 @@
   "queueFlow.cancelTicket": "Annuler le ticket",
   "queueFlow.cancelled": "Ticket annul\u00e9",
   "queueFlow.duplicateTicket": "Vous avez déjà un ticket actif. Vérifiez votre statut.",
+  "queueFlow.queuePaused": "La file d'attente est actuellement suspendue. Revenez plus tard.",
+  "ticketTracker.checkIn": "Je suis là !",
   "ticketTracker.calledTitle": "C'est votre tour !",
   "ticketTracker.calledSubtitle": "Pr\u00e9sentez-vous maintenant au salon",
   "ticketTracker.yourTicket": "Votre ticket",

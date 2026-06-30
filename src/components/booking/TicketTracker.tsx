@@ -31,6 +31,7 @@ interface TicketData {
   service_id: string | null;
   business_id: string | null;
   queue_date: string | null;
+  checked_in_at: string | null;
 }
 
 const CACHE_PREFIX = "leenya_ticket_";
@@ -124,6 +125,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           service_id: data.service_id,
           business_id: data.business_id,
           queue_date: data.queue_date,
+          checked_in_at: data.checked_in_at || null,
         };
         setTicket(t);
         businessIdRef.current = data.business_id;
@@ -156,6 +158,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       service_id: data.service_id,
       business_id: data.business_id,
       queue_date: data.queue_date,
+      checked_in_at: data.checked_in_at || null,
     };
     setTicket(t);
 
@@ -381,7 +384,23 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </p>
       </div>
 
-      <div className="flex gap-3 mt-5">
+      {ticket.status === "waiting" && !ticket.checked_in_at && (
+        <div className="mt-5">
+          <Button
+            variant="default"
+            size="sm"
+            className="w-full gap-1.5 h-[40px] text-[13px]"
+            onClick={async () => {
+              await supabase.rpc("check_in_ticket", { p_ticket_id: ticketId });
+              setTicket({ ...ticket, checked_in_at: new Date().toISOString() });
+            }}
+          >
+            {t("booking:ticketTracker.checkIn")}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex gap-3 mt-3">
         <Button
           variant="outline"
           size="sm"

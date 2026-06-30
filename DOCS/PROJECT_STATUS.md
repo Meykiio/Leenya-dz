@@ -1,6 +1,6 @@
 # Project Status — Leenya
 
-**Last updated:** 2026-06-28 (Phase 3d — Final Pricing Limits & Polish)
+**Last updated:** 2026-06-30 (Queue Edge Cases + Bug Fixes)
 **Version:** 0.0.1 (closed beta candidate)
 **Project name:** Leenya (formerly Dawrni/Darek)
 **One-line pitch:** Queue and appointment management SaaS for Algerian service businesses.
@@ -17,17 +17,17 @@
 | Onboarding wizard | 95% | Fully working — 4 steps, profile + role + business + services |
 | Business public page | 92% | Fully working — slug-based, tabs default to queue, appointment/queue flows |
 | Appointment booking flow | 90% | Working — service, staff selection, date/time, details, WhatsApp links, step indicator |
-| Queue (walk-in) flow | 88% | Working — service selection, ticket generation, real-time tracker, double-join prevention via partial unique index |
-| Queue ticket tracker | 80% | Working — realtime updates, cancel, completion/cancellation states |
+| Queue (walk-in) flow | 95% | Working — service selection, ticket generation, real-time tracker, double-join prevention, skip/send-back, check-in, queue pause toggle |
+| Queue ticket tracker | 90% | Working — realtime updates, cancel, check-in button, completion/cancellation states |
 | TV queue display | 80% | Working — realtime, auto-hide cursor, clock |
 | Owner dashboard — homepage | 85% | Working — metrics (incl. pending count), recent bookings, quick actions |
 | Owner dashboard — bookings mgmt | 92% | Working — upcoming/by-date filter, search, CRUD, WhatsApp actions, PendingApprovals, real-time subscription |
-| Owner dashboard — queue mgmt | 85% | Working — realtime, call/complete/cancel/no-show, display mode |
+| Owner dashboard — queue mgmt | 92% | Working — realtime, call/complete/cancel/no-show, skip/send-back, checked-in indicators, display mode |
 | Owner dashboard — services CRUD | 90% | Working — add/edit/delete/toggle, name_ar field, slider for duration |
 | Owner dashboard — staff CRUD | 97% | Working — add/edit/toggle, service assignment, auth login creation, delete |
-| Owner dashboard — settings | 73% | All tabs present. Subscription tab with real-time counts |
+| Owner dashboard — settings | 75% | All tabs present. Subscription tab with real-time counts. Queue pause toggle in BusinessInfoTab |
 | Owner dashboard — analytics | 80% | Working — metric cards with safe delta calculations (no divide-by-zero), charts, peak hours, popular services, history table |
-| Staff view | 90% | Working — queue management, call/complete/no-show, **bookings tab**, **staff login** |
+| Staff view | 93% | Working — queue management, call/complete/no-show, skip/send-back, checked-in indicators, **bookings tab**, **staff login** |
 | Client bookings page | 70% | Working — list upcoming/past, cancel, leave review |
 | Booking tracker (anonymous token) | 80% | Working — view by token, cancel |
 | Reviews | 60% | Working — display on public page, submit from MyBookings |
@@ -54,11 +54,11 @@ The following flows work end-to-end in a local dev environment with a correctly 
 1. **Landing → Login → Onboarding → Dashboard:** A new user can land on the homepage, sign up via email+password, complete the 4-step onboarding wizard (profile → business type → business details → services), and land on the dashboard.
 2. **Public business page → Book appointment:** A visitor can navigate to `/:slug`, see the business info, select a service, optionally pick a staff member, pick a date and time slot (filtered by staff availability if a staff member was selected), enter their name and phone, and receive a confirmed booking with a WhatsApp tracking link.
 3. **Public business page → Join queue:** A visitor can navigate to `/:slug?tab=queue`, select a service, enter name/phone, get a ticket number, and see their position updated in real time.
-4. **Dashboard → Manage queue:** Owner can view today's queue in real time, call/complete/cancel/no-show tickets, and open TV display mode.
+4. **Dashboard → Manage queue:** Owner can view today's queue in real time, call/complete/cancel/no-show tickets, skip/send-back tickets, see checked-in indicators, toggle queue pause, and open TV display mode.
 5. **Dashboard → Manage bookings:** Owner can filter by date/status, search, create bookings, accept/reject, mark arrived/in-service/completed/cancelled/no-show, and send WhatsApp reminders.
 6. **Dashboard → Services CRUD:** Owner can add/edit/delete services with name, duration, price, and active toggle.
 7. **Dashboard → Staff CRUD:** Owner can add/edit staff members with active/accepts-bookings toggles, upload avatars (initials fallback with deterministic color), assign services via checkbox dialog, **create auth login accounts (email/password)**, and **delete staff members**.
-8. **Staff view:** Staff member can login via email/password, view today's queue and bookings in tabbed interface, call/complete/no-show tickets, and send WhatsApp messages.
+8. **Staff view:** Staff member can login via email/password, view today's queue and bookings in tabbed interface, call/complete/no-show/skip/send-back tickets, see checked-in indicators, and send WhatsApp messages.
 9. **Booking tracker:** Anyone with a booking token URL can view and cancel their booking.
 10. **My Bookings:** Logged-in client can view their booking history and cancel upcoming bookings.
 11. **Analytics:** Owner can view metrics, charts, peak hours, popular services, and booking history.
@@ -141,8 +141,8 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - Staff step is skipped if no staff assigned to the selected service
 - "Pas de préférence" pre-selected when staff step is shown
 - Time slots filtered by selected staff member's existing bookings
-- Queue flow works end-to-end (service → name/phone → ticket → realtime tracker)
-- Dashboard queue management (call/complete/cancel) with realtime
+- Queue flow works end-to-end (service → name/phone → ticket → realtime tracker) with skip/send-back, check-in, and pause toggle
+- Dashboard queue management (call/complete/cancel/skip/send-back) with realtime
 - Dashboard booking management (filter/search/update status, PendingApprovals section for future pending bookings)
 - Sidebar shows real-time pending booking badge
 - Services and staff CRUD with avatar upload and service assignment
@@ -200,3 +200,27 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - **Demo components rewritten:** accent color, i18n translations (20 new keys), equal height
 - **Testimonials section rewritten:** 3 new professional/touching messages in all 3 languages
 - **HowItWorks:** step circles full opacity with white text
+
+**Updated 2026-06-30 (Bug Bash 2 — State Stability & UX Polish):**
+- **Auth token refresh no longer unmounts dashboard** — `onAuthStateChange` skips `setRoleReady(false)` on `TOKEN_REFRESH`
+- **Business reference stabilized** — `useMemo` wrap prevents cascade re-fetches in all dashboard pages
+- **Profile name from DB** — fetches `full_name` from `profiles` table; shows real name not email prefix
+- **Time-of-day greetings** — 5 variants per time block × 3 languages, random index stable per page load
+- **Cover preview matches profile** — same 140px height, PixelCover fallback in settings
+- **Revenue counts queue income** — completed queue tickets' service prices now included in revenue
+- **Cache busting on uploads** — `?cb=timestamp` appended to image URLs, `cacheControl: "no-cache"`
+- **Gradient default covers** — PixelCover + pixel-avatar use seeded SVG linear gradients instead of pixel art
+- **Remove cover/logo** — X button on previews, `removeImage()` sets `null` in DB
+- **Staff picker in Change Service** — TicketTracker can also change staff_member_id alongside service_id
+- **Duplicate labels fixed** — "Phone" → "Business phone" in settings (EN/FR/AR)
+- **Queue tab left on public page** — swapped button order so Queue appears before Appointments
+
+**Updated 2026-06-30 (Queue Edge Cases — Skip, Check-in, Pause + Bug Fixes):**
+- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` NULLs non-waiting positions first; `skip_queue_ticket` moves ticket to end; `send_ticket_back_to_queue` clears position before recalculating
+- **Check-in button** in TicketTracker — "I'm here" sets `checked_in_at` timestamp; staff see green checkmark
+- **Queue pause toggle** in dashboard settings — owners flip `is_queue_paused` switch; QueueFlow shows amber notice, hides join form
+- **StatCard ref warning fixed** — renamed `ref` → `sectionRef` in StaffView.tsx
+- **Staff onboarding redirect fixed** — ProtectedRoute: `!role` → `/` not `/onboarding`; LoginForm uses `get_user_role` RPC instead of direct table `.single()` query
+- **i18n keys added** — 10+ new keys for skip, send back, check-in, queue pause (EN/FR/AR)
+- **DB migrations applied** — `add_queue_skip_checkin_features`, `fix_get_queue_ticket_add_checked_in`, `fix_queue_position_conflicts`
+- **Build passes** — `npm run build` zero errors

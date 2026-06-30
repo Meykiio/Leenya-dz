@@ -38,6 +38,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const [waitingCount, setWaitingCount] = useState(0);
   const [estimatedWait, setEstimatedWait] = useState(0);
   const [currentTicket, setCurrentTicket] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null | "no_preference">(null);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -122,6 +123,10 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   }, [businessId]);
 
   useEffect(() => {
+    supabase.from("businesses").select("is_queue_paused").eq("id", businessId).single().then(({ data: biz }) => {
+      if (biz?.is_queue_paused) setIsPaused(true);
+    });
+
     const fetchStats = async () => {
       const { data, error } = await supabase
         .from("queue_tickets")
@@ -432,8 +437,15 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         />
       )}
 
+      {/* Queue paused notice */}
+      {isPaused && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-center text-[13px] text-amber-800">
+          {t("booking:queueFlow.queuePaused")}
+        </div>
+      )}
+
       {/* Join form */}
-      {selectedService && (staffMembers.length === 0 || staffConfirmed) && (
+      {!isPaused && selectedService && (staffMembers.length === 0 || staffConfirmed) && (
         <div className="space-y-3">
           <h3 className="text-[15px] font-semibold text-foreground">{t("booking:queueFlow.joinTitle")}</h3>
           <div>

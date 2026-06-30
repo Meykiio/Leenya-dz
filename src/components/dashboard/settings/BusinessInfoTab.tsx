@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 import { Copy, Upload, Check, X, Trash2 } from "lucide-react";
 import { wilayas } from "@/lib/wilayas";
 import { generatePixelAvatar } from "@/lib/pixel-avatar";
@@ -46,6 +47,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
     name: "", description: "", phone: "", address: "",
     wilaya_code: "", wilaya_name: "", category: "other",
     slug: "", logo_url: "", cover_url: "",
+    is_queue_paused: false,
   });
   const [loading, setLoading] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
@@ -69,6 +71,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
           slug: data.slug || "",
           logo_url: data.logo_url || "",
           cover_url: data.cover_url || "",
+          is_queue_paused: data.is_queue_paused ?? false,
         });
       }
     });
@@ -129,6 +132,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
       slug: form.slug,
       logo_url: form.logo_url || null,
       cover_url: form.cover_url || null,
+      is_queue_paused: form.is_queue_paused,
     }).eq("id", businessId);
     if (error) { console.error("save business info:", error); toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" }); }
     else toast({ title: t("dashboard:settings.business.toast.saved") });
@@ -269,6 +273,20 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Queue settings */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.queueSettings")}</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>{t("dashboard:settings.business.pauseQueue")}</Label>
+              <p className="text-xs text-muted-foreground">{t("dashboard:settings.business.pauseQueueHint")}</p>
+            </div>
+            <Switch checked={form.is_queue_paused} onCheckedChange={(v) => setForm({ ...form, is_queue_paused: v })} />
           </div>
         </CardContent>
       </Card>

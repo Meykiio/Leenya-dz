@@ -127,7 +127,8 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   trial_ends_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
   queue_capacity INT CHECK (queue_capacity IS NULL OR queue_capacity > 0),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  is_queue_paused BOOLEAN DEFAULT false
 );
 
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
@@ -250,7 +251,8 @@ CREATE TABLE IF NOT EXISTS public.queue_tickets (
   called_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  checked_in_at TIMESTAMPTZ
 );
 
 ALTER TABLE public.queue_tickets ENABLE ROW LEVEL SECURITY;
@@ -389,9 +391,9 @@ GRANT EXECUTE ON FUNCTION public.generate_ticket_number(UUID) TO anon, authentic
 -- -----------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.join_queue(
   p_business_id UUID,
-  p_service_id UUID,
-  p_client_name TEXT,
-  p_client_phone TEXT,
+  p_service_id UUID DEFAULT NULL,
+  p_client_name TEXT DEFAULT NULL,
+  p_client_phone TEXT DEFAULT NULL,
   p_staff_member_id UUID DEFAULT NULL,
   p_estimated_wait_minutes INT DEFAULT NULL
 )
@@ -404,7 +406,13 @@ DECLARE
   v_ticket_num INT;
   v_ticket_lbl TEXT;
   v_ticket_id UUID;
+  v_is_paused BOOLEAN;
 BEGIN
+  SELECT is_queue_paused INTO v_is_paused FROM public.businesses WHERE id = p_business_id;
+  IF v_is_paused THEN
+    RAISE EXCEPTION 'Queue is paused' USING HINT = 'queue_paused';
+  END IF;
+
   INSERT INTO queue_counters (business_id, counter_date, last_number)
   VALUES (p_business_id, CURRENT_DATE, 1)
   ON CONFLICT (business_id, counter_date)
@@ -834,12 +842,12 @@ GRANT EXECUTE ON FUNCTION public.insert_services(UUID, JSONB) TO authenticated;
 
 -- get_queue_ticket — fetch a single queue ticket by ID
 CREATE OR REPLACE FUNCTION public.get_queue_ticket(p_ticket_id UUID)
-RETURNS TABLE(ticket_label TEXT, ticket_number INTEGER, status queue_status, position_in_queue INTEGER, estimated_wait_minutes INTEGER, service_id UUID, business_id UUID, queue_date DATE)
+RETURNS TABLE(ticket_label TEXT, ticket_number INTEGER, status queue_status, position_in_queue INTEGER, estimated_wait_minutes INTEGER, service_id UUID, business_id UUID, queue_date DATE, checked_in_at TIMESTAMPTZ, staff_member_id UUID)
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = 'public'
 AS $$
   SELECT qt.ticket_label, qt.ticket_number, qt.status, qt.position_in_queue,
-         qt.estimated_wait_minutes, qt.service_id, qt.business_id, qt.queue_date
+         qt.estimated_wait_minutes, qt.service_id, qt.business_id, qt.queue_date, qt.checked_in_at, qt.staff_member_id
   FROM public.queue_tickets qt
   WHERE qt.id = p_ticket_id
     AND qt.status IN ('waiting', 'called', 'in_service', 'completed');
@@ -916,7 +924,14 @@ AS $$
 DECLARE
   v_serving_label text;
   v_ahead integer;
+  v_my_position integer;
 BEGIN
+  SELECT position_in_queue INTO v_my_position
+  FROM public.queue_tickets
+  WHERE business_id = p_business_id
+    AND queue_date = p_queue_date
+    AND ticket_number = p_ticket_number;
+
   SELECT q.ticket_label INTO v_serving_label
   FROM public.queue_tickets q
   WHERE q.business_id = p_business_id
@@ -925,12 +940,16 @@ BEGIN
   ORDER BY q.ticket_number ASC
   LIMIT 1;
 
-  SELECT COUNT(*)::integer INTO v_ahead
-  FROM public.queue_tickets q
-  WHERE q.business_id = p_business_id
-    AND q.queue_date = p_queue_date
-    AND q.status = 'waiting'
-    AND q.ticket_number < p_ticket_number;
+  IF v_my_position IS NOT NULL THEN
+    SELECT COUNT(*)::integer INTO v_ahead
+    FROM public.queue_tickets q
+    WHERE q.business_id = p_business_id
+      AND q.queue_date = p_queue_date
+      AND q.status = 'waiting'
+      AND q.position_in_queue < v_my_position;
+  ELSE
+    v_ahead := 0;
+  END IF;
 
   RETURN QUERY
   SELECT q.ticket_label, q.status, q.ticket_number,
@@ -993,6 +1012,138 @@ BEGIN
 END;
 $$;
 
+-- -----------------------------------------------------------
+-- check_in_ticket — staff marks customer as arrived
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_in_ticket(p_ticket_id UUID)
+RETURNS void
+LANGUAGE sql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  UPDATE queue_tickets SET checked_in_at = NOW() WHERE id = p_ticket_id;
+$$;
+
+-- -----------------------------------------------------------
+-- reassign_queue_ticket — staff reassigns ticket to another staff member
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.reassign_queue_ticket(
+  p_ticket_id UUID,
+  p_staff_member_id UUID
+)
+RETURNS void
+LANGUAGE sql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  UPDATE queue_tickets SET staff_member_id = p_staff_member_id WHERE id = p_ticket_id;
+$$;
+
+-- -----------------------------------------------------------
+-- recalculate_queue_positions — renumber waiting tickets 1..N (handles stale positions)
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.recalculate_queue_positions(
+  p_business_id UUID,
+  p_queue_date DATE
+)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+BEGIN
+  UPDATE queue_tickets
+  SET position_in_queue = NULL
+  WHERE business_id = p_business_id
+    AND queue_date = p_queue_date
+    AND status != 'waiting';
+
+  WITH numbered AS (
+    SELECT id, ROW_NUMBER() OVER (ORDER BY ticket_number ASC) AS new_position
+    FROM queue_tickets
+    WHERE business_id = p_business_id
+      AND queue_date = p_queue_date
+      AND status = 'waiting'
+  )
+  UPDATE queue_tickets qt
+  SET position_in_queue = numbered.new_position
+  FROM numbered
+  WHERE qt.id = numbered.id;
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- send_ticket_back_to_queue — staff puts a ticket back to waiting
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.send_ticket_back_to_queue(p_ticket_id UUID)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_business_id UUID;
+  v_queue_date DATE;
+BEGIN
+  SELECT business_id, queue_date INTO v_business_id, v_queue_date
+  FROM queue_tickets WHERE id = p_ticket_id;
+
+  UPDATE queue_tickets
+  SET status = 'waiting', called_at = NULL, position_in_queue = NULL
+  WHERE id = p_ticket_id;
+
+  PERFORM recalculate_queue_positions(v_business_id, v_queue_date);
+END;
+$$;
+
+-- -----------------------------------------------------------
+-- skip_queue_ticket — moves a ticket to the end of the queue
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.skip_queue_ticket(p_ticket_id UUID)
+RETURNS TABLE(new_position integer)
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  v_business_id UUID;
+  v_queue_date DATE;
+BEGIN
+  SELECT business_id, queue_date INTO v_business_id, v_queue_date
+  FROM queue_tickets WHERE id = p_ticket_id;
+
+  UPDATE queue_tickets
+  SET position_in_queue = NULL
+  WHERE business_id = v_business_id
+    AND queue_date = v_queue_date
+    AND status != 'waiting';
+
+  UPDATE queue_tickets
+  SET position_in_queue = NULL
+  WHERE id = p_ticket_id;
+
+  WITH numbered AS (
+    SELECT id, ROW_NUMBER() OVER (ORDER BY ticket_number ASC) AS new_position
+    FROM queue_tickets
+    WHERE business_id = v_business_id
+      AND queue_date = v_queue_date
+      AND status = 'waiting'
+      AND id != p_ticket_id
+  )
+  UPDATE queue_tickets qt
+  SET position_in_queue = numbered.new_position
+  FROM numbered
+  WHERE qt.id = numbered.id;
+
+  UPDATE queue_tickets
+  SET position_in_queue = (
+    SELECT COALESCE(MAX(position_in_queue), 0) + 1
+    FROM queue_tickets
+    WHERE business_id = v_business_id
+      AND queue_date = v_queue_date
+      AND status = 'waiting'
+  )
+  WHERE id = p_ticket_id;
+
+  RETURN QUERY SELECT position_in_queue FROM queue_tickets WHERE id = p_ticket_id;
+END;
+$$;
+
 GRANT EXECUTE ON FUNCTION public.get_queue_ticket(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_staff_queue(UUID, DATE) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_dashboard_queue(UUID, DATE) TO authenticated;
@@ -1003,6 +1154,11 @@ GRANT EXECUTE ON FUNCTION public.get_booking_by_token(UUID) TO anon, authenticat
 GRANT EXECUTE ON FUNCTION public.cancel_booking_by_token(UUID, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cancel_queue_ticket(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.check_in_ticket(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.reassign_queue_ticket(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.recalculate_queue_positions(UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.send_ticket_back_to_queue(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.skip_queue_ticket(UUID) TO authenticated;
 
 -- Authenticated-only RPCs
 GRANT EXECUTE ON FUNCTION public.get_user_role() TO authenticated;

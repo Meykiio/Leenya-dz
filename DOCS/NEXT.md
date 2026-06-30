@@ -1,7 +1,7 @@
 # Next Steps — Leenya
 
 **Target:** Path to first real user / production launch.
-**Last updated:** 2026-06-28 (Phase 3d complete)
+**Last updated:** 2026-06-30 (Queue Edge Cases + Bug Fixes complete)
 
 ---
 
@@ -16,6 +16,18 @@
 **Status: DONE.** Database indexes, advisory locks, frontend optimistic locking, `.maybeSingle()` fix, analytics pagination. App is now race-condition-safe for concurrent multi-tenant use.
 
 Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit` and `npm run build` pass with zero errors.
+
+---
+
+## ✅ Queue Edge Cases — Skip, Check-in, Pause (2026-06-30)
+
+**Status: DONE.** Skip (moves to end of queue), Send back (called → waiting), Check-in (timestamp, green ✓ indicator), Queue pause toggle (owner switch, customer amber notice). 3 DB migrations applied. 10+ i18n keys added (EN/FR/AR). Build passes zero errors.
+
+---
+
+## ✅ Bug Bash 2 — State Stability & UX Polish (2026-06-30)
+
+**Status: DONE.** Auth token refresh no longer unmounts dashboard. Business reference stabilized with useMemo. Profile name from DB. Time-of-day greetings (5 variants × 3 languages). Revenue includes completed queue tickets. Cache busting on uploads. Gradient default covers. Remove cover/logo buttons.
 
 ---
 

@@ -1,6 +1,6 @@
 # System Instructions — Leenya
 
-This file is consumed by AI coding agents (Claude Code, Copilot, etc.) to understand the project, its state, and conventions. Updated: 2026-06-27.
+This file is consumed by AI coding agents (Claude Code, Copilot, etc.) to understand the project, its state, and conventions. Updated: 2026-06-30.
 
 ---
 
@@ -63,14 +63,14 @@ See `DOCS/AI_CONTEXT.md` → File Map for the complete reference. Key files:
 
 ---
 
-## Current Features (Verified State as of 2026-06-28 — Phase 3d)
+## Current Features (Verified State as of 2026-06-30 — Queue Edge Cases)
 
 1. **Landing page** — Static marketing sections, CTA to login. No DB queries.
 2. **Email/password auth** — Login, signup, forgot/reset password. Session handled by AuthContext. Supports both email-confirmation-on and auto-login modes.
 3. **Onboarding wizard** — 4 steps: name → business type → business details → services. Calls `refreshRole()` on completion to fix redirect loop.
 4. **Public business page** — `/:slug` with appointment/queue tabs, reviews, hours.
 5. **Appointment booking** — 5-step flow (service → staff → datetime → details → confirmed). Staff step skipped if no staff assigned to service. "Pas de préférence" pre-selected by default.
-6. **Queue booking** — Service selection → name/phone → ticket → realtime tracker. Double-join prevented at DB level (unique index) + app level (pre-insert phone check).
+6. **Queue booking** — Service selection → name/phone → ticket → realtime tracker. Double-join prevented at DB level (unique index) + app level (pre-insert phone check). Skip/send-back, check-in ("I'm here" button), and queue pause toggle all live.
 7. **Queue display** — `/display/:slug` full-screen TV mode.
 8. **Dashboard (owner)** — Overview (with pending count stat), bookings (with PendingApprovals section + sidebar badge + realtime), queue, services, staff (with avatars + service assignment), settings, analytics.
 9. **Staff view** — Tabbed interface (queue + bookings), realtime, WhatsApp on call, login via email/password.
@@ -141,7 +141,7 @@ npx tsc --noEmit # Type-check only
 - **QueueDisplay sound:** Singleton AudioContext fixes paused_in_background error, click-to-unlock overlay, muted hint.
 - **Staff delete:** Trash button with confirmation dialog in DashboardStaff.
 - **Onboarding auth guard:** Redirects to /login if not authenticated.
-- **Phase 2a Doctor audit fixes:** C-001/C-002 (PII leak → RPC-based access), C-003 (anon cancel → dropped), H-001 (role self-insert → dropped), H-005 (business hours → trigger), H-007 (state machine → triggers), H-008 (anon cancel → RPC), H-009 (SECURITY DEFINER → EXECUTE revoked), C-005 (vitest CVE), H-003 (npm audit 19→2). See `doctor/reports/FINAL_AUDIT.md`.
+- **Phase 2a Doctor audit fixes:** C-001/C-002 (PII leak → RPC-based access), C-003 (anon cancel → dropped), H-001 (role self-insert → dropped), H-005 (business hours → trigger), H-007 (state machine → triggers), H-008 (anon cancel → RPC), H-009 (SECURITY DEFINER → EXECUTE revoked), C-005 (vitest CVE), H-003 (npm audit 19→2). (Doctor audit files deleted; changes were backported to MASTER_SCHEMA.sql.)
 - **Security model updated:** Public queue/booking access now via RPCs (not direct table queries). See `src/components/booking/TicketTracker.tsx`, `src/pages/QueueDisplay.tsx`, `src/pages/BookingTrack.tsx`.
 
 ### Pre-Existing Gaps (Not Fixed — See Phase 2b / Next)
@@ -153,17 +153,37 @@ npx tsc --noEmit # Type-check only
 - No loading skeletons (spinners only)
 
 ### ✅ Fixed in Phase 4 (Launch Prep)
-- Blanket per-table grants → explicit per-table grants (✅ B1)
+- Blanket per-table grants → explicit per-table grants for anon/auth (✅ B1)
 - Storage bucket public listing — already fixed (✅ B2)
 - 17 queries missing business_id — all scoped (✅ B3)
-- 38 lint errors — now 0 warnings (✅ C3)
-- `.env` in git history — already gitignored (✅ C2)
+- 38 lint errors — now 0 warnings (suppressed, ✅ C3)
+- `.env` in git history — never committed, gitignored (✅ C2)
 - Step indicator UI in AppointmentFlow (✅ A3)
 - Analytics delta display divide-by-zero — already guarded (✅ A4)
 - WhatsApp variable format — now uses native JS array (✅ A5)
 - Default booking view → upcoming (✅ A1 — already done)
 - Default public tab → queue (✅ A2 — already done)
-- Unused @tanstack/react-query removed (✅ C1)
+
+### ✅ Fixed in Bug Bash 2 (2026-06-30)
+- Auth token refresh no longer unmounts dashboard — skips `setRoleReady(false)` on `TOKEN_REFRESH`
+- Business reference stabilized — `useMemo` wrap in `use-business-info.ts`
+- Profile name from `profiles` table instead of email prefix
+- Time-of-day greetings with 5 variants per block × 3 languages
+- Cover preview matches public profile (140px height)
+- Revenue includes completed queue ticket prices
+- Cache busting on uploads (`?cb=` param, `no-cache` header)
+- Remove cover/logo buttons in settings
+- Queue tab appears before Appointments on public page
+
+### ✅ Fixed in Queue Edge Cases (2026-06-30)
+- Skip + Send Back 409 conflict fixed — 3 RPCs rewritten for correct position recalculation
+- Check-in button in TicketTracker — timestamp only, no state machine change
+- Queue pause toggle — owner switch, customer amber notice
+- StatCard ref warning — renamed to `sectionRef`
+- Staff onboarding redirect — `!role` → `/` not `/onboarding`; LoginForm uses `get_user_role` RPC
+
+### Still Open (not fixed)
+- @tanstack/react-query still in package.json but unused (+13 kB dead bundle)
 
 ### AI Agent Behavior Rules
 

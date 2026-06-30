@@ -5,15 +5,15 @@
 ## Tech Stack
 
 | Layer | Choice | Notes |
-|---|---|---|
+|---|---|---|---|
 | Framework | React 18 + TypeScript | Vite, not CRA |
 | Routing | React Router v6 | Declarative routes, `createBrowserRouter` |
 | Styling | Tailwind CSS v3 + shadcn/ui | Utility-first, Radix-based components, `rtl:` variant |
 | Backend | Supabase (Postgres) | Auth, DB, Storage, Realtime |
-| State | React context + hooks | No Redux/Zustand |
+| State | React context + hooks | No Redux/Zustand. `@tanstack/react-query` listed in deps but unused |
 | Animations | framer-motion | Page/component transitions |
 | Charts | Recharts | Analytics dashboard |
-| i18n | react-i18next | 6 namespaces × 3 languages (fr/ar/en), ~590 keys |
+| i18n | react-i18next | 6 namespaces × 3 languages (fr/ar/en), ~992 keys (EN) |
 | Monitoring | Sentry | `@sentry/react` + `@sentry/vite-plugin` |
 | Testing | Vitest + Playwright | Unit tests (vitest), E2E (Playwright) |
 
@@ -37,8 +37,7 @@ src/
 │   ├── onboarding/     — OnboardingWizard, StepName, StepBusinessType, etc.
 │   └── ui/             — shadcn/ui components (button, dialog, card, etc.)
 ├── contexts/
-│   ├── AuthContext.tsx  — Session + role management
-│   └── ThemeContext.tsx — Light/dark theme (currently always light)
+│   └── AuthContext.tsx  — Session + role management
 ├── hooks/
 │   ├── use-business-info.ts
 │   ├── useWhatsAppTemplates.ts
@@ -173,30 +172,35 @@ Full schema is in `supabase/schema/MASTER_SCHEMA.sql` (idempotent, single source
 |---|---|---|
 | `profiles` | User profile data | `id` (PK, FK→auth.users), `full_name`, `phone` |
 | `user_roles` | Role assignment | `id`, `user_id` (FK→profiles), `role` ('owner'/'staff'/'client') |
-| `businesses` | Business info | `id`, `owner_id` (FK→profiles), `name`, `slug`, `category`, `phone`, `address`, `is_active`, `accepts_appointments`, `accepts_walkins`, `advance_booking_days` |
+| `businesses` | Business info | `id`, `owner_id` (FK→profiles), `name`, `slug`, `category`, `phone`, `address`, `description`, `wilaya_code`, `wilaya_name`, `logo_url`, `cover_url`, `is_active`, `accepts_appointments`, `accepts_walkins`, `advance_booking_days`, `plan`, `trial_ends_at`, `is_queue_paused`, `queue_capacity` |
 | `business_hours` | Weekly schedule | `id`, `business_id` (FK), `day_of_week`, `open_time`, `close_time`, `is_closed` |
-| `services` | Offered services | `id`, `business_id` (FK), `name`, `name_ar`, `duration`, `price`, `is_active` |
+| `services` | Offered services | `id`, `business_id` (FK), `name`, `name_ar`, `duration`, `price_dzd`, `is_active` |
 | `staff_members` | Staff list | `id`, `business_id` (FK), `profile_id` (FK→profiles, nullable), `display_name`, `avatar_url`, `is_active`, `accepts_bookings` |
 | `staff_services` | Staff-service assignments | `id`, `staff_member_id` (FK), `service_id` (FK), UNIQUE(staff_member_id, service_id) |
 | `bookings` | Appointment bookings | `id`, `business_id` (FK), `service_id` (FK), `staff_member_id` (FK, nullable), `client_name`, `client_phone`, `date`, `start_time`, `end_time`, `status`, `tracking_token`, `notes` |
-| `queue_tickets` | Walk-in queue tickets | `id`, `business_id` (FK), `service_id` (FK), `ticket_number`, `client_name`, `client_phone`, `status`, `called_at` |
-| `whatsapp_templates` | Message templates | `id`, `business_id` (FK), `type`, `message_template`, `variables` |
-| `reviews` | Client reviews | `id`, `business_id` (FK), `booking_id` (FK), `profile_id` (FK), `rating`, `comment` |
+| `queue_counters` | Daily ticket number counter | `id`, `business_id` (FK), `counter_date`, `last_number`, UNIQUE(business_id, counter_date) |
+| `queue_tickets` | Walk-in queue tickets | `id`, `business_id` (FK), `service_id` (FK, nullable), `staff_member_id` (FK→staff_members, nullable, ON DELETE SET NULL), `client_name`, `client_phone`, `ticket_number`, `status`, `position_in_queue`, `called_at`, `completed_at`, `checked_in_at` |
+| `reviews` | Client reviews | `id`, `business_id` (FK), `booking_id` (FK, nullable), `profile_id` (FK), `rating`, `comment` |
+| `feedback` | Landing page feedback | `id`, `business_id` (FK, nullable), `email`, `category`, `message`, `page_url`, `created_at` |
+| `whatsapp_templates` | Message templates | `id`, `business_id` (FK), `template_key`, `name`, `description`, `message_template`, `variables`, UNIQUE(business_id, template_key) |
 
 ### Key Constraints & Indexes
 
-- `bookings`: CHECK status IN (...), rate limit trigger, overlap check trigger, advisory lock
-- `queue_tickets`: Generate ticket number function, rate limit trigger (shared with bookings). Partial unique index `idx_one_active_ticket_per_phone` on `(business_id, client_phone, queue_date) WHERE status IN ('waiting', 'called', 'in_service')` prevents double join.
+- `bookings`: CHECK status IN (...), rate limit trigger, overlap check trigger, advisory lock, plan limit trigger (`check_business_limits`)
+- `queue_tickets`: Generate ticket number function, rate limit trigger (shared with bookings), plan limit trigger (`check_business_limits`). Partial unique index `idx_one_active_ticket_per_phone` on `(business_id, client_phone, queue_date) WHERE status IN ('waiting', 'called', 'in_service')` prevents double join.
 - `bookings.staff_member_id`: nullable FK (null when no preference or without staff selection)
 - `staff_services`: UNIQUE(staff_member_id, service_id), CASCADE deletes
 - `businesses.slug` is indexed via its UNIQUE constraint — no separate index needed
 
-### DB Triggers (Phase 2a additions)
+### DB Triggers
 
 - `check_business_hours_trigger` — BEFORE INSERT on bookings: validates start_time falls within business's operating hours for the given date
 - `check_queue_ticket_state_transition_trigger` — BEFORE UPDATE on queue_tickets: enforces valid state transitions (waiting→called→in_service→completed, waiting→cancelled, etc.)
 - `check_booking_state_transition_trigger` — BEFORE UPDATE on bookings: enforces valid booking state transitions
 - `check_past_booking_trigger` — BEFORE INSERT on bookings: prevents creating bookings with past dates
+- `check_plan_limit_trigger` + `check_plan_limit_queue_trigger` — BEFORE INSERT on bookings/queue_tickets: enforces per-plan caps via `check_business_limits()` function
+- `check_staff_plan_trigger` — BEFORE INSERT on staff_members: enforces staff count per plan
+- `on_auth_user_created` — AFTER INSERT on auth.users: auto-creates profile row
 
 ### Auth Helpers (SECURITY DEFINER, restricted to authenticated users)
 
@@ -205,28 +209,30 @@ Full schema is in `supabase/schema/MASTER_SCHEMA.sql` (idempotent, single source
 - `upsert_profile(id, full_name)` — Bypasses RLS to create/update profile during onboarding
 - `upsert_business(owner_id, name, slug, ...)` — Bypasses RLS to create/update business + default hours
 - `insert_services(business_id, services_jsonb)` — Bypasses RLS to bulk-insert services during onboarding
-- `get_monthly_booking_count(business_id)` — Counts bookings + tickets for plan enforcement
+- `get_monthly_business_counts(p_business_id)` — Counts bookings + queue + staff for plan enforcement
 - `create_staff_user(email, password, staff_member_id, business_id, full_name)` — Creates auth.users + identities + user_roles for staff login
+- `recalculate_queue_positions(p_business_id)` — Renumbers position_in_queue for waiting tickets
+- `skip_queue_ticket(p_ticket_id)` — Moves ticket to end of queue
+- `send_ticket_back_to_queue(p_ticket_id)` — Moves called ticket back to waiting
+- `check_in_ticket(p_ticket_id)` — Sets checked_in_at timestamp
+- `reassign_queue_ticket(p_ticket_id, p_staff_member_id)` — Changes staff assignment
 
 ### Public RPCs (SECURITY DEFINER, callable by anon — Phase 2a)
 
 - `get_queue_ticket(p_ticket_id)` — Returns one queue ticket with no PII (nulls client_name, client_phone)
 - `get_business_queue(p_business_id, p_statuses)` — Returns active queue tickets for TV display (no PII)
 - `get_completed_ticket_stats(p_business_id)` — Returns stats (avg wait time, total today)
-- `get_queue_context(p_business_id, p_ticket_id)` — Returns position in queue for given ticket
+- `get_queue_context(p_business_id, p_ticket_id)` — Returns position in queue (uses position_in_queue, not ticket_number)
 - `get_booking_by_token(p_token)` — Returns one booking matching the tracking token
 - `cancel_booking_by_token(p_token)` — Cancels a booking, requires valid token
+- `get_default_whatsapp_templates()` — Returns 7 default WhatsApp templates
+- `join_queue(p_business_id, p_service_id, p_client_name, p_client_phone, p_staff_member_id)` — Joins queue (checks is_queue_paused)
 
-### DB Triggers
+### Other DB Triggers
 
 - `check_booking_overlap()` — Prevents double-booking using advisory lock
 - `check_insert_rate_limit()` — Limits 10 requests/phone/10min
-- `check_plan_booking_limit()` — Enforces 30-booking/month cap on free plan
 - `check_booking_service_business()` — Validates service/staff belong to business before INSERT
-- `check_business_hours_trigger` — Ensures booking falls within operating hours
-- `check_queue_ticket_state_transition_trigger` — Enforces queue_ticket state machine
-- `check_booking_state_transition_trigger` — Enforces booking state machine
-- `check_past_booking_trigger` — Prevents past-dated bookings
 
 ---
 
@@ -246,8 +252,9 @@ All tables have RLS enabled (**PERMISSIVE** mode — switching to RESTRICTIVE is
 
 ### Storage RLS
 
-- `business-assets` bucket: owner manages, public reads (for images)
-- `staff-avatars/{business_id}/{staff_member_id}` — private to owner, public read
+- `business-assets` bucket: owner manages, public reads (for images), public SELECT for listing
+- Staff avatars path: `business-assets/staff-avatars/{business_id}/{staff_id}.{ext}`
+- Business logos/covers path: `business-assets/{businessId}/{type}.{ext}`
 
 ---
 
@@ -259,18 +266,22 @@ All tables have RLS enabled (**PERMISSIVE** mode — switching to RESTRICTIVE is
 |---|---|---|
 | `/` | Landing | Marketing page |
 | `/login` | Login | Email login/signup |
-| `/forgot-password` | ForgotPassword | Email-only |
 | `/reset-password` | ResetPassword | Captures PASSWORD_RECOVERY event |
+| `/terms` | TermsOfService | Legal page (before `/:slug` catch-all) |
+| `/privacy` | PrivacyPolicy | Legal page (before `/:slug` catch-all) |
 | `/:slug` | BusinessPublic | Dynamic business page — public |
 | `/:slug?tab=queue` | BusinessPublic | Queue tab |
+| `/:slug/queue` | QueuePublic | Public queue view |
 | `/booking/track/:token` | BookingTrack | Anonymous tracking |
 | `/display/:slug` | QueueDisplay | TV display mode |
+| `*` | NotFound | Catch-all 404 |
 
 ### Protected Routes
 
 | Path | Component | Role Required |
 |---|---|---|
 | `/onboarding` | Onboarding | Authenticated (no role) |
+| `/admin` | Admin | Superadmin (lists all businesses) |
 | `/dashboard` | Dashboard | Owner |
 | `/dashboard/bookings` | DashboardBookings | Owner |
 | `/dashboard/queue` | DashboardQueue | Owner |
@@ -278,8 +289,9 @@ All tables have RLS enabled (**PERMISSIVE** mode — switching to RESTRICTIVE is
 | `/dashboard/staff` | DashboardStaff | Owner |
 | `/dashboard/settings` | DashboardSettings | Owner |
 | `/dashboard/analytics` | DashboardAnalytics | Owner |
+| `/dashboard/feedback` | DashboardFeedback | Owner |
 | `/staff` | StaffView | Staff |
-| `/my-bookings` | MyBookings | Client |
+| `/mes-reservations` | MyBookings | Client |
 
 ---
 
@@ -293,3 +305,7 @@ All tables have RLS enabled (**PERMISSIVE** mode — switching to RESTRICTIVE is
 6. **Staff avatar colors deterministic** — Hash from `display_name` maps to fixed 8-color palette.
 7. **No `console.log()` in production code** — All removed in 2026-06-25 session.
 8. **OtpVerification.tsx deleted** — Phone OTP removed entirely in 2026-06-25.
+9. **Accent color is purple** (hsl 260 97% 61%), not blue. AI_CONTEXT.md had incorrect blue values — DESIGN.md is correct.
+10. **Skip moves to end of queue** via position_in_queue recalculation (NULL → renumber → MAX+1).
+11. **Check-in is a lightweight timestamp** — no state machine transition, just `checked_in_at = NOW()`.
+12. **Queue pause** is owner-only toggle (`is_queue_paused` on businesses), enforced server-side in `join_queue` RPC.

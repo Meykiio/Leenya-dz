@@ -30,8 +30,8 @@ import FloatingHelp from "@/components/FloatingHelp";
 
 const mainNav = [
   { to: "/dashboard", labelKey: "dashboard:nav.dashboard", icon: LayoutDashboard, end: true },
-  { to: "/dashboard/bookings", labelKey: "dashboard:nav.bookings", icon: CalendarDays, pending: true },
   { to: "/dashboard/queue", labelKey: "dashboard:nav.queue", icon: Users2, live: true },
+  { to: "/dashboard/bookings", labelKey: "dashboard:nav.bookings", icon: CalendarDays, pending: true },
   { to: "/dashboard/services", labelKey: "dashboard:nav.services", icon: Scissors },
   { to: "/dashboard/staff", labelKey: "dashboard:nav.staff", icon: UserCheck },
 ];
