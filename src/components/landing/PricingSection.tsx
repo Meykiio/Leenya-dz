@@ -24,8 +24,8 @@ const plans = [
   },
   {
     nameKey: "pricing.pro",
-    monthlyPrice: "2 990",
-    annualPrice: "29 900",
+    monthlyPrice: "4 900",
+    annualPrice: "49 000",
     highlighted: true,
     popular: true,
     featureKeys: [
@@ -43,8 +43,8 @@ const plans = [
   },
   {
     nameKey: "pricing.business",
-    monthlyPrice: "5 990",
-    annualPrice: "59 900",
+    monthlyPrice: "8 900",
+    annualPrice: "89 000",
     highlighted: false,
     featureKeys: [
       "pricing.business.feature1",

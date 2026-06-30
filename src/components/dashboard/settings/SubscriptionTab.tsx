@@ -22,7 +22,7 @@ const pricingPlans = [
   },
   {
     nameKey: "dashboard:settings.subscription.pricingModal.pro",
-    price: "2 990",
+    price: "4 900",
     featureKeys: [
       "dashboard:settings.subscription.features.pro500bookings",
       "dashboard:settings.subscription.features.pro1000queue",
@@ -35,7 +35,7 @@ const pricingPlans = [
   },
   {
     nameKey: "dashboard:settings.subscription.pricingModal.business",
-    price: "5 990",
+    price: "8 900",
     featureKeys: [
       "dashboard:settings.subscription.features.businessAllPro",
       "dashboard:settings.subscription.features.businessUnlimitedStaff",

@@ -295,7 +295,7 @@
   - `src/components/dashboard/settings/SubscriptionTab.tsx` — Settings subscription tab with real-time counts
   - `supabase/schema/MASTER_SCHEMA.sql` — `check_business_limits` + `check_staff_plan_limit` triggers
 - **Notes:**
-  - **Plans:** Gratuit (0 DZD, 100 bookings/300 queue/3 staff), Pro (2,990 DZD/mo, 500/1000/7), Business (5,990 DZD/mo, 2000/2000/unlimited)
+   - **Plans:** Gratuit (0 DZD, 100 bookings/300 queue/3 staff), Pro (4,900 DZD/mo, 500/1000/7), Business (8,900 DZD/mo, 2000/2000/unlimited)
   - **Server-side enforcement:** `check_business_limits` trigger blocks INSERT when plan limit reached. `check_staff_plan_limit` blocks staff creation. Both skip during 30-day trial (`trial_ends_at` column).
   - **No payment processing** — plans are enforced but no way to upgrade yet (Pro shows "Coming soon")
   - **Staff limit frontend enforcement:** Add button disabled when at limit with i18n message
