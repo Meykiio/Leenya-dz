@@ -2,6 +2,13 @@
 
 Dates are approximate, reconstructed from migration timestamps and documentation.
 
+## 2026-06-30 — Bugfix: GRANTs, Auth Redirect Race (fix/queue-skip-and-hardening branch)
+
+- **Skip button 400 fixed** — re-granted EXECUTE on 5 RPCs (`skip_queue_ticket`, `check_in_ticket`, `get_dashboard_queue`, `get_staff_queue`, `get_queue_ticket`) that were wiped by DROP+CREATE in the skip migration
+- **Anon feedback DELETE fixed** — anon now only has INSERT on `feedback` (remove accidental DELETE)
+- **Auth redirect race fixed** — LoginForm and AuthContext now share a single `waitForRole()` RPC code path instead of calling `get_user_role` independently, preventing the race where AuthContext would set `role=null` after LoginForm had already fetched the correct role
+- **Migration:** `20260630_fix_rpc_grants.sql`
+
 ## 2026-06-30 — Fix Queue Skip & Hardening (fix/queue-skip-and-hardening branch)
 
 ### Phase 1 — Queue Skip Rewrite
