@@ -112,3 +112,11 @@ npx tsc --noEmit # Type-check only
 - **StatCard ref warning fixed** — renamed `ref` → `sectionRef` prop
 - **Staff onboarding redirect fixed** — ProtectedRoute sends `!role` to `/` not `/onboarding`; LoginForm uses `get_user_role` RPC instead of direct table `.single()` query
 - **i18n:** 10+ new keys added for skip, send back, check-in, queue pause (EN/FR/AR)
+
+### Full Audit/Fix/Ship Session (2026-06-30, branch: audit/june-30)
+- **Full read-only audit** of 13 tables, 46 RLS policies, 5 RPCs, security headers, bundle, ESLint
+- **5 doc contradictions fixed** (DC-01–DC-05): primary color (purple not blue), avatar upload RLS, ResetPassword verified, dead code removed, pricing updated
+- **Pricing updated:** Pro 4,900 DZD/mo, Business 8,900 DZD/mo
+- **17 console.error calls gated** behind `import.meta.env.DEV`
+- **@tanstack/react-query removed** (unused)
+- **42/42 tests pass**, tsc and build zero errors

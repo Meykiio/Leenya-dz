@@ -2,7 +2,43 @@
 
 Dates are approximate, reconstructed from migration timestamps and documentation.
 
-## 2026-06-28 — Phase 4: Launch Prep (Final Pre-Launch Session)
+## 2026-06-30 — Full Audit/Fix/Ship Session (audit/june-30 branch)
+
+### Audit (phase 1)
+- **Full read-only audit** of 13 tables, 46 RLS policies, 5 queue RPCs, ESLint, Sentry config, storage bucket, CSS variables, and 10 document files
+- **Discovered 5 doc contradictions (DC-01–DC-05):** Avatar upload RLS status, pricing values, primary color discrepancy, unused react-query, ResetPassword wiring
+- **12 new security/policy findings documented** in DISCOVERED_ISSUES.md
+
+### Doc drift fixes (phase 2)
+- **DC-03:** Fixed AI_CONTEXT.md — `--primary` is purple (260 97% 61%), not blue
+- **DC-05:** Marked ResetPassword as verified — code correctly wired, depends on Supabase email config
+- **DC-01:** Updated NEXT.md avatar upload status and AUDIT.md C1 policy description to match actual MASTER_SCHEMA.sql
+
+### Dead code removal (phase 3)
+- **Removed @tanstack/react-query** (-13 kB bundle, confirmed zero imports in src/)
+
+### Pricing update (phase 4)
+- **Pro: 2,990 → 4,900 DZD/month** (annual 29,900 → 49,000)
+- **Business: 5,990 → 8,900 DZD/month** (annual 59,900 → 89,000)
+- Updated in PricingSection, SubscriptionTab, FEATURES.md
+
+### UX polish (phase 5)
+- **17 console.error calls gated** behind `import.meta.env.DEV` across DashboardBookings, DashboardQueue, MyBookings, StaffView
+- **AUDIT.md C5 status** updated to FIXED
+
+### Security hardening (phase 6)
+- **Verified all security headers** in vercel.json (6 headers, CSP, CORS, HSTS) — all present and correct
+- **Documented security posture** in DISCOVERED_ISSUES.md
+- H-011 (leaked passwords) requires Supabase Pro plan — flagged
+- H-006 (PERMISSIVE → RESTRICTIVE) flagged as future migration
+
+### Testing (phase 7)
+- **42/42 tests pass** across 6 test files
+- **`npx tsc --noEmit`** — zero errors
+- **`npm run build`** — zero errors
+
+### Doc sync (phase 8)
+- Updated OPENCODE_PROGRESS.md, CHANGELOG.md, CLAUDE.md
 
 ### Block A — UX Fixes
 
