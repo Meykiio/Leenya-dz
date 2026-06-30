@@ -96,8 +96,11 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
     const { error } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true });
     if (error) {       toast({ title: t("common:toast.error"), description: error.message, variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
-    setForm((f) => ({ ...f, [`${type}_url`]: publicUrl }));
-    toast({ title: type === "logo" ? t("dashboard:settings.business.toast.logoUpdated") : t("dashboard:settings.business.toast.coverUpdated") });
+    const tKey = type === "logo" ? t("dashboard:settings.business.toast.logoUpdated") : t("dashboard:settings.business.toast.coverUpdated");
+    toast({ title: tKey });
+    const key = `${type}_url` as "logo_url" | "cover_url";
+    setForm((f) => ({ ...f, [key]: publicUrl }));
+    await supabase.from("businesses").update({ [key]: publicUrl }).eq("id", businessId);
   };
 
   const save = async () => {

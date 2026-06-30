@@ -175,6 +175,14 @@ const DashboardStaff = () => {
     fetchStaff();
   };
 
+  const renameStaff = async (staffId: string, name: string) => {
+    if (!business || !name) return;
+    const { error } = await supabase.from("staff_members").update({ display_name: name }).eq("business_id", business.id).eq("id", staffId);
+    if (error) { console.error("renameStaff:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.updateMember"), variant: "destructive" }); }
+    else toast({ title: t("dashboard:staff.memberRenamed") });
+    fetchStaff();
+  };
+
   const deleteStaff = async (staffId: string) => {
     const { error } = await supabase.from("staff_members").delete().eq("business_id", business.id).eq("id", staffId);
     if (error) { console.error("deleteStaff:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:staff.errors.deleteMember"), variant: "destructive" }); }
@@ -252,6 +260,7 @@ const DashboardStaff = () => {
                 onUploadAvatar={uploadAvatar}
                 onOpenServices={openServiceDialog}
                 onDelete={deleteStaff}
+                onRename={renameStaff}
               />
             ))}
           </div>

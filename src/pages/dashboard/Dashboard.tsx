@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,41 +50,41 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const today = format(new Date(), "yyyy-MM-dd");
 
-  useEffect(() => {
+  const fetchAll = useCallback(async () => {
     if (!business) return;
+    setError(null);
+    setLoading(true);
+    const [bookingsRes, queueRes, pendingRes] = await Promise.all([
+      supabase.from("bookings")
+        .select("*, services(name, price_dzd), staff_members(display_name)")
+        .eq("business_id", business.id).eq("date", today).order("start_time"),
+      supabase.from("queue_tickets")
+        .select("*, services(name)")
+        .eq("business_id", business.id).eq("queue_date", today)
+        .in("status", ["waiting", "called", "in_service"]).order("created_at"),
+      supabase.from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", business.id)
+        .gte("date", today)
+        .eq("status", "pending"),
+    ]);
 
-    const fetchAll = async () => {
-      setLoading(true);
-      const [bookingsRes, queueRes, pendingRes] = await Promise.all([
-        supabase.from("bookings")
-          .select("*, services(name, price_dzd), staff_members(display_name)")
-          .eq("business_id", business.id).eq("date", today).order("start_time"),
-        supabase.from("queue_tickets")
-          .select("*, services(name)")
-          .eq("business_id", business.id).eq("queue_date", today)
-          .in("status", ["waiting", "called", "in_service"]).order("created_at"),
-        supabase.from("bookings")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", business.id)
-          .gte("date", today)
-          .eq("status", "pending"),
-      ]);
-
-      if (bookingsRes.error || queueRes.error) {
-        setError(t("dashboard:overview.error"));
-      }
-      setBookings(bookingsRes.data || []);
-      const tickets = queueRes.data || [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setQueueCount(tickets.filter((t: any) => t.status === "waiting").length);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setQueueTickets(tickets.filter((t: any) => t.status === "waiting").slice(0, 3));
-      setPendingCount(pendingRes.count || 0);
-      setLoading(false);
-    };
-
-    fetchAll();
+    if (bookingsRes.error || queueRes.error) {
+      setError(t("dashboard:overview.error"));
+    }
+    setBookings(bookingsRes.data || []);
+    const tickets = queueRes.data || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setQueueCount(tickets.filter((t: any) => t.status === "waiting").length);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setQueueTickets(tickets.filter((t: any) => t.status === "waiting").slice(0, 3));
+    setPendingCount(pendingRes.count || 0);
+    setLoading(false);
   }, [business, today, t]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const revenue = bookings
     .filter((b) => b.status !== "cancelled" && b.status !== "no_show")
@@ -147,7 +147,7 @@ const Dashboard = () => {
         ) : error ? (
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-12 text-center space-y-3">
             <p className="text-destructive">{error}</p>
-            <Button variant="outline" onClick={() => window.location.reload()}>{t("dashboard:overview.retry")}</Button>
+            <Button variant="outline" onClick={() => { setError(""); fetchAll(); }}>{t("dashboard:overview.retry")}</Button>
           </div>
         ) : (
           <>

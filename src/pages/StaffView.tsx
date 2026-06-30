@@ -181,8 +181,11 @@ const StaffView = () => {
   const called = tickets.filter((t) => t.status === "called");
   const inService = tickets.filter((t) => t.status === "in_service");
 
-  const timeAgo = (dateStr: string) => {
-    const mins = differenceInMinutes(new Date(), new Date(dateStr));
+  const timeAgo = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "—";
+    const mins = differenceInMinutes(new Date(), d);
     return mins < 1 ? t("staff:staffView.timeJustNow") : t("staff:staffView.timeMin", { mins });
   };
 
@@ -207,7 +210,7 @@ const StaffView = () => {
     <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 shadow-sm">
       <div className="flex flex-col items-center justify-center min-w-[48px]">
         <span className="font-mono text-lg font-bold text-[var(--accent)] leading-none">{ticket.ticket_label}</span>
-        <span className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{t("staff:staffView.since")} {timeAgo(ticket.created_at)}</span>
+        <span className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{t("staff:staffView.since")} {timeAgo(ticket.called_at || ticket.created_at)}</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{ticket.client_name}</p>

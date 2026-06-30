@@ -3,6 +3,12 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { ChevronLeft, WifiOff, XCircle, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
@@ -44,6 +50,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const businessIdRef = useRef<string | null>(null);
   const queueDateRef = useRef<string | null>(null);
   const serviceIdRef = useRef<string | null>(null);
+  const [showServicePicker, setShowServicePicker] = useState(false);
+  const [availableServices, setAvailableServices] = useState<{ id: string; name: string }[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState("");
 
   useEffect(() => {
     const reviewed = localStorage.getItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
@@ -390,18 +399,70 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           size="sm"
           className="flex-1 gap-1.5 h-[40px] text-[13px]"
           onClick={async () => {
-            const { data } = await supabase.rpc("cancel_queue_ticket", { p_ticket_id: ticketId }).maybeSingle();
-            if (data) {
-              localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
-              localStorage.removeItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
-              localStorage.removeItem("leenya_queue_active");
-              onBack();
-            }
+            const bizId = businessIdRef.current;
+            if (!bizId) return;
+            const { data, error } = await supabase
+              .from("services")
+              .select("id, name")
+              .eq("business_id", bizId)
+              .eq("is_active", true)
+              .order("display_order");
+            if (error) { console.error("fetchServices:", error); return; }
+            setAvailableServices(data || []);
+            setSelectedServiceId(serviceIdRef.current || "");
+            setShowServicePicker(true);
           }}
         >
           <RefreshCw className="h-4 w-4" /> {t("booking:ticketTracker.changeService")}
         </Button>
       </div>
+
+      <Dialog open={showServicePicker} onOpenChange={setShowServicePicker}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("booking:ticketTracker.changeService")}</DialogTitle>
+            <DialogDescription>{t("booking:ticketTracker.changeServiceDesc")}</DialogDescription>
+          </DialogHeader>
+          {availableServices.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">{t("common:loading")}</p>
+          ) : (
+            <RadioGroup value={selectedServiceId} onValueChange={setSelectedServiceId}>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {availableServices.map((s) => (
+                  <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
+                    <RadioGroupItem value={s.id} id={s.id} />
+                    <Label htmlFor={s.id} className="flex-1 text-sm font-medium cursor-pointer">{s.name}</Label>
+                  </div>
+                ))}
+              </div>
+            </RadioGroup>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowServicePicker(false)}>{t("common:buttons.cancel")}</Button>
+            <Button
+              disabled={!selectedServiceId || selectedServiceId === serviceIdRef.current}
+              onClick={async () => {
+                if (!selectedServiceId) return;
+                const { error } = await supabase
+                  .from("queue_tickets")
+                  .update({ service_id: selectedServiceId })
+                  .eq("id", ticketId);
+                if (error) {
+                  console.error("changeService:", error);
+                  toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
+                  return;
+                }
+                serviceIdRef.current = selectedServiceId;
+                setShowServicePicker(false);
+                toast({ title: t("booking:ticketTracker.serviceChanged") });
+                refetchAll();
+              }}
+            >
+              {t("booking:ticketTracker.confirmChange")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

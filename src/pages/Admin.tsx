@@ -94,7 +94,7 @@ const Admin = () => {
             size="sm"
             onClick={() => {
               localStorage.removeItem("leenya_admin_business_id");
-              window.location.href = "/";
+              navigate("/");
             }}
             className="text-xs text-[var(--text-tertiary)]"
           >

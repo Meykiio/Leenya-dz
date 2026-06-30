@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { business } = useBusinessInfo();
   const isAdminMode = role === "superadmin" && !!getAdminBusinessId();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
@@ -188,7 +189,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={() => {
                 clearAdminBusinessId();
-                window.location.href = "/admin";
+                navigate("/admin");
               }}
               className={navDefault + " w-full"}
             >
@@ -205,7 +206,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             onClick={() => {
               clearAdminBusinessId();
-              window.location.href = "/dashboard";
+              navigate("/dashboard");
             }}
             className="flex items-center gap-2 w-full mb-2 rounded-[6px] px-2.5 h-8 text-[13px] font-medium text-[var(--text-tertiary)] hover:text-[var(--error)] hover:bg-[var(--bg-overlay)] transition-all duration-150"
           >

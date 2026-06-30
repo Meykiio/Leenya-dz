@@ -446,7 +446,8 @@ RETURNS TABLE(
   id UUID, ticket_label TEXT, ticket_number INT, status queue_status,
   staff_member_id UUID, client_name TEXT, client_phone TEXT,
   service_id UUID, service_name TEXT, estimated_wait_minutes INT,
-  position_in_queue INT, queue_date DATE
+  position_in_queue INT, queue_date DATE, created_at TIMESTAMPTZ,
+  called_at TIMESTAMPTZ, completed_at TIMESTAMPTZ
 )
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = 'public'
@@ -454,7 +455,8 @@ AS $$
   SELECT qt.id, qt.ticket_label, qt.ticket_number, qt.status,
          qt.staff_member_id, qt.client_name, qt.client_phone,
          qt.service_id, s.name, qt.estimated_wait_minutes,
-         qt.position_in_queue, qt.queue_date
+         qt.position_in_queue, qt.queue_date, qt.created_at,
+         qt.called_at, qt.completed_at
   FROM queue_tickets qt
   LEFT JOIN services s ON s.id = qt.service_id
   WHERE qt.business_id = (SELECT business_id FROM staff_members WHERE id = p_staff_member_id)

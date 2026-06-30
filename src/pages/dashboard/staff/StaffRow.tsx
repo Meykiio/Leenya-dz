@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Camera, Wrench, Trash2 } from "lucide-react";
+import { Camera, Wrench, Trash2, Pencil, Check, X } from "lucide-react";
 import { generatePixelAvatar } from "@/lib/pixel-avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -25,10 +27,13 @@ interface Props {
   onUploadAvatar: (id: string, file: File) => void;
   onOpenServices: (id: string) => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
 }
 
-export default function StaffRow({ member, onToggleActive, onToggleBookings, onUploadAvatar, onOpenServices, onDelete }: Props) {
+export default function StaffRow({ member, onToggleActive, onToggleBookings, onUploadAvatar, onOpenServices, onDelete, onRename }: Props) {
   const { t } = useTranslation("dashboard");
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(member.display_name);
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
       <div className="relative shrink-0">
@@ -48,7 +53,18 @@ export default function StaffRow({ member, onToggleActive, onToggleBookings, onU
         </label>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--text-primary)] truncate">{member.display_name}</p>
+        {editing ? (
+          <div className="flex items-center gap-1">
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-7 text-sm max-w-[160px]" autoFocus />
+            <button onClick={() => { onRename(member.id, editName.trim()); setEditing(false); }} className="text-success p-0.5"><Check className="h-3.5 w-3.5" /></button>
+            <button onClick={() => { setEditing(false); setEditName(member.display_name); }} className="text-destructive p-0.5"><X className="h-3.5 w-3.5" /></button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-[var(--text-primary)] truncate">{member.display_name}</p>
+            <button onClick={() => { setEditName(member.display_name); setEditing(true); }} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-0.5"><Pencil className="h-3 w-3" /></button>
+          </div>
+        )}
         <div className="flex flex-wrap gap-1 mt-1">
           {member.services && member.services.length > 0 ? (
             member.services.map((svc) => (

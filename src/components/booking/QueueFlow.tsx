@@ -237,8 +237,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     if (existing) {
       toast({
-        title: t("common:toast.error"),
-        description: t("common:toast.updateError"),
+        title: t("booking:queueFlow.duplicateTicket"),
         variant: "destructive",
       });
       setSubmitting(false);
