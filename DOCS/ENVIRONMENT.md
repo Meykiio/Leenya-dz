@@ -48,6 +48,7 @@ Complete guide for setting up Leenya in any environment.
 - [x] Auth: Email confirmation — **Currently ON in Supabase Dashboard**. Frontend handles both states.
 - [ ] **⚠️ Enable leaked password protection (HaveIBeenPwned)** in Supabase Auth settings
 - [x] Storage: `business-assets` bucket created (public)
+- [x] **Storage path scoping** — INSERT policy enforces `id::text = ANY(storage.foldername(name))` against owner's businesses
 - [ ] **⚠️ Tighten storage bucket** — remove public SELECT policy so files can't be listed (individual URLs still work)
 - [x] Realtime: Enabled on `bookings` and `queue_tickets` tables
 - [x] RLS: Enabled on ALL tables (⚠️ PERMISSIVE mode — RESTRICTIVE is Phase 2b)

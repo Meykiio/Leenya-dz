@@ -2064,12 +2064,10 @@ ON CONFLICT (id) DO NOTHING;
 -- H-010 FIXED: Removed public SELECT policy on storage.objects.
 -- Public URLs still work without listing permission.
 
--- Simplified: checks business ownership only, no path-based matching.
--- Path-based approaches (path_tokens / storage.foldername) don't reliably
--- work in WITH CHECK for INSERT in this Supabase version because the `name`
--- column isn't consistently available during policy evaluation.
--- Still secure: only authenticated business owners can upload, and the
--- upload path is always controlled by the client.
+-- Path-scoped: the uploaded file's folder path must contain a business ID
+-- that belongs to the authenticated owner. ANY(foldername) matches both:
+--   {businessId}/logo.png          → foldername[1] = businessId
+--   staff-avatars/{businessId}/...  → foldername[2] = businessId
 DROP POLICY IF EXISTS "Owners can upload business assets" ON storage.objects;
 CREATE POLICY "Owners can upload business assets"
 ON storage.objects FOR INSERT TO authenticated
@@ -2078,6 +2076,7 @@ WITH CHECK (
   AND EXISTS (
     SELECT 1 FROM public.businesses
     WHERE owner_id = auth.uid()
+    AND id::text = ANY(storage.foldername(name))
   )
 );
 
