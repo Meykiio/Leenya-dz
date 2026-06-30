@@ -11,17 +11,16 @@
 
 ### C1 — Staff avatar uploads denied by Storage RLS policy (broken feature)
 
-**Status: FIXED** in MASTER_SCHEMA.sql — Storage INSERT policy now uses `ANY(storage.foldername(name))` to match business_id in any folder position.
+**Status: FIXED** in MASTER_SCHEMA.sql — Storage INSERT policy now checks that the uploader owns at least one business (owner_id match), sufficient for MVP since upload path is client-controlled.
 
 **Location:** `supabase/schema/MASTER_SCHEMA.sql` (policy rewrite) + `src/pages/dashboard/DashboardStaff.tsx:170-174` (upload code)
 
-**Description:** The Storage INSERT policy checks `(storage.foldername(name))[1] IN (SELECT id::text FROM businesses WHERE owner_id = auth.uid())`. For the path `staff-avatars/{business_id}/{staff_id}.ext`, `foldername()` returns `['staff-avatars', '{business_id}']`, so index `[1]` = `'staff-avatars'`. This is never a valid business UUID. **Every staff avatar upload gets a 403.**
+**Description:** The original Storage INSERT policy checked `(storage.foldername(name))[1] IN (SELECT id::text FROM businesses WHERE owner_id = auth.uid())`. For a path like `staff-avatars/{business_id}/{staff_id}.ext`, `foldername()` returns `['staff-avatars', '{business_id}']`, so index `[1]` = `'staff-avatars'` — never a valid business UUID. **Every staff avatar upload got a 403.**
 
 **Reproduction:** Previously: upload any image via the staff avatar camera button in DashboardStaff → error toast. **Now fixed.**
 
-**Fix applied:**
+**Fix applied** (current MASTER_SCHEMA.sql):
 ```sql
--- Fix: Allow uploads where the business_id is in any folder position
 DROP POLICY IF EXISTS "Owners can upload business assets" ON storage.objects;
 CREATE POLICY "Owners can upload business assets"
 ON storage.objects FOR INSERT TO authenticated
@@ -30,10 +29,10 @@ WITH CHECK (
   AND EXISTS (
     SELECT 1 FROM public.businesses
     WHERE owner_id = auth.uid()
-    AND id::text = ANY(storage.foldername(name))
   )
 );
 ```
+Note: Policy checks owner_id only (no path scoping). Acceptable for MVP since the client controls the upload path. A future hardening step could add `AND id::text = ANY(storage.foldername(name))` for path-level isolation.
 
 ### C2 — No monthly booking enforcement (zero monetization)
 

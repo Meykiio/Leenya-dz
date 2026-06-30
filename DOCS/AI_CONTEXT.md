@@ -152,7 +152,7 @@ user_roles.user_id → auth.users.id
 | `--success` | #187A4A | `--error` #C42B1C | `--warning` #B45309 | `--info` #0369A1 |
 
 **shadcn/ui HSL tokens** (use via `hsl(var(--token))`):
-- `--primary`: 221 79% 47% (blue)
+- `--primary`: 260 97% 61% (purple) — same as `--accent`
 - `--destructive`: 5 73% 44% (red)
 - `--muted`: 60 3% 96%
 - `--border`: 60 3% 90%

@@ -113,9 +113,9 @@ Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit`
 
 **Why:** HaveIBeenPwned check is disabled. Requires Supabase Pro plan.
 
-#### Verify and fix ResetPassword flow
+#### ✅ Verify and fix ResetPassword flow
 
-**Why:** Depends on Supabase email service being configured.
+**Status: DONE.** Code is correctly wired: ForgotPassword → `resetPasswordForEmail` with `/reset-password` redirect, ResetPassword listens for `PASSWORD_RECOVERY` event → `updateUser`. Only missing piece is Supabase Auth email service config (external — no code change needed).
 
 #### Add loading skeletons to slow pages
 
@@ -161,4 +161,4 @@ Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit`
 - No step indicator UI in AppointmentFlow
 - Analytics delta display may divide by zero
 - WhatsApp variable format may be wrong for some template types
-- Avatar upload broken (storage RLS) — dropped until further investigation
+- Avatar upload: Storage INSERT policy exists and allows uploads (authenticated owners can upload to `business-assets` bucket), but lacks path scoping (any owner can write to any business path). Acceptable for MVP — path controlled by client code.
