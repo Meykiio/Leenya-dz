@@ -49,8 +49,7 @@ const Admin = () => {
           phone: b.phone,
           address: b.address,
           wilaya_name: b.wilaya_name,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          owner_name: (b as any).profiles?.full_name ?? null,
+          owner_name: b.profiles?.full_name ?? null,
         })));
       }
       setLoading(false);

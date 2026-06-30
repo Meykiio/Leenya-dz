@@ -37,9 +37,8 @@ const ResetPassword = () => {
       if (error) throw error;
       toast({ title: t("auth:resetPassword.successTitle"), description: t("auth:resetPassword.successDesc") });
       navigate("/login");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast({ title: t("common:toast.error"), description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: t("common:toast.error"), description: err instanceof Error ? err.message : t("common:toast.error"), variant: "destructive" });
     } finally {
       setLoading(false);
     }

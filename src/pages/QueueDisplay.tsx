@@ -19,8 +19,7 @@ let audioUnlocked = false;
 function getAudioCtx(): AudioContext | null {
   if (audioCtx) return audioCtx;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    const Ctx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return null;
     audioCtx = new Ctx();
     return audioCtx;
@@ -82,8 +81,7 @@ export default function QueueDisplay() {
     if (error) { console.error("fetchQueue:", error); return; }
     if (!data) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapped: TicketData[] = data.map((t: any) => ({
+    const mapped: TicketData[] = data.map((t: Record<string, unknown>) => ({
       id: t.id,
       ticket_label: t.ticket_label,
       status: t.status,
