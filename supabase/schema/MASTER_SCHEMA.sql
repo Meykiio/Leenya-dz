@@ -34,7 +34,7 @@ GRANT SELECT, INSERT ON TABLE public.user_roles TO authenticated;
 GRANT SELECT, INSERT ON TABLE public.reviews TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.whatsapp_templates TO authenticated;
 GRANT SELECT, INSERT, DELETE ON TABLE public.staff_services TO authenticated;
-GRANT SELECT, INSERT, DELETE ON TABLE public.feedback TO authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.feedback TO anon, authenticated;
 -- service_role: full admin access (used by triggers and SECURITY DEFINER functions)
 GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
 
@@ -2135,7 +2135,7 @@ GRANT SELECT, INSERT ON TABLE public.user_roles TO authenticated;
 GRANT SELECT, INSERT ON TABLE public.reviews TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.whatsapp_templates TO authenticated;
 GRANT SELECT, INSERT, DELETE ON TABLE public.staff_services TO authenticated;
-GRANT SELECT, INSERT, DELETE ON TABLE public.feedback TO authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.feedback TO anon, authenticated;
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 

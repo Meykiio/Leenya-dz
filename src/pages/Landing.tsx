@@ -8,6 +8,7 @@ import CtaBanner from "@/components/landing/CtaBanner";
 import BottomCta from "@/components/landing/BottomCta";
 import Footer from "@/components/landing/Footer";
 import BackToTop from "@/components/landing/BackToTop";
+import FeedbackSection from "@/components/landing/FeedbackSection";
 
 /**
  * Landing page — the public marketing homepage.
@@ -24,6 +25,7 @@ const Landing = () => {
       <PricingSection />
       <FaqSection />
       <CtaBanner />
+      <FeedbackSection />
       <Footer />
       <BottomCta />
       <BackToTop />
