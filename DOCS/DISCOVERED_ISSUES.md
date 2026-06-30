@@ -26,4 +26,21 @@ Started: 2026-06-30
 - ESLint run with --max-warnings 0 passes clean (no errors, no warnings).
 
 ## Security Findings
-(Phase 6)
+### Status: GOOD — no critical gaps
+
+**Security headers:** All implemented in vercel.json ✅
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+- Strict-Transport-Security: max-age=31536000; preload
+- Content-Security-Policy: covers self, supabase.co, sentry.io, fonts, cloudfront video
+- CORS: restricted to Supabase origin
+
+**RLS:** All 13 tables have RLS enabled. 46 policies, all PERMISSIVE mode ✅ (RESTRICTIVE mode flagged as future improvement — H-006)
+
+**Leaked password check (H-011):** Requires Supabase Pro plan — blocked. Configure when upgrading plan.
+
+**Storage:** Business-assets bucket has INSERT/UPDATE/DELETE policies for authenticated owners. Public SELECT disabled (users can only see assets if they own the business).
+
+**.env committed:** L5 from AUDIT.md — contains real Supabase keys. Not fixable without user action (user must add .env to .gitignore and regenerate secrets).
