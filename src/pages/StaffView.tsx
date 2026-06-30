@@ -73,7 +73,7 @@ const StaffView = () => {
     const { data, error } = await supabase
       .rpc("get_staff_queue", { p_staff_member_id: staffMemberId, p_queue_date: today });
 
-    if (error) { console.error("fetchTickets:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.queueLoadError"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("fetchTickets:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.queueLoadError"), variant: "destructive" }); }
     const mapped = (data || []).map((t: Record<string, unknown>) => ({
       ...t,
       services: t.service_name ? { name: t.service_name } : null,
@@ -93,7 +93,7 @@ const StaffView = () => {
       .or("staff_member_id.eq." + staffMemberId + ",staff_member_id.is.null")
       .order("start_time");
 
-    if (error) { console.error("fetchBookings:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.bookingsLoadError"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("fetchBookings:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.bookingsLoadError"), variant: "destructive" }); }
     setBookings(data || []);
     setLoading(false);
   }, [business, staffMemberId, today, t]);
@@ -112,13 +112,13 @@ const StaffView = () => {
 
   const skipTicket = async (id: string) => {
     const { error } = await supabase.rpc("skip_queue_ticket", { p_ticket_id: id });
-    if (error) { console.error("skipTicket:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("skipTicket:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
     fetchTickets();
   };
 
   const sendBackToQueue = async (id: string) => {
     const { error } = await supabase.rpc("send_ticket_back_to_queue", { p_ticket_id: id });
-    if (error) { console.error("sendBackToQueue:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("sendBackToQueue:", error); toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" }); }
     fetchTickets();
   };
 
@@ -143,7 +143,7 @@ const StaffView = () => {
       .select("client_phone, ticket_label");
 
     if (error) {
-      console.error("updateTicketStatus:", error);
+      if (import.meta.env.DEV) console.error("updateTicketStatus:", error);
       toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" });
       return;
     }
@@ -173,7 +173,7 @@ const StaffView = () => {
       .eq("status", currentStatus);
 
     if (error) {
-      console.error("updateBookingStatus:", error);
+      if (import.meta.env.DEV) console.error("updateBookingStatus:", error);
       toast({ title: t("common:toast.error"), description: t("staff:staffView.toast.updateError"), variant: "destructive" });
       return;
     }

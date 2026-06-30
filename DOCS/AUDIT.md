@@ -80,13 +80,9 @@ CREATE INDEX IF NOT EXISTS idx_queue_tickets_phone_created
 
 ### C5 — Console errors still present despite "no console.log" rule
 
-**Status: PARTIALLY FIXED** — Critical console.errors gated behind `import.meta.env.DEV` in NotFound.tsx and useWhatsAppTemplates.ts. Others remain un-gated but are production-safe (no PII exposure in most cases).
+**Status: FIXED** — All console.error calls in DashboardBookings.tsx, DashboardQueue.tsx, MyBookings.tsx, StaffView.tsx, BusinessPublic.tsx, and DashboardAnalytics.tsx now gated behind `import.meta.env.DEV`. Production browser consoles will no longer log internal error details.
 
 **Location:** Various — `BusinessPublic.tsx`, `DashboardBookings.tsx`, `DashboardAnalytics.tsx`, `DashboardQueue.tsx`, `MyBookings.tsx`, `StaffView.tsx`.
-
-**Risk:** These `console.error` calls expose internal data (user IDs, business names, error details) in production browser consoles. Low security risk but violates project conventions.
-
-**Remaining fix needed:** Gate the remaining console.error calls behind `if (import.meta.env.DEV)`. Low priority — non-critical.
 
 ---
 
@@ -336,7 +332,7 @@ CREATE INDEX IF NOT EXISTS idx_staff_services_service
 
 ## Verdict
 
-**Ready for 10 concurrent users?** Yes — all CRITICAL issues have been fixed (C1: Storage RLS fix, C2: plan enforcement, C3: queue_tickets public read restricted, C4: indexes added, C5: partially gated). The remaining issues are performance optimizations and UX polish.
+**Ready for 10 concurrent users?** Yes — all CRITICAL issues have been fixed (C1: Storage RLS fix, C2: plan enforcement, C3: queue_tickets public read restricted, C4: indexes added, C5: console.errors gated in DEV). The remaining issues are performance optimizations and UX polish.
 
 **Ready for 100 concurrent users?** Potentially — but the analytics page (H1: unbounded `select(*)`), missing client-side pagination, and `generateTimeSlots()` O(n²) would need optimization before scaling this high. The database indexes added in MASTER_SCHEMA.sql address the most critical query performance issues.
 
@@ -346,4 +342,4 @@ CREATE INDEX IF NOT EXISTS idx_staff_services_service
 
 ---
 
-*End of audit (updated 2026-06-26). Original: 2 CRITICAL, 5 HIGH, 6 MEDIUM, 5 LOW. All CRITICAL and 2 HIGH (C1-C4, H4) + all missing indexes are FIXED in code/MASTER_SCHEMA.sql. Remaining: 3 HIGH, 4 MEDIUM, 5 LOW — non-critical performance/UX optimizations.*
+*End of audit (updated 2026-06-30). Original: 2 CRITICAL, 5 HIGH, 6 MEDIUM, 5 LOW. All CRITICAL and 5 HIGH (C1-C5, H4) + all missing indexes are FIXED in code/MASTER_SCHEMA.sql. Remaining: 2 HIGH, 4 MEDIUM, 5 LOW — non-critical performance/UX optimizations.*

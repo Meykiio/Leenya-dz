@@ -79,7 +79,7 @@ const DashboardBookings = () => {
 
     const { data, error } = await query;
 
-    if (error) { console.error("fetchBookings:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.loadBookings"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("fetchBookings:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.loadBookings"), variant: "destructive" }); }
     setBookings(data || []);
     setInitialLoading(false);
   };
@@ -169,12 +169,11 @@ const DashboardBookings = () => {
       .eq("status", currentStatus);
 
     if (error) {
-      console.error("updateStatus:", error);
+      if (import.meta.env.DEV) console.error("updateStatus:", error);
       toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.updateBooking"), variant: "destructive" });
       return;
     }
     fetchBookings();
-    // When confirming a booking, send WhatsApp to client
     if (status === "confirmed" && business && businessDetails) {
       if (booking) {
         const url = buildBookingAcceptedUrl(
@@ -270,7 +269,7 @@ const DashboardBookings = () => {
     });
 
     if (error) {
-      console.error("createBooking:", error);
+      if (import.meta.env.DEV) console.error("createBooking:", error);
       toast({ title: t("dashboard:labels.error"), description: t("dashboard:bookings.errors.createBooking"), variant: "destructive" });
     } else {
       toast({ title: t("dashboard:bookings.created") });

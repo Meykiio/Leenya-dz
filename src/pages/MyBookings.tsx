@@ -57,7 +57,7 @@ export default function MyBookings() {
   const cancelBooking = async (id: string) => {
     const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
     if (error) {
-      console.error("cancelBooking:", error);
+      if (import.meta.env.DEV) console.error("cancelBooking:", error);
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
@@ -90,7 +90,7 @@ export default function MyBookings() {
     });
     setSubmittingReview(false);
     if (error) {
-      console.error("submitReview:", error);
+      if (import.meta.env.DEV) console.error("submitReview:", error);
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }

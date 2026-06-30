@@ -50,7 +50,7 @@ const DashboardQueue = () => {
 
     if (fetchError) {
       setError(t("dashboard:queue.errors.loadQueue"));
-      console.error("fetchTickets:", fetchError);
+      if (import.meta.env.DEV) console.error("fetchTickets:", fetchError);
       toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.loadQueue"), variant: "destructive" });
     } else {
       setError(null);
@@ -145,7 +145,7 @@ const DashboardQueue = () => {
       .select("client_phone, ticket_label, services(name)");
 
     if (error) {
-      console.error("updateTicketStatus:", error);
+      if (import.meta.env.DEV) console.error("updateTicketStatus:", error);
       toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" });
       return;
     }
@@ -226,7 +226,7 @@ const DashboardQueue = () => {
     });
 
     if (error) {
-      console.error("createTicket:", error);
+      if (import.meta.env.DEV) console.error("createTicket:", error);
       toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.createTicket"), variant: "destructive" });
     } else {
       toast({ title: t("dashboard:queue.ticketCreated", { ticketLabel: ticket_lbl }) });
@@ -238,19 +238,19 @@ const DashboardQueue = () => {
 
   const skipTicket = async (id: string) => {
     const { error } = await supabase.rpc("skip_queue_ticket", { p_ticket_id: id });
-    if (error) { console.error("skipTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("skipTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
     fetchTickets();
   };
 
   const sendBackToQueue = async (id: string) => {
     const { error } = await supabase.rpc("send_ticket_back_to_queue", { p_ticket_id: id });
-    if (error) { console.error("sendBackToQueue:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("sendBackToQueue:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
     fetchTickets();
   };
 
   const reassignTicket = async (id: string, staffMemberId: string) => {
     const { error } = await supabase.rpc("reassign_queue_ticket", { p_ticket_id: id, p_staff_member_id: staffMemberId });
-    if (error) { console.error("reassignTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
+    if (error) { if (import.meta.env.DEV) console.error("reassignTicket:", error); toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.updateTicket"), variant: "destructive" }); }
     fetchTickets();
   };
 
