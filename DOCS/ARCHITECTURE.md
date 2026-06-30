@@ -306,6 +306,6 @@ All tables have RLS enabled (**PERMISSIVE** mode — switching to RESTRICTIVE is
 7. **No `console.log()` in production code** — All removed in 2026-06-25 session.
 8. **OtpVerification.tsx deleted** — Phone OTP removed entirely in 2026-06-25.
 9. **Accent color is purple** (hsl 260 97% 61%), not blue. AI_CONTEXT.md had incorrect blue values — DESIGN.md is correct.
-10. **Skip moves to end of queue** via position_in_queue recalculation (NULL → renumber → MAX+1).
+10. **Skip swaps one position, not move-to-end** — `skip_queue_ticket` swaps the skipped ticket's `position_in_queue` with the next waiting ticket (bounded 1-position swap). Skip `skip_count` tracks total skips; resets to 0 on check-in. No auto-expiry to no-show (staff decides manually).
 11. **Check-in is a lightweight timestamp** — no state machine transition, just `checked_in_at = NOW()`.
 12. **Queue pause** is owner-only toggle (`is_queue_paused` on businesses), enforced server-side in `join_queue` RPC.

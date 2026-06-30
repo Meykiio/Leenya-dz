@@ -2,6 +2,25 @@
 
 Dates are approximate, reconstructed from migration timestamps and documentation.
 
+## 2026-06-30 — Fix Queue Skip & Hardening (fix/queue-skip-and-hardening branch)
+
+### Phase 1 — Queue Skip Rewrite
+- **Skip is now bounded 1-position swap** (not move-to-end): `skip_queue_ticket` exchanges `position_in_queue` with the next waiting ticket
+- **Skip count badge:** `skip_count` column tracks total skips, amber badge shown in StaffView + DashboardQueue
+- **Check-in resets skip count:** `check_in_ticket` also sets `skip_count = 0`
+- **RPCs updated** to return `checked_in_at` and `skip_count`: `get_dashboard_queue`, `get_staff_queue`, `get_queue_ticket`
+- **"Already last in queue" error:** clear message when skipping the last ticket (no crash, no-op)
+- **Check-in hint** added under "I'm here" button in TicketTracker (EN/FR/AR)
+- **4 new i18n keys** for skip toast, last-in-queue error, skip count tooltip, and check-in hint
+
+### Phase 2 — Trial Window Reset
+- **trial_ends_at set to 2026-07-31 23:59:59 UTC** for all businesses (extended from July 29, no gap)
+
+### Phase 3 — Hardening
+- **Storage path scoping** — INSERT policy enforces `id::text = ANY(storage.foldername(name))`
+- **Landing feedback form** — new FeedbackSection component, anonymous INSERT via `feedback` table
+- **4 ESLint no-explicit-any** suppressions replaced with proper types (Admin, QueueDisplay x2, ResetPassword)
+
 ## 2026-06-30 — Full Audit/Fix/Ship Session (audit/june-30 branch)
 
 ### Audit (phase 1)

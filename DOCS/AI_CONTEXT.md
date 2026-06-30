@@ -199,6 +199,16 @@ These warnings are by design, not security issues:
 
 ## What Was Recently Changed (Last 3 Sessions)
 
+### Session 8 — Fix Queue Skip & Hardening (2026-06-30, branch: fix/queue-skip-and-hardening)
+- **Skip redesigned to bounded 1-position swap** — not move-to-end. `skip_queue_ticket` swaps positions with the next waiting ticket. Clear "already last" error on no-op.
+- **skip_count column** — amber badge in staff/owner views, resets to 0 on check-in via `check_in_ticket`.
+- **RPCs updated** — `get_dashboard_queue`, `get_staff_queue`, `get_queue_ticket` now return `checked_in_at` (previously missing) and `skip_count`.
+- **Check-in hint** — "Tap when you've arrived" text under "I'm here" button (EN/FR/AR).
+- **Trial window extended** — `trial_ends_at` set to 2026-07-31 23:59:59 UTC (no gap from June 30).
+- **Storage path scoping** — INSERT policy on `business-assets` now checks `id::text = ANY(storage.foldername(name))`.
+- **Landing feedback form** — FeedbackSection submits to `feedback` table (anon INSERT granted).
+- **4 ESLint no-explicit-any** cleaned up in Admin.tsx, QueueDisplay.tsx (x2), ResetPassword.tsx.
+
 ### Session 5 — Bug Bash 2: State Stability & UX Polish (2026-06-30)
 - **Auth token refresh no longer unmounts dashboard** — `onAuthStateChange` skips `setRoleReady(false)` on `TOKEN_REFRESH`. Used `userRef.current` comparison to prevent spurious `setUser()` calls.
 - **Business reference stabilized** — `useMemo` wrap on return value of `use-business-info.ts` prevents cascade re-fetches in all dashboard pages.

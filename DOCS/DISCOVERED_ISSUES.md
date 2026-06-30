@@ -19,10 +19,10 @@ Started: 2026-06-30
 - Storage bucket `business-assets` public, INSERT policy for authenticated owners exists
 
 ## ESLint Suppressions (4 files)
-- src\pages\Admin.tsx:52 — no-explicit-any
-- src\pages\QueueDisplay.tsx:22 — no-explicit-any
-- src\pages\QueueDisplay.tsx:85 — no-explicit-any
-- src\pages\ResetPassword.tsx:40 — no-explicit-any
+- src\pages\Admin.tsx:52 — no-explicit-any → **FIXED** (Session 2)
+- src\pages\QueueDisplay.tsx:22 — no-explicit-any → **FIXED** (Session 2)
+- src\pages\QueueDisplay.tsx:85 — no-explicit-any → **FIXED** (Session 2)
+- src\pages\ResetPassword.tsx:40 — no-explicit-any → **FIXED** (Session 2)
 - ESLint run with --max-warnings 0 passes clean (no errors, no warnings).
 
 ## Security Findings
