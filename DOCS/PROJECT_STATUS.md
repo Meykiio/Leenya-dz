@@ -1,7 +1,7 @@
 # Project Status — Leenya
 
-**Last updated:** 2026-06-30 (Queue Edge Cases + Bug Fixes)
-**Version:** 0.0.1 (closed beta candidate)
+**Last updated:** 2026-07-01 (Session 2: skip removal, two-step dialog, docs update)
+**Version:** 0.0.1 (production-ready beta)
 **Project name:** Leenya (formerly Dawrni/Darek)
 **One-line pitch:** Queue and appointment management SaaS for Algerian service businesses.
 
@@ -66,7 +66,7 @@ The following flows work end-to-end in a local dev environment with a correctly 
 
 ---
 
-## What Is Built But Broken
+## Known Bugs (Not Yet Fixed)
 
 1. **`ResetPassword.tsx`**: The `useEffect` listener for `PASSWORD_RECOVERY` event is correct, but this flow is only half-tested — depends on Supabase email configuration being live.
 2. **RLS policies still use PERMISSIVE** — need to switch to RESTRICTIVE (AS RESTRICTIVE on all CREATE POLICY statements). This is a known gap from Phase 2b.
@@ -216,7 +216,7 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - **Queue tab left on public page** — swapped button order so Queue appears before Appointments
 
 **Updated 2026-06-30 (Queue Edge Cases — Skip, Check-in, Pause + Bug Fixes):**
-- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` NULLs non-waiting positions first; `skip_queue_ticket` moves ticket to end; `send_ticket_back_to_queue` clears position before recalculating
+- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` NULLs non-waiting positions first; `skip_queue_ticket` swaps 1 position (bounded swap, not move-to-end); `send_ticket_back_to_queue` clears position before recalculating
 - **Check-in button** in TicketTracker — "I'm here" sets `checked_in_at` timestamp; staff see green checkmark
 - **Queue pause toggle** in dashboard settings — owners flip `is_queue_paused` switch; QueueFlow shows amber notice, hides join form
 - **StatCard ref warning fixed** — renamed `ref` → `sectionRef` in StaffView.tsx
@@ -224,3 +224,12 @@ The last confirmed working flows (as of the code audit on 2026-06-25):
 - **i18n keys added** — 10+ new keys for skip, send back, check-in, queue pause (EN/FR/AR)
 - **DB migrations applied** — `add_queue_skip_checkin_features`, `fix_get_queue_ticket_add_checked_in`, `fix_queue_position_conflicts`
 - **Build passes** — `npm run build` zero errors
+
+**Updated 2026-07-01 (Final session — Bugfix Round 3 + Doc sync + Production deploy):**
+- **7 bugs (A–G) all fixed:** CSP manifest-src self, get_queue_context ambiguous column, RLS 403 on changeService (created `update_ticket_service` SECURITY DEFINER RPC), auth redirect race (defensive fallbacks), staff RBAC confirmed safe, invisible queue tickets (join_queue timezone applied to live DB), staff switch + service change (same RPC handles both).
+- **Rate-limit regression fixed:** `service_changed_at` column (NULL = first change always allowed). Client-side debounce.
+- **Default avatars/covers replaced:** linear gradients → seeded grainy mesh gradient (blur + turbulence noise, purple family).
+- **Two known bugs documented:** skip is bounded swap (not move-to-end), change dialog ignores staff_services.
+- **All DOCS files comprehensively updated:** BUGS.md, CLAUDE.md, CHANGELOG.md, AI_CONTEXT.md, ARCHITECTURE.md, NEXT.md, ENVIRONMENT.md, PROJECT_STATUS.md.
+- **Production deployed:** latest code on `leenya-dz.vercel.app`.
+- **Migrations:** `fix_get_queue_context_ambiguous_column.sql`, `create_update_ticket_service_rpc.sql`, `fix_join_queue_timezone.sql`, `dedicated_service_changed_at_rate_limit.sql`.

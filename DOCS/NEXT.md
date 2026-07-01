@@ -1,7 +1,7 @@
 # Next Steps — Leenya
 
 **Target:** Path to first real user / production launch.
-**Last updated:** 2026-06-30 (Queue Edge Cases + Bug Fixes complete)
+**Last updated:** 2026-07-01 (Session 2: skip removal, two-step dialog, docs update)
 
 ---
 
@@ -32,6 +32,14 @@ Playwright smoke tests confirm all 6 public pages load correctly. `tsc --noEmit`
 ---
 
 ## P0 — Must Do Before First Real User
+
+### ✅ Fix skip: should move to end, not swap 1 position
+
+**Status: DONE.** Skip button removed entirely — "Send back to queue" + "Cancel" cover the same outcomes. StaffView, DashboardQueue, and QueueWaitingList no longer have skip functionality.
+
+### ✅ Fix change service dialog: filter staff by staff_services
+
+**Status: DONE.** Change service dialog redesigned as two-step flow: pick a service first (all shown, current pre-selected), then pick from staff who actually offer it. Staff-query join fixed to go through `staff_members!inner(business_id)` instead of non-existent `staff_services.business_id`.
 
 ### Set VITE_SUPPORT_PHONE in production env
 

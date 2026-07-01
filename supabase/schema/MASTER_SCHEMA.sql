@@ -253,6 +253,7 @@ CREATE TABLE IF NOT EXISTS public.queue_tickets (
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
+  service_changed_at TIMESTAMPTZ,
   checked_in_at TIMESTAMPTZ,
   skip_count INTEGER NOT NULL DEFAULT 0
 );
@@ -427,12 +428,14 @@ BEGIN
     business_id, service_id, staff_member_id,
     client_name, client_phone,
     ticket_number, ticket_label,
-    queue_date, status, position_in_queue, estimated_wait_minutes
+    queue_date, status, position_in_queue, estimated_wait_minutes,
+    client_id
   ) VALUES (
     p_business_id, p_service_id, p_staff_member_id,
     p_client_name, p_client_phone,
     v_ticket_num, v_ticket_lbl,
-    CURRENT_DATE, 'waiting', v_ticket_num, p_estimated_wait_minutes
+    CURRENT_DATE, 'waiting', v_ticket_num, p_estimated_wait_minutes,
+    auth.uid()
   )
   RETURNING id INTO v_ticket_id;
 
@@ -444,6 +447,61 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.join_queue(UUID, UUID, TEXT, TEXT, UUID, INT) TO anon, authenticated;
+
+-- -----------------------------------------------------------
+-- update_ticket_service — SECURITY DEFINER RPC bypassing RLS for anon
+-- Allows users (anon or authenticated) to change their waiting ticket's service or staff member
+-- -----------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_ticket_service(
+  p_ticket_id UUID,
+  p_service_id UUID,
+  p_staff_member_id UUID DEFAULT NULL
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_ticket RECORD;
+BEGIN
+  SELECT qt.* INTO v_ticket
+  FROM public.queue_tickets qt
+  WHERE qt.id = p_ticket_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Ticket not found' USING HINT = 'ticket_not_found';
+  END IF;
+
+  IF v_ticket.status != 'waiting' THEN
+    RAISE EXCEPTION 'Ticket is no longer waiting' USING HINT = 'ticket_not_waiting';
+  END IF;
+
+  -- Authenticated users can only update their own ticket
+  -- Authenticated users can only update their own ticket
+  IF v_ticket.client_id IS NOT NULL AND auth.uid() != v_ticket.client_id THEN
+    RAISE EXCEPTION 'Not your ticket' USING HINT = 'not_owner';
+  END IF;
+
+  -- Rate limit: max 1 change per 30 seconds per ticket (walk-in gap mitigation)
+  -- Uses dedicated service_changed_at column (NULL = first change always allowed)
+  IF v_ticket.service_changed_at IS NOT NULL AND NOW() - v_ticket.service_changed_at < INTERVAL '30 seconds' THEN
+    RAISE EXCEPTION 'Too many changes' USING HINT = 'rate_limited';
+  END IF;
+
+  UPDATE public.queue_tickets
+  SET
+    service_id = p_service_id,
+    staff_member_id = p_staff_member_id,
+    service_changed_at = NOW(),
+    updated_at = NOW()
+  WHERE id = p_ticket_id;
+
+  RETURN TRUE;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_ticket_service(UUID, UUID, UUID) TO anon, authenticated;
 
 -- -----------------------------------------------------------
 -- get_staff_queue — SECURITY DEFINER RPC bypassing RLS for staff
@@ -932,11 +990,11 @@ DECLARE
   v_ahead integer;
   v_my_position integer;
 BEGIN
-  SELECT position_in_queue INTO v_my_position
-  FROM public.queue_tickets
-  WHERE business_id = p_business_id
-    AND queue_date = p_queue_date
-    AND ticket_number = p_ticket_number;
+  SELECT qt.position_in_queue INTO v_my_position
+  FROM public.queue_tickets qt
+  WHERE qt.business_id = p_business_id
+    AND qt.queue_date = p_queue_date
+    AND qt.ticket_number = p_ticket_number;
 
   SELECT q.ticket_label INTO v_serving_label
   FROM public.queue_tickets q
@@ -1116,6 +1174,12 @@ BEGIN
   SELECT business_id, queue_date, position_in_queue
   INTO v_business_id, v_queue_date, v_current_pos
   FROM queue_tickets WHERE id = p_ticket_id;
+
+  IF v_business_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext(v_business_id::text || v_queue_date::text));
 
   IF v_current_pos IS NULL THEN
     RAISE EXCEPTION 'Ticket has no position assigned' USING HINT = 'skip_no_position';
@@ -2457,3 +2521,6 @@ CREATE POLICY "Owners can reply to reviews" ON public.reviews
     EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
     OR public.is_superadmin()
   );
+
+-- Migration M-025: Add service_changed_at column for rate limit
+ALTER TABLE public.queue_tickets ADD COLUMN IF NOT EXISTS service_changed_at TIMESTAMPTZ;

@@ -51,14 +51,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [roleReady, setRoleReady] = useState(false);
+  const pendingRolePromiseRef = useRef<Promise<AppRole> | null>(null);
 
-  /** Fetch the user's app role from the database via RPC. */
+  const getRole = useRef(async (): Promise<AppRole> => {
+    if (pendingRolePromiseRef.current) return pendingRolePromiseRef.current;
+    pendingRolePromiseRef.current = (async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_user_role");
+        if (error) throw error;
+        const role = (data as AppRole) ?? null;
+        if (!role) {
+          Sentry.addBreadcrumb({ category: "auth", message: "get_user_role returned null, retrying once" });
+          const { data: retryData, error: retryError } = await supabase.rpc("get_user_role");
+          if (retryError) throw retryError;
+          return (retryData as AppRole) ?? null;
+        }
+        return role;
+      } catch (error) {
+        console.error("[AuthContext] getRole failed:", error);
+        return null;
+      }
+    })();
+    return pendingRolePromiseRef.current;
+  }).current;
+
   const fetchRole = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc("get_user_role");
-      if (error) throw error;
-      setRole((data as AppRole) ?? null);
+      const newRole = await getRole();
+      setRole(newRole);
     } catch (error) {
       console.error("[AuthContext] fetchRole failed:", error);
       setRole(null);
@@ -72,15 +92,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         const newUser = session?.user ?? null;
-        // Only update user state if the user ID actually changed — prevents cascade on TOKEN_REFRESH
         if (newUser?.id !== userRef.current) {
           setUser(newUser);
           userRef.current = newUser?.id ?? null;
         }
         if (session?.user) {
           Sentry.setUser({ id: session.user.id, email: session.user.email ?? undefined });
-          // Only fetch role on SIGNED_IN — skip TOKEN_REFRESH to avoid unmounting dashboard
           if (event === "SIGNED_IN") {
+            pendingRolePromiseRef.current = null;
             setRoleReady(false);
             setTimeout(() => fetchRole(), 0);
           }
@@ -119,27 +138,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  /** Sign the user out, clear session, user, and role from state. */
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
     setRole(null);
+    pendingRolePromiseRef.current = null;
   };
 
-  /** Re-fetch the user's role from the database (e.g., after a role change). */
   const refreshRole = async () => {
     if (!user) return;
+    pendingRolePromiseRef.current = null;
     setRoleReady(false);
     await fetchRole();
   };
 
-  /** Fetch the role and return it — single code path shared with LoginForm to avoid the race where fetchRole and handlePostAuth call RPC independently */
   const waitForRole = async (): Promise<AppRole> => {
     try {
-      const { data, error } = await supabase.rpc("get_user_role");
-      if (error) throw error;
-      const newRole = (data as AppRole) ?? null;
+      const newRole = await getRole();
       setRole(newRole);
       setRoleReady(true);
       return newRole;

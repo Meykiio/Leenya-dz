@@ -212,7 +212,7 @@ Full schema is in `supabase/schema/MASTER_SCHEMA.sql` (idempotent, single source
 - `get_monthly_business_counts(p_business_id)` — Counts bookings + queue + staff for plan enforcement
 - `create_staff_user(email, password, staff_member_id, business_id, full_name)` — Creates auth.users + identities + user_roles for staff login
 - `recalculate_queue_positions(p_business_id)` — Renumbers position_in_queue for waiting tickets
-- `skip_queue_ticket(p_ticket_id)` — Moves ticket to end of queue
+- `skip_queue_ticket(p_ticket_id)` — Swaps position with next waiting ticket (bounded 1-position swap, not move-to-end)
 - `send_ticket_back_to_queue(p_ticket_id)` — Moves called ticket back to waiting
 - `check_in_ticket(p_ticket_id)` — Sets checked_in_at timestamp
 - `reassign_queue_ticket(p_ticket_id, p_staff_member_id)` — Changes staff assignment

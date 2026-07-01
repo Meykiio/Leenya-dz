@@ -59,12 +59,20 @@ Complete guide for setting up Leenya in any environment.
 - Anon direct table access revoked on `queue_tickets` and `bookings` — public data access via parameterized RPCs only
 - SECURITY DEFINER EXECUTE restricted: anon can call exactly 7 public RPCs, not the full function list
 
-### Latest DB Migrations Applied (June 30)
+### Latest DB Migrations Applied (July 1)
 | Migration | Purpose |
 |---|---|
-| `add_queue_skip_checkin_features` | Added `checked_in_at` to queue_tickets, `is_queue_paused` to businesses, and new RPCs for skip/check-in/reassign |
-| `fix_get_queue_ticket_add_checked_in` | Recreated `get_queue_ticket` RPC with `checked_in_at` and `staff_member_id` in return type |
-| `fix_queue_position_conflicts` | Rewrote 3 RPCs to prevent 409 unique constraint violations on skip/send-back |
+| `fix_get_queue_context_ambiguous_column.sql` | Fixed `get_queue_context` ambiguous `ticket_number` by adding `qt` alias |
+| `create_update_ticket_service_rpc.sql` | Created SECURITY DEFINER RPC for anon ticket service/staff change |
+| `fix_join_queue_timezone.sql` | Applied `SET timezone = 'Africa/Algiers'` to `join_queue` (was missing on live DB) |
+| `dedicated_service_changed_at_rate_limit.sql` | Added `service_changed_at` column for proper first-change rate limiting |
+
+## Deployment
+
+| Environment | URL | Notes |
+|---|---|---|
+| Production | `leenya-dz.vercel.app` | Linked to GitHub `main` branch. Auto-deploys on push. |
+| Preview | `leenya-main-*.vercel.app` | Created per branch. Has Vercel Deployment Protection (SSO gate). Use `?_vercel_share=...` param to bypass. |
 
 ## Additional Services
 

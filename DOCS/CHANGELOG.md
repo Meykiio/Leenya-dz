@@ -2,6 +2,39 @@
 
 Dates are approximate, reconstructed from migration timestamps and documentation.
 
+## 2026-07-01 — Session 2: Skip removed, two-step change dialog, staff_services filter fix
+
+- **Skip button removed** — "Send back to queue" + "Cancel" already cover the same outcomes. Removed from StaffView, DashboardQueue, and QueueWaitingList. `skip_queue_ticket` RPC kept in DB for backward compatibility.
+- **Change service/staff dialog redesigned to two-step flow** — Step 1 shows ALL services with current one pre-selected and a "Current" badge. Step 2 shows only staff who offer the selected service (with "No preference" option, Back button). Toast shows single clean message in the user's language.
+- **staff_services query fixed** — Previous query tried to filter by `business_id` on `staff_services` table (which doesn't have that column). Now joins through `staff_members!inner(business_id)` instead.
+- **Step state + pre-selection all reset correctly** — Dialog opens at step 1 with current service and staff pre-selected. Changing service clears staff if they don't offer the new selection. Saving resets step.
+- **i18n keys added** — `nextStep`, `pickService`, `selectedService`, `changeStaffStep`, `changeStaffDesc`, `currentBadge`, `currentInfo` in EN/FR/AR booking.json.
+- **Known Issues from previous session resolved** — Skip (1-position swap) and staff_services (wrong filter) are both fixed. Removed from BUGS.md Known Issues section.
+- **Production deployed** — Build passes zero errors, deployed to `leenya-dz.vercel.app`.
+
+## 2026-07-01 — Final session: doc sync, bug documentation, production deploy
+
+- **7 bugs (A–G) all fixed** — CSP manifest-src self, get_queue_context ambiguous column, RLS 403 on changeService (created `update_ticket_service` SECURITY DEFINER RPC), auth redirect race (defensive fallbacks), staff RBAC confirmed safe, invisible queue tickets (join_queue timezone applied to live DB), staff switch + service change (same RPC handles both).
+- **Rate-limit regression FIXED** — `update_ticket_service` rate-limited the FIRST change on newly created tickets because it checked `updated_at` (set to NOW() at creation time). Replaced with dedicated `service_changed_at` column (starts NULL → first change always allowed). Added client-side debounce on confirm button. Migration `dedicated_service_changed_at_rate_limit` applied.
+- **Manifest CORS on preview CONFIRMED EXPECTED** — Redirect to `vercel.com/sso-api` is Vercel Deployment Protection (SSO gating on preview deployments). Not a code bug. Will not occur on production domain.
+- **Default avatars/covers replaced** — `PixelCover.tsx` + `pixel-avatar.ts`: swapped linear gradient + 8-palette system for seeded grainy mesh gradient (overlapping blurred radial blobs + `<feTurbulence>` noise texture). Colors constrained to Leenya purple family (hsl 250-290). Fully deterministic per ID, SVG-only, no network dependency.
+- **Two "stubborn" bugs documented as Known Issues** in BUGS.md:
+  - **Skip is bounded 1-position swap (not move-to-end):** `skip_queue_ticket` swaps position with the next waiting ticket. Staff must click multiple times to fully skip someone. The RPC logic needs to change to NULL position + renumber instead of swap.
+  - **Change service dialog ignores staff_services:** TicketTracker fetches ALL active staff without joining to `staff_services`. Users can select a barber who doesn't offer the selected service. The `update_ticket_service` RPC also doesn't validate staff-service assignments. Both dialog and RPC need fixes.
+- **All DOCS files comprehensively updated** — BUGS.md, CLAUDE.md, CHANGELOG.md, AI_CONTEXT.md, ARCHITECTURE.md, NEXT.md, ENVIRONMENT.md, PROJECT_STATUS.md — all synced to reflect final July 1 state.
+- **Production deployed** — latest code promoted to production on `leenya-dz.vercel.app`.
+- **Clean accounts:** `owner@leenya.dz` (owner of "Barber Owner"), `staff1@leenya.com` + `staff2@leenya.com` (staff) with correct roles. No superadmin involvement.
+- **Migrations:** `dedicated_service_changed_at_rate_limit.sql`, `fix_get_queue_context_ambiguous_column.sql`, `create_update_ticket_service_rpc.sql`, `fix_join_queue_timezone.sql`
+
+## 2026-06-30 — Bugfix Round 2: error.hint, Shared Auth Promise, CSP, Advisory Lock (fix/session-bugs branch)
+
+- **Bug 1 (Skip → generic error) FIXED** — The real root cause: `skip_queue_ticket` raises exceptions with `USING HINT`, PostgREST puts that in `error.hint`, but the frontend was checking `error.message` (never matches). Both StaffView.tsx and DashboardQueue.tsx now read `error.hint` instead. Advisory lock (`pg_advisory_xact_lock`) added to skip function to prevent concurrent recalculate races.
+- **Bug 2 (get_queue_context 400) FIXED** — Sentry MCP investigation found zero 400 errors in current codebase (2 captured spans are 200 OK). Defensive null guard added in `refreshQueueContext`. No stale closure found in the real-time subscription.
+- **Bug 3 (Auth redirect race) FIXED** — Structural fix: `fetchRole` and `waitForRole` now share a single `getRole()` promise (`pendingRolePromiseRef`), collapsing two independent RPC calls into one. Promise reset on SIGNED_IN + signOut for fresh login cycles. `handlePostAuth` uses `getSession()` (local cache) instead of `getUser()` (network call) to prevent yielding to React before role is set.
+- **Bug 4 (CSP blocks Vercel tooling) FIXED** — `vercel.live` added to script-src, connect-src, frame-src. `vercel.com` added to manifest-src, frame-src.
+- **Migration:** `20260630_advisory_lock_skip_ticket.sql` (advisory lock on skip_queue_ticket)
+- **Build:** `npm run build` and `npx tsc --noEmit` pass zero errors.
+
 ## 2026-06-30 — Bugfix: GRANTs, Auth Redirect Race (fix/queue-skip-and-hardening branch)
 
 - **Skip button 400 fixed** — re-granted EXECUTE on 5 RPCs (`skip_queue_ticket`, `check_in_ticket`, `get_dashboard_queue`, `get_staff_queue`, `get_queue_ticket`) that were wiped by DROP+CREATE in the skip migration

@@ -58,3 +58,11 @@ Then ask "Want me to test anything or look at something else?"
 - **Functions backported:** `check_in_ticket`, `reassign_queue_ticket`, `recalculate_queue_positions`, `send_ticket_back_to_queue`, `skip_queue_ticket`
 - **Logic fixes:** `join_queue` — added `is_queue_paused` check; `get_queue_ticket` — added `checked_in_at` + `staff_member_id` to return; `get_queue_context` — uses `position_in_queue` instead of `ticket_number`; `join_queue` params made optional with DEFAULT NULL
 - **All docs updated:** Removed stale "schema drift" warnings from AI_CONTEXT.md, AGENTS.md
+
+### 2026-07-01 — Bugfix Round 3: CSP self, join_queue Timezone, RPC for changeService
+- **CSP manifest-src regression** — `vercel.json`: added missing `'self'` to `manifest-src` (was dropped when `vercel.com` was added)
+- **get_queue_context ambiguous column** — `MASTER_SCHEMA.sql` + live migration: first query in function got alias `qt` to fix `ticket_number` ambiguity with `RETURNS TABLE` output column
+- **update_ticket_service RPC created** — `TicketTracker.tsx` changeService dialog now calls `update_ticket_service` RPC (SECURITY DEFINER, bypasses RLS) instead of direct table UPDATE, fixing the 403 RLS error for anon users
+- **join_queue timezone drift FIXED** — MASTER_SCHEMA.sql had `SET timezone = 'Africa/Algiers'` but it was NEVER applied to live DB (added in commit 90e163b but no migration ran). Live `join_queue` used UTC `CURRENT_DATE`, causing tickets created after midnight Algeria time (before midnight UTC) to get wrong `queue_date`. Applied migration + set A-018's date correctly.
+- **Auth redirect defensive fix** — `LoginForm.tsx` `handlePostAuth` now falls back to `getUser()` if `getSession()` returns null, and falls back to direct RPC if `waitForRole()` returns null
+- **Test function `test_timezone` cleaned up**

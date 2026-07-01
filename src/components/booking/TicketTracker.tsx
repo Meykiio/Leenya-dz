@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,60 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const [availableServices, setAvailableServices] = useState<{ id: string; name: string }[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [availableStaff, setAvailableStaff] = useState<{ id: string; display_name: string }[]>([]);
+  const [staffServices, setStaffServices] = useState<{ staff_member_id: string; service_id: string }[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [savingChange, setSavingChange] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+
+  const staffServicesByStaff = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const ss of staffServices) {
+      if (!map.has(ss.staff_member_id)) map.set(ss.staff_member_id, new Set());
+      map.get(ss.staff_member_id)!.add(ss.service_id);
+    }
+    return map;
+  }, [staffServices]);
+
+  const staffServicesByService = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const ss of staffServices) {
+      if (!map.has(ss.service_id)) map.set(ss.service_id, new Set());
+      map.get(ss.service_id)!.add(ss.staff_member_id);
+    }
+    return map;
+  }, [staffServices]);
+
+  const filteredStaff = useMemo(() => {
+    if (!selectedServiceId) return availableStaff;
+    const validIds = staffServicesByService.get(selectedServiceId);
+    if (!validIds) return [];
+    return availableStaff.filter((s) => validIds.has(s.id));
+  }, [availableStaff, selectedServiceId, staffServicesByService]);
+
+  const filteredServices = useMemo(() => {
+    if (!selectedStaffId) return availableServices;
+    const validIds = staffServicesByStaff.get(selectedStaffId);
+    if (!validIds) return [];
+    return availableServices.filter((s) => validIds.has(s.id));
+  }, [availableServices, selectedStaffId, staffServicesByStaff]);
+
+  useEffect(() => {
+    if (selectedServiceId && selectedStaffId) {
+      const validStaff = staffServicesByService.get(selectedServiceId);
+      if (validStaff && !validStaff.has(selectedStaffId)) {
+        setSelectedStaffId("");
+      }
+    }
+  }, [selectedServiceId, selectedStaffId, staffServicesByService]);
+
+  useEffect(() => {
+    if (selectedStaffId && selectedServiceId) {
+      const validServices = staffServicesByStaff.get(selectedStaffId);
+      if (validServices && !validServices.has(selectedServiceId)) {
+        setSelectedServiceId("");
+      }
+    }
+  }, [selectedStaffId, selectedServiceId, staffServicesByStaff]);
 
   useEffect(() => {
     const reviewed = localStorage.getItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
@@ -93,6 +146,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   }, []);
 
   const refreshQueueContext = async (bizId: string, qDate: string, ticketNumber: number) => {
+    if (!bizId || !qDate || !ticketNumber) return;
     const { data: queueData, error: queueError } = await supabase
       .rpc("get_queue_context", {
         p_business_id: bizId,
@@ -427,15 +481,18 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           onClick={async () => {
             const bizId = businessIdRef.current;
             if (!bizId) return;
-            const [svcResult, staffResult] = await Promise.all([
+            const [svcResult, staffResult, ssResult] = await Promise.all([
               supabase.from("services").select("id, name").eq("business_id", bizId).eq("is_active", true).order("display_order"),
               supabase.from("staff_members").select("id, display_name").eq("business_id", bizId).eq("is_active", true).order("display_name"),
+              supabase.from("staff_services").select("staff_member_id, service_id, staff_members!inner(business_id)").eq("staff_members.business_id", bizId),
             ]);
             if (svcResult.error) { console.error("fetchServices:", svcResult.error); return; }
             setAvailableServices(svcResult.data || []);
             setAvailableStaff(staffResult.data || []);
+            setStaffServices(ssResult.data || []);
             setSelectedServiceId(serviceIdRef.current || "");
             setSelectedStaffId(staffMemberIdRef.current || "");
+            setStep(1);
             setShowServicePicker(true);
           }}
         >
@@ -443,84 +500,129 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </Button>
       </div>
 
-      <Dialog open={showServicePicker} onOpenChange={setShowServicePicker}>
+      <Dialog open={showServicePicker} onOpenChange={(open) => { setShowServicePicker(open); if (open) setStep(1); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{t("booking:ticketTracker.changeService")}</DialogTitle>
-            <DialogDescription>{t("booking:ticketTracker.changeServiceDesc")}</DialogDescription>
+            <DialogTitle>
+              {step === 1
+                ? t("booking:ticketTracker.changeService")
+                : t("booking:ticketTracker.changeStaffStep")}
+            </DialogTitle>
+            <DialogDescription>
+              {step === 1
+                ? t("booking:ticketTracker.changeServiceDesc")
+                : t("booking:ticketTracker.changeStaffDesc")}
+            </DialogDescription>
           </DialogHeader>
-          {availableServices.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">{t("common:loading")}</p>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-2">{t("booking:ticketTracker.changeService")}</p>
-                <RadioGroup value={selectedServiceId} onValueChange={setSelectedServiceId}>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {availableServices.map((s) => (
-                      <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
-                        <RadioGroupItem value={s.id} id={s.id} />
-                        <Label htmlFor={s.id} className="flex-1 text-sm font-medium cursor-pointer">{s.name}</Label>
+          {step === 1 ? (
+            <>
+              {availableServices.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">{t("common:loading")}</p>
+              ) : (
+                <div className="space-y-4">
+                  {(() => {
+                    const currentServiceName = availableServices.find(s => s.id === serviceIdRef.current)?.name;
+                    const currentStaffName = staffMemberIdRef.current ? availableStaff.find(s => s.id === staffMemberIdRef.current)?.display_name : null;
+                    return currentServiceName ? (
+                      <div className="rounded-md bg-muted/50 border border-border p-3 text-sm">
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("booking:ticketTracker.currentInfo")}</p>
+                        <p className="font-medium text-foreground mt-0.5">
+                          {currentServiceName}{currentStaffName ? ` \u2192 ${currentStaffName}` : ""}
+                        </p>
                       </div>
-                    ))}
+                    ) : null;
+                  })()}
+                  <div>
+                    <p className="text-sm font-medium mb-2">{t("booking:ticketTracker.pickService")}</p>
+                    <RadioGroup value={selectedServiceId} onValueChange={setSelectedServiceId}>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {availableServices.map((s) => (
+                          <div key={s.id} className={`flex items-center gap-3 rounded-md border p-3 ${s.id === serviceIdRef.current ? 'border-accent bg-accent/5' : 'border-border'}`}>
+                            <RadioGroupItem value={s.id} id={`svc-${s.id}`} />
+                            <Label htmlFor={`svc-${s.id}`} className="flex-1 text-sm font-medium cursor-pointer">{s.name}</Label>
+                            {s.id === serviceIdRef.current && (
+                              <span className="text-[10px] text-muted-foreground font-medium px-1.5 py-0.5 rounded bg-muted">{t("booking:ticketTracker.currentBadge")}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </RadioGroup>
                   </div>
-                </RadioGroup>
-              </div>
-              {availableStaff.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium mb-2">{t("booking:ticketTracker.changeStaff")}</p>
-                  <RadioGroup value={selectedStaffId} onValueChange={setSelectedStaffId}>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      <div className="flex items-center gap-3 rounded-md border border-border p-3">
-                        <RadioGroupItem value="" id="staff-none" />
-                        <Label htmlFor="staff-none" className="flex-1 text-sm font-medium cursor-pointer">{t("booking:appointmentFlow.stepStaff.noPreference")}</Label>
-                      </div>
-                      {availableStaff.map((s) => (
-                        <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
-                          <RadioGroupItem value={s.id} id={s.id} />
-                          <Label htmlFor={s.id} className="flex-1 text-sm font-medium cursor-pointer">{s.display_name}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
                 </div>
               )}
-            </div>
+              <DialogFooter className="gap-2 pt-2">
+                <Button variant="outline" onClick={() => setShowServicePicker(false)}>{t("common:buttons.cancel")}</Button>
+                <Button disabled={!selectedServiceId} onClick={() => setStep(2)}>
+                  {t("booking:ticketTracker.nextStep")}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div className="rounded-md border border-border p-3 text-sm">
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("booking:ticketTracker.selectedService")}</p>
+                  <p className="font-semibold text-foreground mt-0.5">
+                    {availableServices.find(s => s.id === selectedServiceId)?.name}
+                  </p>
+                </div>
+                {filteredStaff.length > 0 ? (
+                  <div>
+                    <p className="text-sm font-medium mb-2">{t("booking:ticketTracker.changeStaff")}</p>
+                    <RadioGroup value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        <div className="flex items-center gap-3 rounded-md border border-border p-3">
+                          <RadioGroupItem value="" id="staff-none" />
+                          <Label htmlFor="staff-none" className="flex-1 text-sm font-medium cursor-pointer">{t("booking:appointmentFlow.stepStaff.noPreference")}</Label>
+                        </div>
+                        {filteredStaff.map((s) => (
+                          <div key={s.id} className="flex items-center gap-3 rounded-md border border-border p-3">
+                            <RadioGroupItem value={s.id} id={`staff-${s.id}`} />
+                            <Label htmlFor={`staff-${s.id}`} className="flex-1 text-sm font-medium cursor-pointer">{s.display_name}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </RadioGroup>
+                  </div>
+                ) : (
+                  <div className="rounded-md bg-muted/50 border border-border p-3 text-center">
+                    <p className="text-sm text-muted-foreground">No staff members assigned to this service</p>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="gap-2 pt-2">
+                <Button variant="outline" onClick={() => setStep(1)}>{t("common:buttons.back")}</Button>
+                <Button
+                  disabled={savingChange || (selectedServiceId === serviceIdRef.current && selectedStaffId === (staffMemberIdRef.current || ""))}
+                  onClick={async () => {
+                    if (savingChange) return;
+                    setSavingChange(true);
+                    const oldServiceId = serviceIdRef.current;
+                    const oldStaffId = staffMemberIdRef.current;
+                    const { error } = await supabase.rpc("update_ticket_service", {
+                      p_ticket_id: ticketId,
+                      p_service_id: selectedServiceId,
+                      p_staff_member_id: selectedStaffId !== (oldStaffId || "") ? (selectedStaffId || null) : undefined,
+                    });
+                    if (error) {
+                      console.error("changeService:", error);
+                      toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
+                      setSavingChange(false);
+                      return;
+                    }
+                    setSavingChange(false);
+                    serviceIdRef.current = selectedServiceId;
+                    staffMemberIdRef.current = selectedStaffId || null;
+                    setShowServicePicker(false);
+                    toast({ title: t("booking:ticketTracker.serviceChanged") });
+                    refetchAll();
+                  }}
+                >
+                  {t("booking:ticketTracker.confirmChange")}
+                </Button>
+              </DialogFooter>
+            </>
           )}
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowServicePicker(false)}>{t("common:buttons.cancel")}</Button>
-            <Button
-              disabled={!selectedServiceId || (selectedServiceId === serviceIdRef.current && selectedStaffId === (staffMemberIdRef.current || ""))}
-              onClick={async () => {
-                if (!selectedServiceId) return;
-                const oldServiceId = serviceIdRef.current;
-                const oldStaffId = staffMemberIdRef.current;
-                const updates: Record<string, string | null> = { service_id: selectedServiceId };
-                if (selectedStaffId !== (oldStaffId || "")) {
-                  updates.staff_member_id = selectedStaffId || null;
-                }
-                const { error } = await supabase
-                  .from("queue_tickets")
-                  .update(updates)
-                  .eq("id", ticketId);
-                if (error) {
-                  console.error("changeService:", error);
-                  toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
-                  return;
-                }
-                serviceIdRef.current = selectedServiceId;
-                staffMemberIdRef.current = selectedStaffId || null;
-                setShowServicePicker(false);
-                const changedParts = [];
-                if (selectedServiceId !== oldServiceId) changedParts.push(t("booking:ticketTracker.serviceChanged"));
-                if (selectedStaffId !== (oldStaffId || "")) changedParts.push(t("booking:ticketTracker.staffChanged"));
-                toast({ title: changedParts.join(" + ") });
-                refetchAll();
-              }}
-            >
-              {t("booking:ticketTracker.confirmChange")}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

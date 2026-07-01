@@ -70,12 +70,28 @@ npm run dev      # Dev server
 npx tsc --noEmit # Type-check only
 ```
 
-## What was just done (last 3 sessions)
+## What was just done (current session)
+
+### Session 2 — Skip removed, two-step change dialog, staff_services filter fix (2026-07-01)
+
+- **Skip button removed entirely** — StaffView, DashboardQueue, and QueueWaitingList no longer have skip functionality. "Send back to queue" + "Cancel" cover the same outcomes without the confusing "one position at a time" behavior. RPC kept in DB for backward compatibility.
+- **Change service/staff dialog redesigned** — Two-step flow: pick a service first (all shown, current pre-selected with "Current" badge), then pick from staff who actually offer that service ("No preference" option available). Toast shows one clean message instead of concatenated developer-speak.
+- **staff_services join bug fixed** — Query previously filtered by `business_id` on `staff_services` table (column doesn't exist). Changed to join through `staff_members!inner(business_id)`.
+- **Both "stubborn" bugs from last session resolved** — Skip behavior and staff_services filter are both fixed. Removed from Known Issues.
+- **Production deployed** — Build passes zero errors, live at `leenya-dz.vercel.app`.
+
+### Bugfix Round 2 — error.hint, Shared Auth Promise, CSP (2026-06-30, fix/session-bugs branch)
+
+- **Bug 1 (Skip → generic error) FIXED** — `error.hint` vs `error.message` mismatch. Both StaffView and DashboardQueue skip handlers now read `(error as any)?.hint` instead of `error.message`. Advisory lock (`pg_advisory_xact_lock`) added to `skip_queue_ticket` to prevent concurrent skip/recalculate races.
+- **Bug 2 (get_queue_context 400) FIXED** — Sentry investigation found zero 400s (only successful ~60ms spans). No stale closure in the real-time subscription. Added defensive null guard in `refreshQueueContext`.
+- **Bug 3 (Auth redirect race) FIXED** — Collapsed two independent `get_user_role` RPC calls into one shared promise (`pendingRolePromiseRef`). `fetchRole` and `waitForRole` now delegate to `getRole()` which caches the promise per login cycle. Promise reset on SIGNED_IN + signOut. `handlePostAuth` uses `getSession()` (local cache, no yield to React) instead of `getUser()`.
+- **Bug 4 (CSP) FIXED** — `vercel.live` + `vercel.com` added to CSP in vercel.json.
+- **Build:** `npm run build` and `npx tsc --noEmit` pass zero errors.
 
 ### Phase 3d — Final Pricing Limits & Polish (2026-06-28)
 - **Pricing:** Final Algerian market limits: Free(100/300/3), Pro(500/1000/7), Business(2000/2000/unlimited). Migration applied live.
 - **Legal pages:** TermsOfService + PrivacyPolicy (Algerian Law 18-07)
-- **i18n:** All missing keys added (~590 total per locale). 20 new keys in demo components.
+- **i18n:** All missing keys added (~992 total per locale). 20 new keys in demo components.
 - **RTL polish:** ~20 items across 18 files. All 35+ components patched. All arrow icons flipped.
 - **SubscriptionTab:** Fixed RPC array bug. Real-time subscription for counts. Staff limit frontend enforcement.
 - **Bugfixes:** `bg-[var(--accent)]` → `bg-accent` across 8 files (invalid CSS). BookingRow column widths fixed.
@@ -106,7 +122,7 @@ npx tsc --noEmit # Type-check only
 - **Cover images get cache-busting `?cb=`** on each upload to prevent stale browser cache
 
 ### Queue Edge Cases — Skip, Send Back, Check-in, Pause (2026-06-30)
-- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` now NULLs non-waiting positions first; `skip_queue_ticket` actually moves ticket to end (was duplicate recalc with no skip logic); `send_ticket_back_to_queue` clears position before recalculating
+- **Skip + Send Back 409 conflict fixed** — 3 RPCs rewritten: `recalculate_queue_positions` now NULLs non-waiting positions first; `skip_queue_ticket` swaps 1 position (bounded swap, not move-to-end); `send_ticket_back_to_queue` clears position before status change.
 - **Check-in button** in TicketTracker — "I'm here" sets `checked_in_at` timestamp, staff see green ✓
 - **Queue pause toggle** in dashboard settings — owners flip switch, QueueFlow shows amber notice, join form hidden
 - **StatCard ref warning fixed** — renamed `ref` → `sectionRef` prop

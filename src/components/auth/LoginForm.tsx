@@ -26,12 +26,19 @@ const LoginForm = () => {
   }
 
   const handlePostAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Try getSession first (instant local read), fall back to getUser (network-verified)
+    let user: import("@supabase/supabase-js").User | undefined;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      user = session.user;
+    } else {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      user = u ?? undefined;
+    }
     if (!user) return;
 
     // Use AuthContext's waitForRole (single RPC code path, no race with fetchRole)
     const roleData = await waitForRole();
-
     if (!roleData) {
       navigate("/onboarding");
       return;
