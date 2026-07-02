@@ -464,39 +464,29 @@ AS $$
 DECLARE
   v_ticket RECORD;
 BEGIN
-  SELECT qt.* INTO v_ticket
-  FROM public.queue_tickets qt
-  WHERE qt.id = p_ticket_id
-  FOR UPDATE;
+  SELECT qt.* INTO v_ticket FROM public.queue_tickets qt WHERE qt.id = p_ticket_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Ticket not found' USING HINT = 'ticket_not_found'; END IF;
+  IF v_ticket.status != 'waiting' THEN RAISE EXCEPTION 'Ticket is no longer waiting' USING HINT = 'ticket_not_waiting'; END IF;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Ticket not found' USING HINT = 'ticket_not_found';
-  END IF;
-
-  IF v_ticket.status != 'waiting' THEN
-    RAISE EXCEPTION 'Ticket is no longer waiting' USING HINT = 'ticket_not_waiting';
-  END IF;
-
-  -- Authenticated users can only update their own ticket
-  -- Authenticated users can only update their own ticket
-  IF v_ticket.client_id IS NOT NULL AND auth.uid() != v_ticket.client_id THEN
+  -- Authenticated users: can only update their own ticket
+  IF auth.uid() IS NOT NULL AND v_ticket.client_id IS NOT NULL AND auth.uid() != v_ticket.client_id THEN
     RAISE EXCEPTION 'Not your ticket' USING HINT = 'not_owner';
   END IF;
 
+  -- Walk-in bypass fix: authenticated non-owner users must be business staff/owner/superadmin
+  IF auth.uid() IS NOT NULL AND v_ticket.client_id IS NULL
+     AND NOT EXISTS (SELECT 1 FROM public.businesses WHERE id = v_ticket.business_id AND owner_id = auth.uid())
+     AND NOT EXISTS (SELECT 1 FROM public.staff_members WHERE business_id = v_ticket.business_id AND profile_id = auth.uid())
+     AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin') THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
   -- Rate limit: max 1 change per 30 seconds per ticket (walk-in gap mitigation)
-  -- Uses dedicated service_changed_at column (NULL = first change always allowed)
   IF v_ticket.service_changed_at IS NOT NULL AND NOW() - v_ticket.service_changed_at < INTERVAL '30 seconds' THEN
     RAISE EXCEPTION 'Too many changes' USING HINT = 'rate_limited';
   END IF;
 
-  UPDATE public.queue_tickets
-  SET
-    service_id = p_service_id,
-    staff_member_id = p_staff_member_id,
-    service_changed_at = NOW(),
-    updated_at = NOW()
-  WHERE id = p_ticket_id;
-
+  UPDATE public.queue_tickets SET service_id = p_service_id, staff_member_id = p_staff_member_id, service_changed_at = NOW(), updated_at = NOW() WHERE id = p_ticket_id;
   RETURN TRUE;
 END;
 $$;
@@ -554,9 +544,20 @@ RETURNS TABLE(
   completed_at TIMESTAMPTZ,
   checked_in_at TIMESTAMPTZ, skip_count INT
 )
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = 'public'
 AS $$
+BEGIN
+  -- Business owner, staff, or superadmin can access this (contains PII)
+  IF auth.uid() IS NULL OR (
+    NOT EXISTS (SELECT 1 FROM businesses b WHERE b.id = p_business_id AND b.owner_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM staff_members sm WHERE sm.business_id = p_business_id AND sm.profile_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin')
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  RETURN QUERY
   SELECT qt.id, qt.ticket_label, qt.ticket_number, qt.status,
          qt.staff_member_id, qt.client_name, qt.client_phone,
          qt.service_id, s.name, sm.display_name,
@@ -570,6 +571,7 @@ AS $$
     AND qt.queue_date = p_queue_date
     AND qt.status IN ('waiting', 'called', 'in_service', 'completed')
   ORDER BY qt.created_at ASC;
+END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_dashboard_queue(UUID, DATE) TO authenticated;
@@ -584,16 +586,24 @@ SET search_path = 'public'
 AS $$
 DECLARE
   v_old_status queue_status;
+  v_business_id UUID;
+  v_client_id UUID;
 BEGIN
-  SELECT status INTO v_old_status FROM queue_tickets WHERE id = p_ticket_id;
+  SELECT status, business_id, client_id
+  INTO v_old_status, v_business_id, v_client_id
+  FROM queue_tickets WHERE id = p_ticket_id;
 
-  IF v_old_status IS NULL THEN
-    RETURN FALSE;
+  IF v_old_status IS NULL THEN RETURN FALSE; END IF;
+
+  -- Authenticated users must own the ticket or be business owner/staff/superadmin
+  IF auth.uid() IS NOT NULL AND auth.uid() != v_client_id
+     AND NOT EXISTS (SELECT 1 FROM businesses WHERE id = v_business_id AND owner_id = auth.uid())
+     AND NOT EXISTS (SELECT 1 FROM staff_members WHERE business_id = v_business_id AND profile_id = auth.uid())
+     AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin') THEN
+    RAISE EXCEPTION 'Not authorized';
   END IF;
 
-  IF v_old_status NOT IN ('waiting', 'called') THEN
-    RETURN FALSE;
-  END IF;
+  IF v_old_status NOT IN ('waiting', 'called') THEN RETURN FALSE; END IF;
 
   UPDATE queue_tickets SET status = 'cancelled', updated_at = NOW()
   WHERE id = p_ticket_id AND status IN ('waiting', 'called');
@@ -1081,10 +1091,28 @@ $$;
 -- -----------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.check_in_ticket(p_ticket_id UUID)
 RETURNS void
-LANGUAGE sql SECURITY DEFINER
+LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
+DECLARE
+  v_business_id UUID;
+  v_is_superadmin BOOLEAN;
+BEGIN
+  SELECT business_id INTO v_business_id FROM queue_tickets WHERE id = p_ticket_id;
+  IF v_business_id IS NULL THEN RAISE EXCEPTION 'Ticket not found'; END IF;
+
+  SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin') INTO v_is_superadmin;
+
+  IF auth.uid() IS NULL OR (
+    NOT EXISTS (SELECT 1 FROM businesses WHERE id = v_business_id AND owner_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM staff_members WHERE business_id = v_business_id AND profile_id = auth.uid())
+    AND NOT v_is_superadmin
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
   UPDATE queue_tickets SET checked_in_at = NOW(), skip_count = 0 WHERE id = p_ticket_id;
+END;
 $$;
 
 -- -----------------------------------------------------------
@@ -1095,10 +1123,25 @@ CREATE OR REPLACE FUNCTION public.reassign_queue_ticket(
   p_staff_member_id UUID
 )
 RETURNS void
-LANGUAGE sql SECURITY DEFINER
+LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = 'public'
 AS $$
+DECLARE
+  v_business_id UUID;
+BEGIN
+  SELECT business_id INTO v_business_id FROM queue_tickets WHERE id = p_ticket_id;
+  IF v_business_id IS NULL THEN RAISE EXCEPTION 'Ticket not found'; END IF;
+
+  IF auth.uid() IS NULL OR (
+    NOT EXISTS (SELECT 1 FROM businesses WHERE id = v_business_id AND owner_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM staff_members WHERE business_id = v_business_id AND profile_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin')
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
   UPDATE queue_tickets SET staff_member_id = p_staff_member_id WHERE id = p_ticket_id;
+END;
 $$;
 
 -- -----------------------------------------------------------
@@ -1144,14 +1187,23 @@ AS $$
 DECLARE
   v_business_id UUID;
   v_queue_date DATE;
+  v_is_superadmin BOOLEAN;
 BEGIN
   SELECT business_id, queue_date INTO v_business_id, v_queue_date
   FROM queue_tickets WHERE id = p_ticket_id;
+  IF v_business_id IS NULL THEN RAISE EXCEPTION 'Ticket not found'; END IF;
 
-  UPDATE queue_tickets
-  SET status = 'waiting', called_at = NULL, position_in_queue = NULL
-  WHERE id = p_ticket_id;
+  SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin') INTO v_is_superadmin;
 
+  IF auth.uid() IS NULL OR (
+    NOT EXISTS (SELECT 1 FROM businesses WHERE id = v_business_id AND owner_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM staff_members WHERE business_id = v_business_id AND profile_id = auth.uid())
+    AND NOT v_is_superadmin
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  UPDATE queue_tickets SET status = 'waiting', called_at = NULL, position_in_queue = NULL WHERE id = p_ticket_id;
   PERFORM recalculate_queue_positions(v_business_id, v_queue_date);
 END;
 $$;
@@ -1170,63 +1222,73 @@ DECLARE
   v_current_pos INTEGER;
   v_next_ticket_id UUID;
   v_next_pos INTEGER;
+  v_is_superadmin BOOLEAN;
 BEGIN
   SELECT business_id, queue_date, position_in_queue
   INTO v_business_id, v_queue_date, v_current_pos
   FROM queue_tickets WHERE id = p_ticket_id;
+  IF v_business_id IS NULL THEN RETURN; END IF;
 
-  IF v_business_id IS NULL THEN
-    RETURN;
+  SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'superadmin') INTO v_is_superadmin;
+
+  IF auth.uid() IS NULL OR (
+    NOT EXISTS (SELECT 1 FROM businesses WHERE id = v_business_id AND owner_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM staff_members WHERE business_id = v_business_id AND profile_id = auth.uid())
+    AND NOT v_is_superadmin
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
   END IF;
 
   PERFORM pg_advisory_xact_lock(hashtext(v_business_id::text || v_queue_date::text));
 
-  IF v_current_pos IS NULL THEN
-    RAISE EXCEPTION 'Ticket has no position assigned' USING HINT = 'skip_no_position';
-  END IF;
+  IF v_current_pos IS NULL THEN RAISE EXCEPTION 'Ticket has no position assigned' USING HINT = 'skip_no_position'; END IF;
 
-  UPDATE queue_tickets
-  SET position_in_queue = NULL
-  WHERE business_id = v_business_id
-    AND queue_date = v_queue_date
-    AND status != 'waiting';
+  UPDATE queue_tickets SET position_in_queue = NULL WHERE business_id = v_business_id AND queue_date = v_queue_date AND status != 'waiting';
 
   SELECT id, position_in_queue INTO v_next_ticket_id, v_next_pos
-  FROM queue_tickets
-  WHERE business_id = v_business_id
-    AND queue_date = v_queue_date
-    AND status = 'waiting'
-    AND position_in_queue > v_current_pos
-  ORDER BY position_in_queue ASC
-  LIMIT 1;
+  FROM queue_tickets WHERE business_id = v_business_id AND queue_date = v_queue_date AND status = 'waiting' AND position_in_queue > v_current_pos
+  ORDER BY position_in_queue ASC LIMIT 1;
 
-  IF v_next_ticket_id IS NULL THEN
-    RAISE EXCEPTION 'Already last in queue, nothing to skip' USING HINT = 'skip_last_in_queue';
-  END IF;
+  IF v_next_ticket_id IS NULL THEN RAISE EXCEPTION 'Already last in queue, nothing to skip' USING HINT = 'skip_last_in_queue'; END IF;
 
   UPDATE queue_tickets SET position_in_queue = v_next_pos WHERE id = p_ticket_id;
   UPDATE queue_tickets SET position_in_queue = v_current_pos WHERE id = v_next_ticket_id;
-
   UPDATE queue_tickets SET skip_count = skip_count + 1 WHERE id = p_ticket_id;
 
   RETURN QUERY SELECT position_in_queue FROM queue_tickets WHERE id = p_ticket_id;
 END;
 $$;
 
+-- Revoke PUBLIC on all RPCs first, then selectively grant per security model
+REVOKE EXECUTE ON FUNCTION public.get_queue_ticket(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_queue_ticket(UUID) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_staff_queue(UUID, DATE) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_staff_queue(UUID, DATE) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_dashboard_queue(UUID, DATE) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_dashboard_queue(UUID, DATE) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_business_queue(UUID, DATE) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_business_queue(UUID, DATE) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_completed_ticket_stats(UUID, UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_completed_ticket_stats(UUID, UUID) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_queue_context(UUID, DATE, INTEGER) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_queue_context(UUID, DATE, INTEGER) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_booking_by_token(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_booking_by_token(UUID) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.cancel_booking_by_token(UUID, UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.cancel_booking_by_token(UUID, UUID) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.cancel_queue_ticket(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.cancel_queue_ticket(UUID) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_default_whatsapp_templates() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_default_whatsapp_templates() TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.check_in_ticket(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.check_in_ticket(UUID) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.reassign_queue_ticket(UUID, UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.reassign_queue_ticket(UUID, UUID) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.recalculate_queue_positions(UUID, DATE) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.recalculate_queue_positions(UUID, DATE) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.send_ticket_back_to_queue(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.send_ticket_back_to_queue(UUID) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.skip_queue_ticket(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.skip_queue_ticket(UUID) TO authenticated;
 
 -- Authenticated-only RPCs

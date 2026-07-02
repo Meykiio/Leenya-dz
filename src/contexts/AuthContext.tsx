@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         return role;
       } catch (error) {
-        console.error("[AuthContext] getRole failed:", error);
+        if (import.meta.env.DEV) console.error("[AuthContext] getRole failed:", error);
         return null;
       }
     })();
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const newRole = await getRole();
       setRole(newRole);
     } catch (error) {
-      console.error("[AuthContext] fetchRole failed:", error);
+      if (import.meta.env.DEV) console.error("[AuthContext] fetchRole failed:", error);
       setRole(null);
     } finally {
       setRoleReady(true);
@@ -88,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -101,7 +102,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (event === "SIGNED_IN") {
             pendingRolePromiseRef.current = null;
             setRoleReady(false);
-            setTimeout(() => fetchRole(), 0);
+            const id = setTimeout(() => fetchRole(), 0);
+            timeoutIds.push(id);
           }
         } else {
           setRole(null);
@@ -135,7 +137,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSessionReady(true);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      timeoutIds.forEach(clearTimeout);
+    };
   }, []);
 
   const signOut = async () => {
@@ -160,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setRoleReady(true);
       return newRole;
     } catch (error) {
-      console.error("[AuthContext] waitForRole failed:", error);
+      if (import.meta.env.DEV) console.error("[AuthContext] waitForRole failed:", error);
       setRole(null);
       setRoleReady(true);
       return null;

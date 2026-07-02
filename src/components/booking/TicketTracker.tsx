@@ -52,6 +52,8 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const queueDateRef = useRef<string | null>(null);
   const serviceIdRef = useRef<string | null>(null);
   const staffMemberIdRef = useRef<string | null>(null);
+  const ticketRef = useRef(ticket);
+  useEffect(() => { ticketRef.current = ticket; }, [ticket]);
   const [showServicePicker, setShowServicePicker] = useState(false);
   const [availableServices, setAvailableServices] = useState<{ id: string; name: string }[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
@@ -196,7 +198,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   }, [ticketId, fetchHistoricalData]);
 
   const refetchAll = useCallback(async () => {
-    if (!businessIdRef.current || !queueDateRef.current || !ticket) return;
+    if (!businessIdRef.current || !queueDateRef.current || !ticketRef.current) return;
     setIsOffline(false);
     const { data, error } = await supabase
       .rpc("get_queue_ticket", { p_ticket_id: ticketId })
@@ -224,8 +226,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       );
       if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId, ticket, refreshQueueContext]);
+  }, [ticketId, refreshQueueContext]);
 
   useEffect(() => {
     if (!businessIdRef.current) return;
@@ -446,7 +447,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
             className="w-full gap-1.5 h-[40px] text-[13px]"
             onClick={async () => {
               await supabase.rpc("check_in_ticket", { p_ticket_id: ticketId });
-              setTicket({ ...ticket, checked_in_at: new Date().toISOString() });
+              setTicket(prev => prev ? { ...prev, checked_in_at: new Date().toISOString() } : prev);
             }}
           >
             {t("booking:ticketTracker.checkIn")}

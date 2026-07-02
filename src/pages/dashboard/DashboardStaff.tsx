@@ -166,7 +166,7 @@ const DashboardStaff = () => {
     if (!business) return;
     const ext = file.name.split(".").pop();
     const path = `staff-avatars/${business.id}/${staffId}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage.from("business-assets").upload(path, file, { upsert: true, cacheControl: "no-cache" });
     if (uploadError) { console.error("uploadAvatar:", uploadError); toast({ title: t("dashboard:labels.errorUpload"), description: t("dashboard:staff.errors.uploadImage"), variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("business-assets").getPublicUrl(path);
     const { error: updateError } = await supabase.from("staff_members").update({ avatar_url: publicUrl }).eq("business_id", business.id).eq("id", staffId);
