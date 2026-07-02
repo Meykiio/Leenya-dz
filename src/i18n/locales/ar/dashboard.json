@@ -285,7 +285,7 @@
   "settings.account.deleteDesc": "هذا الإجراء لا رجعة فيه. سيتم حذف جميع بياناتك نهائياً.",
   "settings.account.toast.updated": "تم تحديث الملف الشخصي",
   "settings.account.toast.passwordChanged": "تم تغيير كلمة المرور",
-  "settings.account.toast.contactSupport": "اتصل بالدعم لحذف حسابك.",
+  "settings.account.toast.deleted": "تم حذف حسابك وجميع البيانات المرتبطة به.",
   "settings.account.error.passwordShort": "كلمة المرور قصيرة جداً (6 أحرف على الأقل)",
   "settings.subscription.title": "باقتك",
   "settings.subscription.invoices": "سجل الفواتير",

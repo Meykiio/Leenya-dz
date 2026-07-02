@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -13,8 +14,9 @@ import { toast } from "@/hooks/use-toast";
 
 export default function AccountTab() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { setLanguage } = useLanguage();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ full_name: "", phone: "", preferred_lang: "en" });
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -135,7 +137,16 @@ export default function AccountTab() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={() => toast({ title: t("dashboard:settings.account.toast.contactSupport") })}>
+                <AlertDialogAction onClick={async () => {
+                  const { error } = await supabase.rpc("delete_my_account");
+                  if (error) {
+                    toast({ title: t("common:toast.error"), description: error.message, variant: "destructive" });
+                    return;
+                  }
+                  toast({ title: t("dashboard:settings.account.toast.deleted") });
+                  await signOut();
+                  navigate("/");
+                }}>
                   {t("dashboard:settings.account.confirmDelete")}
                 </AlertDialogAction>
               </AlertDialogFooter>

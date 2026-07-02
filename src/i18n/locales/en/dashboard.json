@@ -286,7 +286,7 @@
   "settings.account.deleteDesc": "This action is irreversible. All your data will be permanently deleted.",
   "settings.account.toast.updated": "Profile updated",
   "settings.account.toast.passwordChanged": "Password changed",
-  "settings.account.toast.contactSupport": "Contact support to delete your account.",
+  "settings.account.toast.deleted": "Your account and all associated data have been deleted.",
   "settings.account.error.passwordShort": "Password too short (minimum 6 characters)",
   "settings.subscription.title": "Your subscription",
   "settings.subscription.invoices": "Invoice history",
