@@ -165,11 +165,11 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
       <Card>
         <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.images")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center justify-items-center">
+          <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:items-start">
             <div className="space-y-2 text-center">
-              <Label>{t("dashboard:settings.business.logo")}</Label>
+              <Label className="text-sm">{t("dashboard:settings.business.logo")}</Label>
               <div className="relative inline-block">
-                <Avatar className="h-16 w-16 border">
+                <Avatar className="h-16 w-16 border mx-auto">
                   <AvatarImage src={form.logo_url || generatePixelAvatar(form.name || " ", 64)} alt={t("dashboard:settings.business.logo")} />
                   <AvatarFallback className="bg-muted" />
                 </Avatar>
@@ -179,18 +179,18 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
                   </button>
                 )}
               </div>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline justify-center">
+              <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
                 <Upload className="h-4 w-4" />
                 <span>{t("dashboard:settings.business.changeLogo")}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "logo")} />
               </label>
             </div>
-            <div className="space-y-2 w-full">
-              <Label className="text-center block">{t("dashboard:settings.business.cover")}</Label>
-              <div className="relative h-[140px] w-full overflow-hidden">
+            <div className="space-y-2 w-full max-w-full">
+              <Label className="text-sm text-center sm:text-left block">{t("dashboard:settings.business.cover")}</Label>
+              <div className="relative h-[120px] sm:h-[140px] w-full rounded-lg overflow-hidden bg-muted">
                 {form.cover_url ? (
                   <>
-                    <img src={form.cover_url} alt={t("dashboard:settings.business.cover")} className="h-full w-full object-cover" />
+                    <img src={form.cover_url} alt="" className="h-full w-full object-cover" />
                     <button onClick={() => removeImage("cover")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 z-10">
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -199,7 +199,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
                   <PixelCover name={form.name || " "} />
                 )}
               </div>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
+              <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-primary hover:underline">
                 <Upload className="h-4 w-4" />
                 <span>{t("dashboard:settings.business.changeCover")}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "cover")} />

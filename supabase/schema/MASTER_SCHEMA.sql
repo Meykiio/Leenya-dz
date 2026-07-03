@@ -124,12 +124,12 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   accepts_walkins BOOLEAN DEFAULT true,
   accepts_appointments BOOLEAN DEFAULT true,
   advance_booking_days INT DEFAULT 14,
-  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'business')),
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'business', 'paid')),
   trial_ends_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
   queue_capacity INT CHECK (queue_capacity IS NULL OR queue_capacity > 0),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  is_queue_paused BOOLEAN DEFAULT false
+  is_queue_paused BOOLEAN DEFAULT true
 );
 
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
@@ -1372,8 +1372,7 @@ BEGIN
 
   CASE v_plan
     WHEN 'free' THEN v_max_bookings := 100; v_max_queue := 300;
-    WHEN 'pro' THEN v_max_bookings := 500; v_max_queue := 1000;
-    WHEN 'business' THEN v_max_bookings := 2000; v_max_queue := 2000;
+    WHEN 'paid' THEN v_max_bookings := 5000; v_max_queue := 5000;
     ELSE v_max_bookings := 100; v_max_queue := 300;
   END CASE;
 
@@ -1423,8 +1422,7 @@ BEGIN
 
   CASE v_plan
     WHEN 'free' THEN v_max_staff := 3;
-    WHEN 'pro' THEN v_max_staff := 7;
-    WHEN 'business' THEN RETURN NEW;
+    WHEN 'paid' THEN RETURN NEW;
     ELSE v_max_staff := 3;
   END CASE;
 

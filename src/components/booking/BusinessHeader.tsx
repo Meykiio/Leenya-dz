@@ -69,10 +69,13 @@ export default function BusinessHeader({ business, openStatus }: BusinessHeaderP
 
         {/* Phone */}
         {business.phone && (
-          <p className="text-[13px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+          <a
+            href={`tel:${business.phone.replace(/[^0-9+]/g, "")}`}
+            className="text-[13px] text-muted-foreground mt-0.5 flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
             <Phone className="h-3.5 w-3.5 shrink-0" />
             {business.phone}
-          </p>
+          </a>
         )}
 
         {/* Open status + Take me there */}

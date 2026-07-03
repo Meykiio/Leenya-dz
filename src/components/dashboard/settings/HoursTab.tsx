@@ -94,44 +94,54 @@ export default function HoursTab({ businessId }: { businessId: string }) {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">{t("dashboard:settings.hours.title")}</CardTitle>
-            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base shrink-0">{t("dashboard:settings.hours.title")}</CardTitle>
+            <label className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground cursor-pointer shrink-0">
               <Switch checked={sameAll} onCheckedChange={setSameAll} />
-              <span>{t("dashboard:settings.hours.sameForAll")}</span>
+              <span className="hidden sm:inline">{t("dashboard:settings.hours.sameForAll")}</span>
+              <span className="sm:hidden">Tous</span>
             </label>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {hours.map((day, i) => (
-            <div key={i} className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-              <span className="w-24 text-sm font-medium text-foreground shrink-0">{t(`dashboard:${dayNameKeys[day.day_of_week]}`)}</span>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={!day.is_closed}
-                  onCheckedChange={(v) => updateDay(i, "is_closed", !v)}
-                />
-                <span className="text-xs text-muted-foreground w-12">{day.is_closed ? t("dashboard:settings.hours.closed") : t("dashboard:settings.hours.open")}</span>
-              </div>
-              {!day.is_closed && (
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    type="time"
-                    value={day.opens_at}
-                    onChange={(e) => updateDay(i, "opens_at", e.target.value)}
-                    className="w-[100px] sm:w-28"
-                  />
-                  <span className="text-muted-foreground text-xs shrink-0">→</span>
-                  <Input
-                    type="time"
-                    value={day.closes_at}
-                    onChange={(e) => updateDay(i, "closes_at", e.target.value)}
-                    className="w-[100px] sm:w-28"
-                  />
+        <CardContent>
+          <div className="divide-y divide-[var(--border-subtle)] -mx-6 px-6">
+            {hours.map((day, i) => (
+              <div key={i} className="py-3 first:pt-0 last:pb-0">
+                {/* Mobile layout */}
+                <div className="sm:hidden space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">{t(`dashboard:${dayNameKeys[day.day_of_week]}`)}</span>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={!day.is_closed} onCheckedChange={(v) => updateDay(i, "is_closed", !v)} />
+                      <span className="text-xs text-muted-foreground w-12">{day.is_closed ? t("dashboard:settings.hours.closed") : t("dashboard:settings.hours.open")}</span>
+                    </div>
+                  </div>
+                  {!day.is_closed && (
+                    <div className="flex items-center gap-2 pl-1">
+                      <Input type="time" value={day.opens_at} onChange={(e) => updateDay(i, "opens_at", e.target.value)} className="flex-1 min-w-0" />
+                      <span className="text-muted-foreground text-sm shrink-0">→</span>
+                      <Input type="time" value={day.closes_at} onChange={(e) => updateDay(i, "closes_at", e.target.value)} className="flex-1 min-w-0" />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+                {/* Desktop layout */}
+                <div className="hidden sm:flex items-center gap-3">
+                  <span className="w-24 text-sm font-medium text-foreground shrink-0">{t(`dashboard:${dayNameKeys[day.day_of_week]}`)}</span>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={!day.is_closed} onCheckedChange={(v) => updateDay(i, "is_closed", !v)} />
+                    <span className="text-xs text-muted-foreground w-12">{day.is_closed ? t("dashboard:settings.hours.closed") : t("dashboard:settings.hours.open")}</span>
+                  </div>
+                  {!day.is_closed && (
+                    <div className="flex items-center gap-1.5">
+                      <Input type="time" value={day.opens_at} onChange={(e) => updateDay(i, "opens_at", e.target.value)} className="w-28" />
+                      <span className="text-muted-foreground text-sm shrink-0">→</span>
+                      <Input type="time" value={day.closes_at} onChange={(e) => updateDay(i, "closes_at", e.target.value)} className="w-28" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
       <Button onClick={save} disabled={loading} className="w-full sm:w-auto">

@@ -17,6 +17,8 @@
   "businessPublic.openStatus.closesAt": "Ferme \u00e0 {{time}}",
   "businessPublic.openStatus.closed": "Ferm\u00e9",
   "businessPublic.takeMeThere": "M'y rendre",
+  "businessPublic.chatWhatsApp": "Discuter sur WhatsApp",
+  "appointmentFlow.dateTimeLine": "{{date}} à {{time}}",
   "appointmentFlow.step.service": "Service",
   "appointmentFlow.step.staff": "Equipe",
   "appointmentFlow.step.date": "Date",

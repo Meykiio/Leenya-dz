@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import BusinessHeader from "@/components/booking/BusinessHeader";
 import AppointmentFlow from "@/components/booking/AppointmentFlow";
 import QueueFlow from "@/components/booking/QueueFlow";
+import { MessageCircle, Phone } from "lucide-react";
 
 interface Business {
   id: string;
@@ -52,8 +53,8 @@ const BusinessPublic = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [hours, setHours] = useState<BusinessHour[]>([]);
   
-  // Read tab from URL params, default to queue
-  const defaultTab = searchParams.get('tab') === 'appointment' ? 'appointment' : 'queue';
+  // Read tab from URL params, default to appointment
+  const defaultTab = searchParams.get('tab') === 'queue' ? 'queue' : 'appointment';
   const [activeTab, setActiveTab] = useState<"appointment" | "queue">(defaultTab);
 
   useEffect(() => {
@@ -105,13 +106,13 @@ const BusinessPublic = () => {
     fetchAll();
   }, [slug, navigate]);
 
-  // Set default tab based on business config (only if not already set by URL)
+  // Set default tab based on business config (appointment first, queue fallback)
   useEffect(() => {
     if (business && !searchParams.get('tab')) {
       const showAppointments = business.accepts_appointments !== false;
       const showQueue = business.accepts_walkins !== false;
-      if (activeTab === "queue" && !showQueue) setActiveTab("appointment");
       if (activeTab === "appointment" && !showAppointments) setActiveTab("queue");
+      if (activeTab === "queue" && !showQueue) setActiveTab("appointment");
     }
   }, [business, searchParams, activeTab]);
 
@@ -178,18 +179,6 @@ const BusinessPublic = () => {
             {/* Custom sticky tab bar */}
             <div className="sticky top-0 z-10 bg-background border-b border-border px-5">
               <div className="flex">
-                {showQueue && (
-                  <button
-                    onClick={() => setActiveTab("queue")}
-                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
-                      activeTab === "queue"
-                        ? "text-foreground border-foreground"
-                        : "text-muted-foreground border-transparent hover:text-foreground/70"
-                    }`}
-                  >
-                    {t("booking:businessPublic.tabQueue")}
-                  </button>
-                )}
                 {showAppointments && (
                   <button
                     onClick={() => setActiveTab("appointment")}
@@ -200,6 +189,18 @@ const BusinessPublic = () => {
                     }`}
                   >
                     {t("booking:businessPublic.tabAppointment")}
+                  </button>
+                )}
+                {showQueue && (
+                  <button
+                    onClick={() => setActiveTab("queue")}
+                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
+                      activeTab === "queue"
+                        ? "text-foreground border-foreground"
+                        : "text-muted-foreground border-transparent hover:text-foreground/70"
+                    }`}
+                  >
+                    {t("booking:businessPublic.tabQueue")}
                   </button>
                 )}
               </div>
@@ -243,6 +244,19 @@ const BusinessPublic = () => {
         )}
 
       </div>
+
+      {/* WhatsApp floating CTA */}
+      {business.phone && (
+        <a
+          href={`https://wa.me/${business.phone.replace(/[^0-9]/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-white shadow-lg hover:bg-[#22c35e] transition-all duration-200 hover:scale-105 active:scale-95 rtl:right-auto rtl:left-5"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[13px] font-semibold whitespace-nowrap">{t("booking:businessPublic.chatWhatsApp")}</span>
+        </a>
+      )}
     </div>
   );
 };

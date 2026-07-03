@@ -123,9 +123,11 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   }, [businessId]);
 
   useEffect(() => {
-    supabase.from("businesses").select("is_queue_paused").eq("id", businessId).single().then(({ data: biz }) => {
+    const fetchPauseState = async () => {
+      const { data: biz } = await supabase.from("businesses").select("is_queue_paused").eq("id", businessId).single();
       if (biz?.is_queue_paused) setIsPaused(true);
-    });
+    };
+    fetchPauseState();
 
     const fetchStats = async () => {
       const { data, error } = await supabase
@@ -149,14 +151,26 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     };
     fetchStats();
 
-    const channel = supabase
+    const statsChannel = supabase
       .channel("queue-stats")
       .on("postgres_changes", { event: "*", schema: "public", table: "queue_tickets", filter: `business_id=eq.${businessId}` }, () => {
         fetchStats();
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const pauseChannel = supabase
+      .channel("queue-pause")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "businesses", filter: `id=eq.${businessId}` }, (payload) => {
+        if (payload.new && typeof payload.new.is_queue_paused === "boolean") {
+          setIsPaused(payload.new.is_queue_paused);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(statsChannel);
+      supabase.removeChannel(pauseChannel);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId, today, selectedService]);
 
@@ -358,6 +372,13 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
   return (
     <div className="px-5 py-5 space-y-5">
+      {/* Queue paused notice — top of the page */}
+      {isPaused && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-4 text-center">
+          <p className="text-[14px] font-semibold text-amber-800">{t("booking:queueFlow.queuePaused")}</p>
+        </div>
+      )}
+
       {cachedData && (
         <div className="rounded-md border border-primary/30 bg-primary/5 p-4 space-y-3">
           <p className="text-[13px] font-medium text-foreground">
@@ -373,10 +394,11 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           </div>
         </div>
       )}
+
       {/* Live stats */}
       <div className="rounded-md border border-border p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          <span className={`h-2 w-2 rounded-full ${isPaused ? "bg-amber-400" : "bg-primary animate-pulse"}`} />
           <h3 className="text-[13px] font-semibold text-foreground">{t("booking:queueFlow.liveQueueTitle")}</h3>
         </div>
         <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
@@ -391,87 +413,85 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         )}
       </div>
 
-      {/* Service selection */}
-      <div>
-        <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:queueFlow.serviceTitle")}</h2>
-        <div className="flex flex-col gap-2">
-          {services.map((s) => {
-            const isSelected = selectedService?.id === s.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSelectedService(s)}
-                className={`flex items-center justify-between rounded-md border p-[14px_16px] text-left transition-all ${
-                  isSelected
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-foreground/20 hover:bg-muted/50"
-                }`}
-              >
-                <div>
-                  <p className={`text-[14px] font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
-                    {s.name}
-                  </p>
-                  <p className="text-[12px] text-muted-foreground mt-0.5">
-                    <span className="font-mono">{s.duration_minutes}</span> {t("common:labels.minutesShort")}
-                    {s.price_dzd != null && (
-                      <> · <span className="font-mono">{s.price_dzd.toLocaleString("fr-FR")}</span> DZD</>
-                    )}
-                  </p>
-                </div>
-                <ChevronRight className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Staff selection */}
-      {selectedService && staffMembers.length > 0 && !staffConfirmed && (
-        <StepStaff
-          staffMembers={staffMembers}
-          selectedStaff={selectedStaff}
-          onSelect={(s) => setSelectedStaff(s)}
-          onBack={() => { setSelectedService(null); setStaffConfirmed(false); }}
-          onContinue={() => setStaffConfirmed(true)}
-        />
-      )}
-
-      {/* Queue paused notice */}
-      {isPaused && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-center text-[13px] text-amber-800">
-          {t("booking:queueFlow.queuePaused")}
-        </div>
-      )}
-
-      {/* Join form */}
-      {!isPaused && selectedService && (staffMembers.length === 0 || staffConfirmed) && (
-        <div className="space-y-3">
-          <h3 className="text-[15px] font-semibold text-foreground">{t("booking:queueFlow.joinTitle")}</h3>
+      {/* Everything below is hidden when queue is paused */}
+      {!isPaused && (
+        <>
+          {/* Service selection */}
           <div>
-            <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.nameLabel")}</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("booking:queueFlow.namePlaceholder")} className="mt-1" />
-          </div>
-          <div>
-            <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                value={phone}
-                onChange={(e) => { setPhone(e.target.value.replace(/\D/g, "")); setPhoneError(""); }}
-                placeholder={t("booking:queueFlow.phonePlaceholder")}
-                type="tel"
-              />
+            <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:queueFlow.serviceTitle")}</h2>
+            <div className="flex flex-col gap-2">
+              {services.map((s) => {
+                const isSelected = selectedService?.id === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSelectedService(s)}
+                    className={`flex items-center justify-between rounded-md border p-[14px_16px] text-left transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-foreground/20 hover:bg-muted/50"
+                    }`}
+                  >
+                    <div>
+                      <p className={`text-[14px] font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
+                        {s.name}
+                      </p>
+                      <p className="text-[12px] text-muted-foreground mt-0.5">
+                        <span className="font-mono">{s.duration_minutes}</span> {t("common:labels.minutesShort")}
+                        {s.price_dzd != null && (
+                          <> · <span className="font-mono">{s.price_dzd.toLocaleString("fr-FR")}</span> DZD</>
+                        )}
+                      </p>
+                    </div>
+                    <ChevronRight className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                  </button>
+                );
+              })}
             </div>
-            {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
           </div>
-          <Button
-            className="w-full h-[44px]"
-            disabled={!name.trim() || !phone.trim() || submitting}
-            onClick={handleJoin}
-          >
-            {submitting ? t("booking:queueFlow.submitting") : t("booking:queueFlow.takeTicket")}
-          </Button>
-        </div>
+
+          {/* Staff selection */}
+          {selectedService && staffMembers.length > 0 && !staffConfirmed && (
+            <StepStaff
+              staffMembers={staffMembers}
+              selectedStaff={selectedStaff}
+              onSelect={(s) => setSelectedStaff(s)}
+              onBack={() => { setSelectedService(null); setStaffConfirmed(false); }}
+              onContinue={() => setStaffConfirmed(true)}
+            />
+          )}
+
+          {/* Join form */}
+          {selectedService && (staffMembers.length === 0 || staffConfirmed) && (
+            <div className="space-y-3">
+              <h3 className="text-[15px] font-semibold text-foreground">{t("booking:queueFlow.joinTitle")}</h3>
+              <div>
+                <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.nameLabel")}</label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("booking:queueFlow.namePlaceholder")} className="mt-1" />
+              </div>
+              <div>
+                <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value.replace(/\D/g, "")); setPhoneError(""); }}
+                    placeholder={t("booking:queueFlow.phonePlaceholder")}
+                    type="tel"
+                  />
+                </div>
+                {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
+              </div>
+              <Button
+                className="w-full h-[44px]"
+                disabled={!name.trim() || !phone.trim() || submitting}
+                onClick={handleJoin}
+              >
+                {submitting ? t("booking:queueFlow.submitting") : t("booking:queueFlow.takeTicket")}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

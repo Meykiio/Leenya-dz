@@ -29,7 +29,7 @@ export default function StepConfirmed({
   businessName, trackingUrl, googleCalUrl, shareToBusinessUrl, whatsappShareUrl,
   onCopyLink,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <motion.div
       key="confirmed"
@@ -54,7 +54,10 @@ export default function StepConfirmed({
       <div className="rounded-md border border-border bg-muted/50 p-[14px_16px] text-left space-y-1">
         <p className="text-[14px] font-medium text-foreground">{selectedService?.name}</p>
         <p className="text-[12px] text-muted-foreground">
-          {selectedDate?.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} a {selectedTime}
+          {selectedDate && t("booking:appointmentFlow.dateTimeLine", {
+            date: selectedDate.toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long" }),
+            time: selectedTime,
+          })}
         </p>
         <p className="text-[12px] text-muted-foreground">{businessName}</p>
       </div>

@@ -141,3 +141,17 @@
 | shadcn/ui components installed | UI component library |
 | i18n framework set up | French, English, Arabic support |
 | Tailwind CSS configured | Styling foundation |
+
+
+---
+
+## 2026-07-03 — Full Repositioning
+
+| What changed | Why |
+|---|---|
+| Pricing collapsed from 3 tiers to 2 (Free + 1,990 DZD/mo) | Simpler choice, better value. Pro and Business tiers removed — now one paid plan covers everything |
+| Bookings now open by default on the public page | Clinics and salons rely on appointments first. Queue moved to a secondary tab |
+| Dashboard nav reordered | Bookings now appear before Queue in the sidebar and mobile nav |
+| WhatsApp floating button on every business page | Visitors can message the business directly from their bio-link page |
+| Landing page copy rewritten English-primary | New hero: &quot;Your booking page. In your bio.&quot; Focus on no-show reduction and appointments |
+| All pricing and subscription text updated in French and Arabic | Translations match the new 2-tier model

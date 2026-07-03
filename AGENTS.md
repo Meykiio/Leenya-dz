@@ -66,3 +66,11 @@ Then ask "Want me to test anything or look at something else?"
 - **join_queue timezone drift FIXED** â€” MASTER_SCHEMA.sql had `SET timezone = 'Africa/Algiers'` but it was NEVER applied to live DB (added in commit 90e163b but no migration ran). Live `join_queue` used UTC `CURRENT_DATE`, causing tickets created after midnight Algeria time (before midnight UTC) to get wrong `queue_date`. Applied migration + set A-018's date correctly.
 - **Auth redirect defensive fix** â€” `LoginForm.tsx` `handlePostAuth` now falls back to `getUser()` if `getSession()` returns null, and falls back to direct RPC if `waitForRole()` returns null
 - **Test function `test_timezone` cleaned up**
+
+
+### 2026-07-03 — Full Repositioning: Pricing Collapse, Bookings-First, Bio-link, Landing Rewrite
+- **Pricing collapsed to 2 tiers** — Free (100 bookings, 300 queue, 3 staff) + Paid at 1,990 DZD/month (unlimited everything). Pro/Business tiers removed. DB CHECK constraint expanded, triggers updated, frontend cards rewritten.
+- **Bookings now the default product** — Public page opens on Appointment tab. Dashboard nav reordered: Bookings before Queue. Queue kept as secondary module.
+- **WhatsApp floating CTA on public page** — Every business page now has a green WhatsApp button so visitors can message directly.
+- **Landing page rewritten English-primary** — Hero: &quot;Your booking page. In your bio.&quot; All sections updated for bookings-first messaging. French and Arabic translations updated.
+- **i18n updated across all 3 locales** — Pricing, hero, features, FAQ, footer all rewritten. Dashboard subscription keys updated for 2-tier model.

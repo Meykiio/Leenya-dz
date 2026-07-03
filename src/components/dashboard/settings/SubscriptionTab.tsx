@@ -21,27 +21,16 @@ const pricingPlans = [
     current: true,
   },
   {
-    nameKey: "dashboard:settings.subscription.pricingModal.pro",
-    price: "4 900",
+    nameKey: "dashboard:settings.subscription.pricingModal.paid",
+    price: "1 990",
     featureKeys: [
-      "dashboard:settings.subscription.features.pro500bookings",
-      "dashboard:settings.subscription.features.pro1000queue",
-      "dashboard:settings.subscription.features.pro7staff",
-      "dashboard:settings.subscription.features.proSmsReminders",
-      "dashboard:settings.subscription.features.proAdvancedAnalytics",
+      "dashboard:settings.subscription.features.paidUnlimited",
+      "dashboard:settings.subscription.features.paidReminders",
+      "dashboard:settings.subscription.features.paidAnalytics",
+      "dashboard:settings.subscription.features.paidSupport",
+      "dashboard:settings.subscription.features.paidStaff",
     ],
     highlight: true,
-    comingSoon: true,
-  },
-  {
-    nameKey: "dashboard:settings.subscription.pricingModal.business",
-    price: "8 900",
-    featureKeys: [
-      "dashboard:settings.subscription.features.businessAllPro",
-      "dashboard:settings.subscription.features.businessUnlimitedStaff",
-      "dashboard:settings.subscription.features.businessPrioritySupport",
-      "dashboard:settings.subscription.features.businessCustomApi",
-    ],
   },
 ];
 
@@ -53,8 +42,7 @@ interface BusinessCounts {
 
 const LIMITS: Record<string, { maxBookings: number; maxQueue: number }> = {
   free: { maxBookings: 100, maxQueue: 300 },
-  pro: { maxBookings: 500, maxQueue: 1000 },
-  business: { maxBookings: 2000, maxQueue: 2000 },
+  paid: { maxBookings: 5000, maxQueue: 5000 },
 };
 
 export default function SubscriptionTab({ businessId }: { businessId: string }) {
@@ -122,7 +110,6 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
 
   return (
     <div className="space-y-4">
-      {/* Trial countdown */}
       {isTrialActive && (
         <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/5 to-transparent">
           <CardContent className="p-5">
@@ -146,7 +133,6 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
         </Card>
       )}
 
-      {/* Current plan card */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -157,23 +143,21 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Bookings progress */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t("dashboard:settings.subscription.bookingsThisMonth")}</span>
               <span className="font-medium text-foreground">
-                {counts !== null ? counts.booking_count : "—"} / {limits.maxBookings}
+                {counts !== null ? counts.booking_count : "—"} / {limits.maxBookings === 5000 ? "∞" : limits.maxBookings}
               </span>
             </div>
             <Progress value={bookingUsagePct} className="h-2" />
           </div>
 
-          {/* Queue progress */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t("dashboard:settings.subscription.queueThisMonth")}</span>
               <span className="font-medium text-foreground">
-                {counts !== null ? counts.queue_count : "—"} / {limits.maxQueue}
+                {counts !== null ? counts.queue_count : "—"} / {limits.maxQueue === 5000 ? "∞" : limits.maxQueue}
               </span>
             </div>
             <Progress value={queueUsagePct} className="h-2" />
@@ -184,33 +168,31 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
               {t("dashboard:settings.subscription.trialNote")}
             </p>
           )}
-          {!isTrialActive && counts !== null && (bookingUsagePct >= 80 || queueUsagePct >= 80) && (
-            <p className="text-xs text-warning">{t("dashboard:settings.subscription.warning")}</p>
-          )}
         </CardContent>
       </Card>
 
       {/* Upgrade CTA */}
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Sparkles className="h-6 w-6 text-primary" />
+      {plan !== "paid" && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-foreground">{t("dashboard:settings.subscription.upgradeToPaid")}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t("dashboard:settings.subscription.upgradeDesc")}
+                </p>
+                <Button className="mt-4" onClick={() => setShowPricingModal(true)}>
+                  {t("dashboard:settings.subscription.seePlans")}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-foreground">{t("dashboard:settings.subscription.upgradeToPro")}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t("dashboard:settings.subscription.upgradeDesc")}
-              </p>
-              <Button className="mt-4" onClick={() => setShowPricingModal(true)}>
-                {t("dashboard:settings.subscription.seePlans")}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Invoices section */}
       <Card>
         <CardHeader><CardTitle className="text-base">{t("dashboard:settings.subscription.invoices")}</CardTitle></CardHeader>
         <CardContent>
@@ -220,11 +202,10 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
         </CardContent>
       </Card>
 
-      {/* Pricing Modal */}
       {showPricingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 overflow-y-auto py-8">
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={() => setShowPricingModal(false)} />
-          <div className="relative w-full max-w-4xl">
+          <div className="relative w-full max-w-3xl">
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#1a1630] via-[#1f1a38] to-[#151128] shadow-2xl shadow-purple-500/10">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(123,57,252,0.12),transparent_50%)] pointer-events-none" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(123,57,252,0.08),transparent_50%)] pointer-events-none" />
@@ -242,13 +223,13 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
               </div>
 
               <div className="relative px-8 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-2xl mx-auto">
                   {pricingPlans.map((planItem, i) => (
                     <div
                       key={planItem.nameKey}
                       className={`relative rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
                         planItem.highlight
-                          ? "border-2 border-purple-500 shadow-lg shadow-purple-500/20 -mt-2 -mb-2"
+                          ? "border-2 border-purple-500 shadow-lg shadow-purple-500/20"
                           : planItem.current
                           ? "border border-white/10 bg-white/5"
                           : "border border-white/10 bg-white/[0.03]"
@@ -272,7 +253,9 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
 
                         <div>
                           <span className="text-4xl font-bold text-white tracking-tight">{planItem.price}</span>
-                          <span className="text-sm text-white/40 ml-1.5 rtl:ml-0 rtl:mr-1.5">{t("dashboard:settings.subscription.pricingModal.perMonth")}</span>
+                          {planItem.price !== "0" && (
+                            <span className="text-sm text-white/40 ml-1.5 rtl:ml-0 rtl:mr-1.5">{t("dashboard:settings.subscription.pricingModal.perMonth")}</span>
+                          )}
                         </div>
 
                         <ul className="space-y-3">
@@ -288,23 +271,14 @@ export default function SubscriptionTab({ businessId }: { businessId: string }) 
 
                         {!planItem.current && (
                           <Button
-                            variant={planItem.highlight ? "default" : "ghost"}
+                            variant="default"
                             size="sm"
-                            disabled={planItem.comingSoon}
-                            className={`w-full h-9 text-sm ${
-                              planItem.highlight
-                                ? "bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-500/30 border-0 disabled:opacity-60 disabled:cursor-not-allowed"
-                                : "bg-white/5 border border-white/10 text-white/80 hover:bg-purple-500/20 hover:text-purple-300 hover:border-purple-500/40 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-                            }`}
+                            className="w-full h-9 text-sm bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-500/30 border-0"
                             onClick={() => {
                               setShowPricingModal(false);
                             }}
                           >
-                            {planItem.comingSoon
-                              ? t("dashboard:settings.subscription.pricingModal.comingSoon")
-                              : i < pricingPlans.length - 1
-                              ? t("common:buttons.choose")
-                              : t("common:buttons.contact")}
+                            {t("common:buttons.choose")}
                           </Button>
                         )}
                       </div>

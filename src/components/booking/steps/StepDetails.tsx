@@ -41,7 +41,7 @@ export default function StepDetails({
   selectedService, selectedDate, selectedTime, selectedStaff,
   onSubmit, submitting,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
@@ -74,11 +74,14 @@ export default function StepDetails({
         </p>
         <p className="text-[12px] text-muted-foreground flex items-center gap-1">
           <Calendar className="h-3 w-3" />
-          {selectedDate?.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} a {selectedTime}
+          {selectedDate && t("booking:appointmentFlow.dateTimeLine", {
+            date: selectedDate.toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long" }),
+            time: selectedTime,
+          })}
         </p>
         {selectedStaff && selectedStaff !== "no_preference" && (
           <p className="text-[12px] text-muted-foreground">
-            Avec {selectedStaff.display_name}
+            {t("booking:appointmentFlow.stepDetails.withStaff", { staffName: selectedStaff.display_name })}
           </p>
         )}
       </div>

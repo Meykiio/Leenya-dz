@@ -53,6 +53,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const serviceIdRef = useRef<string | null>(null);
   const staffMemberIdRef = useRef<string | null>(null);
   const ticketRef = useRef(ticket);
+  const [bizIdReady, setBizIdReady] = useState(false);
   useEffect(() => { ticketRef.current = ticket; }, [ticket]);
   const [showServicePicker, setShowServicePicker] = useState(false);
   const [availableServices, setAvailableServices] = useState<{ id: string; name: string }[]>([]);
@@ -188,6 +189,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         queueDateRef.current = data.queue_date;
         serviceIdRef.current = data.service_id;
         staffMemberIdRef.current = data.staff_member_id;
+        setBizIdReady(true);
 
         fetchHistoricalData(data.business_id, data.service_id);
         refreshQueueContext(data.business_id, data.queue_date, data.ticket_number).then((ctx) => {
@@ -229,7 +231,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   }, [ticketId, refreshQueueContext]);
 
   useEffect(() => {
-    if (!businessIdRef.current) return;
+    if (!bizIdReady || !businessIdRef.current) return;
     const channel = supabase
       .channel(`queue-tracker-${ticketId}`)
       .on(
@@ -242,7 +244,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         if (status === "SUBSCRIBED") setIsOffline(false);
       });
     return () => { supabase.removeChannel(channel); };
-  }, [ticketId, refetchAll]);
+  }, [ticketId, refetchAll, bizIdReady]);
 
   const handleSubmitReview = async () => {
     if (rating === 0) return;

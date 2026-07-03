@@ -23,8 +23,7 @@ interface ServiceOption {
 
 const STAFF_LIMITS: Record<string, number> = {
   free: 3,
-  pro: 7,
-  business: Infinity,
+  paid: Infinity,
 };
 
 /**

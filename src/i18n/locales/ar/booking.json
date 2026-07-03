@@ -17,6 +17,8 @@
   "businessPublic.openStatus.closesAt": "يغلق الساعة {{time}}",
   "businessPublic.openStatus.closed": "مغلق",
   "businessPublic.takeMeThere": "خذني إلى هناك",
+  "businessPublic.chatWhatsApp": "راسلنا على واتساب",
+  "appointmentFlow.dateTimeLine": "{{date}} الساعة {{time}}",
   "appointmentFlow.step.service": "الخدمة",
   "appointmentFlow.step.staff": "الفريق",
   "appointmentFlow.step.date": "التاريخ",
