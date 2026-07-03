@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { VitePWA } from "vite-plugin-pwa";
 
 const SENTRY_DSN = process.env.VITE_SENTRY_DSN;
 
@@ -45,6 +46,48 @@ export default defineConfig(({ mode }) => ({
         authToken: process.env.SENTRY_AUTH_TOKEN,
         telemetry: false,
       }),
+    VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-cache",
+              expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-cache",
+              expiration: { maxEntries: 10, maxAgeSeconds: 604800 },
+            },
+          },
+        ],
+      },
+      manifest: {
+        name: "Leenya",
+        short_name: "Leenya",
+        description: "Queue management and booking platform for barbershops",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#1A1A2E",
+        theme_color: "#1A1A2E",
+        orientation: "portrait",
+        lang: "fr",
+        dir: "ltr",
+        icons: [
+          { src: "/logo.png", sizes: "192x192", type: "image/png" },
+          { src: "/logo.png", sizes: "512x512", type: "image/png" },
+          { src: "/logo.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
