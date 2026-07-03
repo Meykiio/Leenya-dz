@@ -33,28 +33,26 @@ const DashboardSettings = () => {
         <h2 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight">{t("dashboard:settings.title")}</h2>
 
         <Tabs defaultValue="business" className="space-y-4">
-          <div className="overflow-x-auto scrollbar-none">
-            <TabsList className="inline-flex h-auto gap-1 bg-[var(--bg-muted)] p-1 rounded-lg">
-              <TabsTrigger value="business" className="gap-1.5 text-xs h-8 whitespace-nowrap">
-                <Building2 className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.business")}
-              </TabsTrigger>
-              <TabsTrigger value="hours" className="gap-1.5 text-xs h-8 whitespace-nowrap">
-                <Clock className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.hours")}
-              </TabsTrigger>
-              <TabsTrigger value="prefs" className="gap-1.5 text-xs h-8 whitespace-nowrap">
-                <CalendarCog className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.prefs")}
-              </TabsTrigger>
-              <TabsTrigger value="whatsapp" className="gap-1.5 text-xs h-8 whitespace-nowrap">
-                <MessageCircle className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.whatsapp")}
-              </TabsTrigger>
-              <TabsTrigger value="account" className="gap-1.5 text-xs h-8 whitespace-nowrap">
-                <UserCog className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.account")}
-              </TabsTrigger>
-              <TabsTrigger value="subscription" className="gap-1.5 text-xs h-8 whitespace-nowrap">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.subscription")}
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="flex-wrap h-auto gap-1.5 bg-[var(--bg-muted)] p-1.5 rounded-lg">
+            <TabsTrigger value="business" className="gap-1.5 text-xs h-7">
+              <Building2 className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.business")}
+            </TabsTrigger>
+            <TabsTrigger value="hours" className="gap-1.5 text-xs h-7">
+              <Clock className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.hours")}
+            </TabsTrigger>
+            <TabsTrigger value="prefs" className="gap-1.5 text-xs h-7">
+              <CalendarCog className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.prefs")}
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="gap-1.5 text-xs h-7">
+              <MessageCircle className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.whatsapp")}
+            </TabsTrigger>
+            <TabsTrigger value="account" className="gap-1.5 text-xs h-7">
+              <UserCog className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.account")}
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="gap-1.5 text-xs h-7">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.subscription")}
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="business">
             {business && <BusinessInfoTab businessId={business.id} />}

@@ -119,7 +119,7 @@ const LoginForm = () => {
               <Input
                 id="email"
                 type="email"
-                autoComplete={isSignUp ? "email" : "username"}
+                autoComplete="email"
                 placeholder={t(isSignUp ? "auth:signup.emailPlaceholder" : "auth:login.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
