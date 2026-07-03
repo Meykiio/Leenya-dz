@@ -290,18 +290,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border-default)] bg-[var(--bg-base)] flex items-center justify-around py-2">
-          {allNav.slice(0, 5).map((item) => (
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border-default)] bg-[var(--bg-base)] flex items-center overflow-x-auto py-1.5 px-1 scrollbar-none">
+          {allNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               end={(item as any).end}
-              className="flex flex-col items-center gap-0.5 px-2 py-1 text-[var(--text-tertiary)]"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-[var(--text-tertiary)] min-w-[64px] shrink-0"
               activeClassName="text-[var(--accent)]"
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[10px]">{t(item.labelKey).split(" ")[0]}</span>
+              <span className="text-[10px] text-center leading-tight">{t(item.labelKey)}</span>
             </NavLink>
           ))}
         </nav>

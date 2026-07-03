@@ -126,40 +126,91 @@ const DashboardServices = () => {
           </div>
         ) : (
           <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
-            {services.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
-                <GripVertical className="h-4 w-4 text-[var(--text-disabled)] shrink-0 cursor-grab" />
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${s.is_active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)] line-through"}`}>{s.name}</p>
-                  {s.name_ar && <p className="text-xs text-[var(--text-tertiary)] font-arabic">{s.name_ar}</p>}
+            {services.map((s) => {
+              const actions = (
+                <div className="flex items-center gap-1">
+                  <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
+                  <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-7 w-7 p-0 text-[var(--text-tertiary)]">
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("dashboard:services.deleteTitle")}</AlertDialogTitle>
+                        <AlertDialogDescription>{t("dashboard:services.deleteDesc", { serviceName: s.name })}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common:buttons.delete")}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
-                <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded shrink-0">
-                  {s.duration_minutes} min
-                </span>
-                <span className="text-sm text-[var(--text-secondary)] shrink-0 w-20 text-right">
-                  {(s.price_dzd || 0).toLocaleString()} DZD
-                </span>
-                <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
-                <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-7 w-7 p-0 text-[var(--text-tertiary)]">
-                  <Pencil className="h-3 w-3" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("dashboard:services.deleteTitle")}</AlertDialogTitle>
-                      <AlertDialogDescription>{t("dashboard:services.deleteDesc", { serviceName: s.name })}</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common:buttons.delete")}</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            ))}
+              );
+              return (
+                <div key={s.id}>
+                  {/* Desktop row */}
+                  <div className="hidden sm:flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
+                    <GripVertical className="h-4 w-4 text-[var(--text-disabled)] shrink-0 cursor-grab" />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${s.is_active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)] line-through"}`}>{s.name}</p>
+                      {s.name_ar && <p className="text-xs text-[var(--text-tertiary)] font-arabic">{s.name_ar}</p>}
+                    </div>
+                    <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded shrink-0">
+                      {s.duration_minutes} min
+                    </span>
+                    <span className="text-sm text-[var(--text-secondary)] shrink-0 w-20 text-right">
+                      {(s.price_dzd || 0).toLocaleString()} DZD
+                    </span>
+                    {actions}
+                  </div>
+                  {/* Mobile card */}
+                  <div className="sm:hidden px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <GripVertical className="h-4 w-4 text-[var(--text-disabled)] shrink-0 cursor-grab" />
+                          <p className={`text-sm font-medium truncate ${s.is_active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)] line-through"}`}>{s.name}</p>
+                        </div>
+                        {s.name_ar && <p className="text-xs text-[var(--text-tertiary)] font-arabic mt-0.5 ml-6">{s.name_ar}</p>}
+                      </div>
+                      <span className="text-sm font-semibold text-[var(--text-primary)] shrink-0">
+                        {(s.price_dzd || 0).toLocaleString()} DZD
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 ml-6">
+                      <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded">
+                        {s.duration_minutes} min
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-7 w-7 p-0 text-[var(--text-tertiary)]">
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("dashboard:services.deleteTitle")}</AlertDialogTitle>
+                              <AlertDialogDescription>{t("dashboard:services.deleteDesc", { serviceName: s.name })}</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common:buttons.delete")}</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
