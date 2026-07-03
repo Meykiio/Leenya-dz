@@ -33,8 +33,8 @@ const DashboardSettings = () => {
         <h2 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight">{t("dashboard:settings.title")}</h2>
 
         <Tabs defaultValue="business" className="space-y-4">
-          <div className="overflow-x-auto -mx-4 px-4 scrollbar-none">
-            <TabsList className="inline-flex h-auto gap-1 bg-[var(--bg-muted)] p-1 rounded-lg w-max">
+          <div className="overflow-x-auto scrollbar-none">
+            <TabsList className="inline-flex h-auto gap-1 bg-[var(--bg-muted)] p-1 rounded-lg">
               <TabsTrigger value="business" className="gap-1.5 text-xs h-8 whitespace-nowrap">
                 <Building2 className="h-3.5 w-3.5 shrink-0" /> {t("dashboard:settings.tab.business")}
               </TabsTrigger>

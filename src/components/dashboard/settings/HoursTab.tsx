@@ -114,19 +114,19 @@ export default function HoursTab({ businessId }: { businessId: string }) {
                 <span className="text-xs text-muted-foreground w-12">{day.is_closed ? t("dashboard:settings.hours.closed") : t("dashboard:settings.hours.open")}</span>
               </div>
               {!day.is_closed && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <Input
                     type="time"
                     value={day.opens_at}
                     onChange={(e) => updateDay(i, "opens_at", e.target.value)}
-                    className="w-28"
+                    className="w-[100px] sm:w-28"
                   />
-                  <span className="text-muted-foreground text-sm">→</span>
+                  <span className="text-muted-foreground text-xs shrink-0">→</span>
                   <Input
                     type="time"
                     value={day.closes_at}
                     onChange={(e) => updateDay(i, "closes_at", e.target.value)}
-                    className="w-28"
+                    className="w-[100px] sm:w-28"
                   />
                 </div>
               )}

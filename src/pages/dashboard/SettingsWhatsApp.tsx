@@ -157,7 +157,7 @@ export default function SettingsWhatsApp() {
               </pre>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{t('dashboard:settings.whatsapp.autoSend')}</span>
                 <Switch
@@ -168,17 +168,17 @@ export default function SettingsWhatsApp() {
                 />
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => handlePreview(template.template_key)}>
-                  <Eye className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => handlePreview(template.template_key)} className="text-xs">
+                  <Eye className="h-3.5 w-3.5 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
                   {t('dashboard:settings.whatsapp.preview')}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleEdit(template.template_key)}>
-                  <Edit className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                <Button variant="outline" size="sm" onClick={() => handleEdit(template.template_key)} className="text-xs">
+                  <Edit className="h-3.5 w-3.5 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
                   {t('dashboard:settings.whatsapp.edit')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleReset(template.template_key)}>
-                  <RotateCcw className="h-4 w-4" />
+                <Button variant="ghost" size="sm" onClick={() => handleReset(template.template_key)} className="h-8 w-8 p-0">
+                  <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>

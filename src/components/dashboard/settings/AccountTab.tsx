@@ -96,7 +96,7 @@ export default function AccountTab() {
           <div className="space-y-2">
             <Label>{t("dashboard:settings.account.language")}</Label>
             <Select value={form.preferred_lang} onValueChange={(v) => { setForm({ ...form, preferred_lang: v }); setLanguage(v); }}>
-              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">{t("common:languages.english")}</SelectItem>
                 <SelectItem value="fr">{t("common:languages.french")}</SelectItem>

@@ -151,7 +151,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
         <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.publicLink")}</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-md bg-muted px-3 py-2 font-mono text-sm text-primary truncate">
+            <div className="flex-1 rounded-md bg-muted px-3 py-2 font-mono text-sm text-primary truncate min-w-0">
               {window.location.host}/{form.slug}
             </div>
             <Button variant="outline" size="sm" onClick={copyLink} className="gap-1 shrink-0">
