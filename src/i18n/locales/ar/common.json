@@ -64,6 +64,18 @@
   "languages.english": "English",
   "languages.french": "Français",
   "languages.arabic": "العربية",
+  "push": {
+    "enableTitle": "تلقي الإشعارات",
+    "enableMessage": "سنخبرك عندما يتم تأكيد حجزك أو عندما يحين دورك.",
+    "enableButton": "تفعيل الإشعارات",
+    "bookingConfirmed": "تم تأكيد الحجز!",
+    "bookingConfirmedBody": "{{business}} — {{date}} الساعة {{time}}",
+    "queueCalled": "حان دورك!",
+    "queueCalledBody": "{{business}} — تذكرة {{ticket}} جاهزة",
+    "permissionDenied": "الإشعارات محظورة",
+    "permissionDeniedDesc": "يرجى السماح بالإشعارات في إعدادات المتصفح.",
+    "notSupported": "الإشعارات غير متاحة على هذا الجهاز"
+  },
   "validation": {
     "phone": {
       "invalidPrefix": "يجب أن يبدأ بـ 05 أو 06 أو 07",

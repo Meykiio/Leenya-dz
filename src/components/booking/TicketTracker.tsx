@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, WifiOff, XCircle, RefreshCw } from "lucide-react";
+import { ChevronLeft, WifiOff, XCircle, RefreshCw, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import { useWebPush } from "@/hooks/useWebPush";
 import TicketCompleted from "./TicketCompleted";
 import TicketCancelled from "./TicketCancelled";
 
@@ -37,8 +38,9 @@ interface TicketData {
 const CACHE_PREFIX = "leenya_ticket_";
 
 export default function TicketTracker({ ticketId, businessName, serviceName, onBack }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [ticket, setTicket] = useState<TicketData | null>(null);
+  const { isSupported, permission, subscribing, subscribe } = useWebPush();
   const [currentServing, setCurrentServing] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState(0);
   const [avgWaitTime, setAvgWaitTime] = useState<number | null>(null);
@@ -440,6 +442,29 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           {t("booking:ticketTracker.stayOnPage")}
         </p>
       </div>
+
+      {isSupported && permission !== "granted" && permission !== "unsupported" && (
+        <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-primary shrink-0" />
+            <p className="text-[12px] font-medium text-foreground">{t("common:push.enableTitle")}</p>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t("common:push.enableMessage")}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 text-xs w-full"
+            onClick={async () => {
+              const bizId = businessIdRef.current || ticket?.business_id;
+              if (!bizId) return;
+              await subscribe({ businessId: bizId, queueTicketId: ticketId, locale: i18n.language });
+            }}
+            disabled={subscribing}
+          >
+            {subscribing ? t("common:loading") : <><Bell className="h-3.5 w-3.5" /> {t("common:push.enableButton")}</>}
+          </Button>
+        </div>
+      )}
 
       {ticket.status === "waiting" && !ticket.checked_in_at && (
         <div className="mt-5">

@@ -382,6 +382,7 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
             selectedDate={selectedDate}
             selectedTime={selectedTime}
             businessName={businessName}
+            businessId={businessId}
             businessPhone={businessPhone}
             trackingUrl={trackingUrl}
             googleCalUrl={googleCalUrl()}

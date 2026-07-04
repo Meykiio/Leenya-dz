@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Copy, ExternalLink, Calendar, MessageCircle, Share2 } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, Calendar, MessageCircle, Share2, Bell, BellOff } from "lucide-react";
+import { useWebPush } from "@/hooks/useWebPush";
 
 interface Service {
   id: string;
@@ -15,6 +16,7 @@ interface Props {
   selectedDate: Date | null;
   selectedTime: string | null;
   businessName: string;
+  businessId: string;
   businessPhone: string | null;
   trackingUrl: string;
   googleCalUrl: string;
@@ -23,13 +25,21 @@ interface Props {
   onCopyLink: () => void;
 }
 
-/** @description Booking confirmation step shown after successful submission — displays booking summary, tracking link, Google Calendar, and WhatsApp share actions. */
 export default function StepConfirmed({
-  bookingId, selectedService, selectedDate, selectedTime,
-  businessName, trackingUrl, googleCalUrl, shareToBusinessUrl, whatsappShareUrl,
+  bookingId, bookingToken, selectedService, selectedDate, selectedTime,
+  businessName, businessId, trackingUrl, googleCalUrl, shareToBusinessUrl, whatsappShareUrl,
   onCopyLink,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const { isSupported, permission, subscribing, subscribe } = useWebPush();
+
+  const handleEnablePush = async () => {
+    if (!bookingId) return;
+    await subscribe({ businessId, bookingId, locale: i18n.language });
+  };
+
+  const showPushPrompt = isSupported && permission !== "granted" && permission !== "unsupported" && bookingId;
+
   return (
     <motion.div
       key="confirmed"
@@ -61,6 +71,37 @@ export default function StepConfirmed({
         </p>
         <p className="text-[12px] text-muted-foreground">{businessName}</p>
       </div>
+
+      {showPushPrompt && (
+        <div className="rounded-md border border-primary/20 bg-primary/5 p-[14px_16px] space-y-2">
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-primary" />
+            <p className="text-[13px] font-medium text-foreground">{t("common:push.enableTitle")}</p>
+          </div>
+          <p className="text-[12px] text-muted-foreground text-left">
+            {t("common:push.enableMessage")}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 text-xs"
+            onClick={handleEnablePush}
+            disabled={subscribing}
+          >
+            {subscribing ? t("common:loading") : <><Bell className="h-3.5 w-3.5" /> {t("common:push.enableButton")}</>}
+          </Button>
+        </div>
+      )}
+
+      {permission === "denied" && (
+        <div className="rounded-md border border-destructive/20 bg-destructive/5 p-[14px_16px] space-y-1">
+          <div className="flex items-center gap-2">
+            <BellOff className="h-4 w-4 text-destructive" />
+            <p className="text-[13px] font-medium text-foreground">{t("common:push.permissionDenied")}</p>
+          </div>
+          <p className="text-[12px] text-muted-foreground">{t("common:push.permissionDeniedDesc")}</p>
+        </div>
+      )}
 
       {bookingId && (
         <div className="rounded-md border border-primary/20 bg-primary/5 p-[14px_16px] space-y-2">

@@ -68,6 +68,18 @@
     "search": "Rechercher des commerces...",
     "noResults": "Aucun commerce trouvé"
   },
+  "push": {
+    "enableTitle": "Recevoir des notifications",
+    "enableMessage": "Nous vous préviendrons quand votre rendez-vous est confirmé ou quand c'est votre tour.",
+    "enableButton": "Activer les notifications",
+    "bookingConfirmed": "Rendez-vous confirmé !",
+    "bookingConfirmedBody": "{{business}} — {{date}} à {{time}}",
+    "queueCalled": "C'est votre tour !",
+    "queueCalledBody": "{{business}} — ticket {{ticket}} est prêt",
+    "permissionDenied": "Notifications bloquées",
+    "permissionDeniedDesc": "Autorisez les notifications dans les paramètres de votre navigateur.",
+    "notSupported": "Notifications non disponibles sur cet appareil"
+  },
   "validation": {
     "phone": {
       "invalidPrefix": "Doit commencer par 05, 06 ou 07",

@@ -92,3 +92,14 @@ export interface BookingFilters {
   status: string;
   search: string;
 }
+
+/** A browser push notification subscription */
+export interface PushSubscriptionRecord {
+  id: string;
+  business_id: string;
+  booking_id: string | null;
+  queue_ticket_id: string | null;
+  subscription: PushSubscriptionJSON;
+  locale: string;
+  created_at: string;
+}

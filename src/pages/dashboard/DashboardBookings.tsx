@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { Plus, CalendarDays } from "lucide-react";
 import { openWhatsApp, buildBookingConfirmationUrl, buildReminderUrl, buildBookingAcceptedUrl, buildBookingCancelledUrl } from "@/lib/whatsapp";
 import { validateAlgerianPhone } from "@/lib/phone/validation";
+import { useWebPush } from "@/hooks/useWebPush";
 import type { Booking, Service, StaffMember, Business, NewBookingForm } from "@/types";
 import BookingFilters from "./bookings/BookingFilters";
 import BookingRow from "./bookings/BookingRow";
@@ -32,8 +33,9 @@ const statusColors: Record<string, string> = {
  * @returns The bookings management page JSX
  */
 const DashboardBookings = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { business } = useBusinessInfo();
+  const { sendPush } = useWebPush();
   const statusLabels: Record<string, string> = {
     pending: t("dashboard:bookings.status.pending"),
     confirmed: t("dashboard:bookings.status.confirmed"),
@@ -189,9 +191,28 @@ const DashboardBookings = () => {
     }
   };
 
-  // Accept booking: pending → confirmed + send WhatsApp to client
+  // Accept booking: pending → confirmed + send WhatsApp + push to client
   const acceptBooking = async (id: string) => {
     await updateStatus(id, "confirmed");
+    const booking = bookings.find(b => b.id === id);
+    if (!booking || !business) return;
+    const { data: subs } = await supabase
+      .from("push_subscriptions")
+      .select("subscription, locale")
+      .eq("booking_id", id);
+    if (subs && subs.length > 0) {
+      const dateLabel = booking.date
+        ? new Date(booking.date + "T" + (booking.start_time || "00:00")).toLocaleDateString(i18n.language, { weekday: "short", day: "numeric", month: "short" })
+        : "";
+      const timeLabel = booking.start_time?.slice(0, 5) || "";
+      for (const sub of subs) {
+        await sendPush(sub.subscription, {
+          title: t("common:push.bookingConfirmed"),
+          body: t("common:push.bookingConfirmedBody", { business: business.name, date: dateLabel, time: timeLabel }),
+          url: `/booking/track/${booking.booking_token}`,
+        });
+      }
+    }
   };
 
   // Reject booking: pending → cancelled + send WhatsApp cancellation

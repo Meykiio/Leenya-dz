@@ -68,6 +68,18 @@
     "search": "Search businesses...",
     "noResults": "No businesses found"
   },
+  "push": {
+    "enableTitle": "Get notified",
+    "enableMessage": "We'll let you know when your booking is confirmed or when it's your turn.",
+    "enableButton": "Enable notifications",
+    "bookingConfirmed": "Your appointment is confirmed!",
+    "bookingConfirmedBody": "{{business}} — {{date}} at {{time}}",
+    "queueCalled": "It's your turn!",
+    "queueCalledBody": "{{business}} — ticket {{ticket}} is ready",
+    "permissionDenied": "Notifications blocked",
+    "permissionDeniedDesc": "Please allow notifications in your browser settings.",
+    "notSupported": "Notifications not available on this device"
+  },
   "validation": {
     "phone": {
       "invalidPrefix": "Must start with 05, 06, or 07",

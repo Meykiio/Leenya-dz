@@ -311,6 +311,52 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_templates (
 
 ALTER TABLE public.whatsapp_templates ENABLE ROW LEVEL SECURITY;
 
+-- -----------------------------------------------------------
+-- push_subscriptions
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID REFERENCES public.businesses(id) ON DELETE CASCADE NOT NULL,
+  booking_id UUID REFERENCES public.bookings(id) ON DELETE CASCADE,
+  queue_ticket_id UUID REFERENCES public.queue_tickets(id) ON DELETE CASCADE,
+  subscription JSONB NOT NULL,
+  locale TEXT DEFAULT 'fr',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subs_booking ON public.push_subscriptions(booking_id);
+CREATE INDEX IF NOT EXISTS idx_push_subs_ticket ON public.push_subscriptions(queue_ticket_id);
+
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can create push subscriptions"
+  ON public.push_subscriptions FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Business owners can read their push subscriptions"
+  ON public.push_subscriptions FOR SELECT
+  TO authenticated
+  USING (
+    business_id IN (SELECT id FROM public.businesses WHERE owner_id = auth.uid())
+  );
+
+CREATE POLICY "Business owners can delete push subscriptions"
+  ON public.push_subscriptions FOR DELETE
+  TO authenticated
+  USING (
+    business_id IN (SELECT id FROM public.businesses WHERE owner_id = auth.uid())
+  );
+
+CREATE POLICY "Staff can read push subscriptions for queue tickets"
+  ON public.push_subscriptions FOR SELECT
+  TO authenticated
+  USING (
+    business_id IN (SELECT sm.business_id FROM public.staff_members sm WHERE sm.profile_id = auth.uid())
+  );
+
+ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS push_subscriptions;
+
 -- ============================================================
 -- VIEWS
 -- ============================================================

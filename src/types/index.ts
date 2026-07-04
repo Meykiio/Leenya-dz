@@ -8,6 +8,7 @@ export type { StaffMember, StaffService } from "./staff";
 export type {
   Booking, QueueTicket, Review, QueueCounter,
   NewBookingForm, NewQueueTicketForm, BookingFilters,
+  PushSubscriptionRecord,
 } from "./booking";
 
 /** Category of user-submitted feedback */

@@ -20,14 +20,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { openWhatsApp, buildQueueCalledUrl, buildBookingConfirmationUrl } from "@/lib/whatsapp";
 import { generatePixelAvatar } from "@/lib/pixel-avatar";
+import { useWebPush } from "@/hooks/useWebPush";
 import type { Business, QueueTicket, Booking } from "@/types";
 import type { BookingStatus } from "@/integrations/supabase/types";
 
 type Tab = "queue" | "bookings";
 
 const StaffView = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, signOut } = useAuth();
+  const { sendPush } = useWebPush();
   const [business, setBusiness] = useState<Pick<Business, "id" | "name" | "slug"> | null>(null);
   const [staffMemberId, setStaffMemberId] = useState<string | null>(null);
   const [staffName, setStaffName] = useState<string>("");
@@ -151,6 +153,20 @@ const StaffView = () => {
       const serviceName = ticket.services?.name || t("staff:staffView.serviceDefault");
       const url = buildQueueCalledUrl(ticketData.client_phone, business!.name, ticketData.ticket_label, serviceName);
       openWhatsApp(url);
+
+      const { data: subs } = await supabase
+        .from("push_subscriptions")
+        .select("subscription, locale")
+        .eq("queue_ticket_id", id);
+      if (subs && subs.length > 0) {
+        for (const sub of subs) {
+          await sendPush(sub.subscription, {
+            title: t("common:push.queueCalled"),
+            body: t("common:push.queueCalledBody", { business: business!.name, ticket: ticketData.ticket_label }),
+            url: `/booking/track/${id}`,
+          });
+        }
+      }
     }
   };
 
