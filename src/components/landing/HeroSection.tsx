@@ -38,21 +38,8 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen overflow-hidden flex flex-col">
-      {/* Video Background with fallback gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#2b2344] to-[#1a1630]">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source
-            src="https://d8jnt0lcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260210_031346_d87182fb-b0af-4273-84d1-c6fd17d6bf0f.mp4"
-            type="video/mp4"
-          />
-        </video>
-      </div>
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#2b2344] to-[#1a1630]" />
 
       {/* Navbar */}
       <nav className="relative z-20 flex items-center justify-between px-6 lg:px-[120px] py-[16px]">
