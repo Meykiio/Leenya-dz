@@ -78,10 +78,14 @@
     "queueCalledBody": "{{business}} — ticket {{ticket}} est prêt",
     "permissionDenied": "Notifications bloquées",
     "permissionDeniedDesc": "Autorisez les notifications dans les paramètres de votre navigateur.",
-    "notSupported": "Notifications non disponibles sur cet appareil"
+    "notSupported": "Notifications non disponibles sur cet appareil",
+    "iosTitle": "Recevoir des notifications sur iPhone",
+    "iosMessage": "Appuyez sur le bouton Partager, puis \"Ajouter à l'écran d'accueil\" pour installer Leenya. Vous pourrez ensuite activer les notifications.",
+    "iosButton": "Comment faire"
   },
   "validation": {
     "phone": {
+      "hint": "Numéro algérien commençant par 05, 06 ou 07 (ex: 0555 123 456)",
       "invalidPrefix": "Doit commencer par 05, 06 ou 07",
       "invalidLength": "Doit contenir exactement 10 chiffres",
       "invalidTooShort": "Au moins 10 chiffres requis",

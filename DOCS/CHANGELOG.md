@@ -145,11 +145,23 @@
 
 ---
 
-## 2026-07-03 � Full Repositioning
+## 2026-07-08 — Database Wipe + UX Hints + iOS Push Message
 
 | What changed | Why |
 |---|---|
-| Pricing collapsed from 3 tiers to 2 (Free + 1,990 DZD/mo) | Simpler choice, better value. Pro and Business tiers removed � now one paid plan covers everything |
+| **All test data deleted from database** — every business, booking, queue ticket, review, service, staff member, and feedback entry removed. Super admin kept. | Clean slate for beta launch. No leftover test data confusing testers. |
+| **Owner role removed from super admin** | Cleaner — superadmin can already access everything. Owner account can be created later if needed. |
+| **iPhone users now see "Add to Home Screen" card** instead of broken "Enable Notifications" button on booking confirmation and queue tracking pages | iOS Safari doesn't support web push — the card tells them how to install the PWA so notifications work |
+| **Small hints under inputs** on login, signup, booking, queue, and dashboard forms | Users stopped guessing — email hint ("We'll send a confirmation link"), password hint ("At least 6 characters"), phone hint ("Algerian number starting with 05, 06, or 07") |
+| **Phone hints in French and Arabic** | Same experience in all languages |
+
+---
+
+## 2026-07-03 — Full Repositioning
+
+| What changed | Why |
+|---|---|
+| Pricing collapsed from 3 tiers to 2 (Free + 1,990 DZD/mo) | Simpler choice, better value. Pro and Business tiers removed � now one paid plan covers everything |
 | Bookings now open by default on the public page | Clinics and salons rely on appointments first. Queue moved to a secondary tab |
 | Dashboard nav reordered | Bookings now appear before Queue in the sidebar and mobile nav |
 | WhatsApp floating button on every business page | Visitors can message the business directly from their bio-link page |

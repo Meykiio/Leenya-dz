@@ -46,6 +46,7 @@ export default function NewBookingSlideOver({ open, onClose, form, onChange, for
                 <Input value={form.client_phone} onChange={(e) => onChange((prev) => ({ ...prev, client_phone: e.target.value.replace(/\D/g, "") }))} placeholder="5 XX XX XX XX" maxLength={10} className="h-8 text-sm" />
               </div>
               {formErrors.client_phone && <p className="text-xs text-[var(--error)]">{formErrors.client_phone}</p>}
+              {!formErrors.client_phone && <p className="text-[11px] text-muted-foreground/70">{t("common:validation.phone.hint")}</p>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">{t("bookings.form.service")}</Label>

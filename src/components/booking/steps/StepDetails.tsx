@@ -60,6 +60,7 @@ export default function StepDetails({
             <Input value={phone} onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ""))} placeholder="555 123 456" type="tel" />
           </div>
           {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
+          {!phoneError && <p className="text-[11px] text-muted-foreground/70">{t("common:validation.phone.hint")}</p>}
         </div>
         <div>
           <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.noteLabel")}</label>

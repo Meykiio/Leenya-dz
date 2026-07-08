@@ -481,6 +481,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
                   />
                 </div>
                 {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
+                {!phoneError && <p className="text-[11px] text-muted-foreground/70">{t("common:validation.phone.hint")}</p>}
               </div>
               <Button
                 className="w-full h-[44px]"

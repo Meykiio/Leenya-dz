@@ -48,6 +48,7 @@ export default function AddToQueueDialog({ open, onClose, name, phone, serviceId
           <div className="space-y-1">
             <Label className="text-xs">{t("queue.form.phone")}</Label>
             <Input value={phone} onChange={(e) => onChangePhone(e.target.value.replace(/\D/g, ""))} placeholder={t("queue.form.phonePlaceholder")} className="h-8 text-sm" />
+            <p className="text-[11px] text-muted-foreground/70">{t("common:validation.phone.hint")}</p>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">{t("queue.form.service")}</Label>

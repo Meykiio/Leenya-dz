@@ -125,6 +125,7 @@ const LoginForm = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+              <p className="text-[11px] text-muted-foreground/70">{t(isSignUp ? "auth:signup.emailHint" : "auth:login.emailHint")}</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -149,6 +150,7 @@ const LoginForm = () => {
                 required
                 minLength={6}
               />
+              <p className="text-[11px] text-muted-foreground/70">{t(isSignUp ? "auth:signup.passwordHint" : "auth:login.passwordHint")}</p>
             </div>
             <Button type="submit" className="w-full h-[44px]" disabled={loading}>
               {loading ? t(isSignUp ? "auth:signup.loading" : "auth:login.loading") : isSignUp ? t("auth:signup.submit") : t("auth:login.submit")}

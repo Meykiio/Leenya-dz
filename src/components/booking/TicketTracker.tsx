@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, WifiOff, XCircle, RefreshCw, Bell } from "lucide-react";
+import { ChevronLeft, WifiOff, XCircle, RefreshCw, Bell, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { useWebPush } from "@/hooks/useWebPush";
@@ -41,6 +41,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   const { t, i18n } = useTranslation();
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const { isSupported, permission, subscribing, subscribe } = useWebPush();
+  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent) && !("PushManager" in window);
   const [currentServing, setCurrentServing] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState(0);
   const [avgWaitTime, setAvgWaitTime] = useState<number | null>(null);
@@ -443,7 +444,22 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
         </p>
       </div>
 
-      {isSupported && permission !== "granted" && permission !== "unsupported" && (
+      {isIOS && permission !== "granted" && (
+        <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-primary shrink-0" />
+            <p className="text-[12px] font-medium text-foreground">{t("common:push.iosTitle")}</p>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t("common:push.iosMessage")}</p>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs w-full" asChild>
+            <a href="https://support.apple.com/guide/iphone/bookmark-frequently-visited-webpages-iph42efe91e7/ios#iph28c2ec388" target="_blank" rel="noopener noreferrer">
+              <Smartphone className="h-3.5 w-3.5" /> {t("common:push.iosButton")}
+            </a>
+          </Button>
+        </div>
+      )}
+
+      {!isIOS && isSupported && permission !== "granted" && permission !== "unsupported" && (
         <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4 text-primary shrink-0" />

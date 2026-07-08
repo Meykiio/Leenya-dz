@@ -68,9 +68,14 @@ Then ask "Want me to test anything or look at something else?"
 - **Test function `test_timezone` cleaned up**
 
 
-### 2026-07-03 — Full Repositioning: Pricing Collapse, Bookings-First, Bio-link, Landing Rewrite
-- **Pricing collapsed to 2 tiers** — Free (100 bookings, 300 queue, 3 staff) + Paid at 1,990 DZD/month (unlimited everything). Pro/Business tiers removed. DB CHECK constraint expanded, triggers updated, frontend cards rewritten.
-- **Bookings now the default product** — Public page opens on Appointment tab. Dashboard nav reordered: Bookings before Queue. Queue kept as secondary module.
-- **WhatsApp floating CTA on public page** — Every business page now has a green WhatsApp button so visitors can message directly.
-- **Landing page rewritten English-primary** — Hero: &quot;Your booking page. In your bio.&quot; All sections updated for bookings-first messaging. French and Arabic translations updated.
-- **i18n updated across all 3 locales** — Pricing, hero, features, FAQ, footer all rewritten. Dashboard subscription keys updated for 2-tier model.
+### 2026-07-03 ï¿½ Full Repositioning: Pricing Collapse, Bookings-First, Bio-link, Landing Rewrite
+- **Pricing collapsed to 2 tiers** ï¿½ Free (100 bookings, 300 queue, 3 staff) + Paid at 1,990 DZD/month (unlimited everything). Pro/Business tiers removed. DB CHECK constraint expanded, triggers updated, frontend cards rewritten.
+- **Bookings now the default product** ï¿½ Public page opens on Appointment tab. Dashboard nav reordered: Bookings before Queue. Queue kept as secondary module.
+- **WhatsApp floating CTA on public page** ï¿½ Every business page now has a green WhatsApp button so visitors can message directly.
+- **Landing page rewritten English-primary** ï¿½ Hero: &quot;Your booking page. In your bio.&quot; All sections updated for bookings-first messaging. French and Arabic translations updated.
+- **i18n updated across all 3 locales** ï¿½ Pricing, hero, features, FAQ, footer all rewritten. Dashboard subscription keys updated for 2-tier model.
+
+### 2026-07-08 â€” Database Wipe + UX Hints + iOS Push Message
+- **Database wiped clean** ï¿½ All test data deleted (businesses, bookings, queue tickets, reviews, services, staff, feedback). Super admin kept with superadmin role only. Clean slate for beta launch.
+- **iOS "Add to Home Screen" card** ï¿½ iPhone users see instructions to install Leenya as a PWA instead of a broken "Enable Notifications" button (on booking confirmation + queue tracking pages). FR/AR translations included.
+- **Input hints** ï¿½ Small text below email ("We'll send a confirmation link"), password ("At least 6 characters"), and phone ("Algerian number starting with 05, 06, or 07") fields on login, signup, booking, queue, and dashboard forms in EN/FR/AR.
