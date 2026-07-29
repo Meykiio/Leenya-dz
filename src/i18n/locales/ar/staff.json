@@ -1,6 +1,6 @@
 {
-  "staffView.accessDenied": "تم رفض الوصول — لا يوجد أي نشاط تجاري مرتبط بحسابك.",
-  "staffView.noBusiness": "لا يوجد أي نشاط تجاري مرتبط بحسابك.",
+  "staffView.accessDenied": "تم رفض الوصول — لا يوجد متجر مرتبط بحسابك.",
+  "staffView.noBusiness": "لا يوجد متجر مرتبط بحسابك.",
   "staffView.signOut": "تسجيل الخروج",
   "staffView.tabQueue": "طابور الانتظار",
   "staffView.tabBookings": "الحجوزات",
@@ -25,10 +25,10 @@
   "staffView.dialogCancelBooking": "إلغاء هذا الحجز؟",
   "staffView.dialogCancelBookingDesc": "سيتم إلغاء حجز {{name}} في {{time}}.",
   "staffView.dialogNoShow": "تسجيل كعدم حضور؟",
-  "staffView.dialogNoShowButton": "عدم حضور",
+  "staffView.dialogNoShowButton": "لم يحضر",
   "staffView.dialogNoShowTitle": "تسجيل كعدم حضور؟",
   "staffView.dialogNoShowDesc": "سيتم تسجيل العميل {{name}} كغائب.",
-  "staffView.buttonNoShow": "عدم حضور",
+  "staffView.buttonNoShow": "لم يحضر",
   "staffView.buttonAccept": "قبول",
   "staffView.buttonArrived": "وصل",
   "staffView.buttonCancel": "إلغاء",
@@ -48,6 +48,6 @@
   "staffView.statusArrived": "وصل",
   "staffView.statusInProgress": "قيد التنفيذ",
   "staffView.since": "منذ",
-  "staffView.timeJustNow": "الآن",
+  "staffView.timeJustNow": "منذ لحظات",
   "staffView.timeMin": "{{mins}} د"
 }

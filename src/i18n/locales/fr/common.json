@@ -25,7 +25,7 @@
   "statuses.waiting": "En attente",
   "statuses.inProgress": "En cours",
   "statuses.arrived": "Arrivé",
-  "statuses.noShow": "No-show",
+  "statuses.noShow": "Absent",
   "labels.email": "Email",
   "labels.password": "Mot de passe",
   "labels.name": "Nom",
@@ -75,12 +75,12 @@
     "bookingConfirmed": "Rendez-vous confirmé !",
     "bookingConfirmedBody": "{{business}} — {{date}} à {{time}}",
     "queueCalled": "C'est votre tour !",
-    "queueCalledBody": "{{business}} — ticket {{ticket}} est prêt",
+    "queueCalledBody": "{{business}} — le ticket {{ticket}} est prêt",
     "permissionDenied": "Notifications bloquées",
     "permissionDeniedDesc": "Autorisez les notifications dans les paramètres de votre navigateur.",
     "notSupported": "Notifications non disponibles sur cet appareil",
     "iosTitle": "Recevoir des notifications sur iPhone",
-    "iosMessage": "Appuyez sur le bouton Partager, puis \"Ajouter à l'écran d'accueil\" pour installer Leenya. Vous pourrez ensuite activer les notifications.",
+    "iosMessage": "Appuyez sur le bouton Partager, puis « Ajouter à l'écran d'accueil » pour installer Leenya. Vous pourrez ensuite activer les notifications.",
     "iosButton": "Comment faire"
   },
   "validation": {
