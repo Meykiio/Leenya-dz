@@ -290,4 +290,10 @@
   .card-hover-lg:hover {
     transform: translateY(-4px);
   }
+
+  /* Neutralize positive letter-spacing for Arabic (prevents broken connections) */
+  [dir="rtl"] .tracking-wider,
+  [dir="rtl"] .tracking-wide {
+    letter-spacing: 0;
+  }
 }

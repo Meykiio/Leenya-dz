@@ -202,7 +202,7 @@ const HeroSection = () => {
       {/* Hero Content — flex-1 centers vertically */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 relative z-10">
         {/* Headline */}
-        <h1 className="font-serif text-5xl md:text-[96px] text-white leading-[1.1] tracking-tight max-w-[900px] mb-6 text-center">
+        <h1 className={`${language === 'ar' ? 'font-arabic' : 'font-serif'} text-5xl md:text-[96px] text-white leading-[1.1] tracking-tight max-w-[900px] mb-6 text-center`}>
           {t("landing:hero.title")}
         </h1>
 
