@@ -202,34 +202,28 @@ const DashboardQueue = () => {
       return;
     }
 
-    const { data: ticketData, error: rpcError } = await supabase
-      .rpc("generate_ticket_number", { p_business_id: business.id });
+    const { data, error } = await supabase
+      .rpc("add_walk_in_ticket", {
+        p_business_id: business.id,
+        p_client_name: newClient.name,
+        p_client_phone: normalizedPhone,
+        p_service_id: newClient.service_id || null,
+        p_staff_member_id: newClient.staff_member_id || null,
+        p_estimated_wait_minutes: null,
+      })
+      .maybeSingle();
 
-    if (rpcError || !ticketData || ticketData.length === 0) {
-      toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.generateTicket"), variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
-    const { ticket_num, ticket_lbl } = ticketData[0];
-
-    const { error } = await supabase.from("queue_tickets").insert({
-      business_id: business.id,
-      client_name: newClient.name,
-      client_phone: normalizedPhone,
-      service_id: newClient.service_id || null,
-      staff_member_id: newClient.staff_member_id || null,
-      ticket_number: ticket_num,
-      ticket_label: ticket_lbl,
-      queue_date: today,
-      position_in_queue: waiting.length + 1,
-    });
-
-    if (error) {
-      if (import.meta.env.DEV) console.error("createTicket:", error);
-      toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.createTicket"), variant: "destructive" });
+    if (error || !data) {
+      const message = error?.message || "";
+      const hint = error?.hint || "";
+      if (message.includes("already_in_queue") || hint.includes("already_in_queue")) {
+        toast({ title: t("dashboard:queue.errors.ticketActive"), variant: "destructive" });
+      } else {
+        if (import.meta.env.DEV) console.error("createTicket:", error);
+        toast({ title: t("dashboard:labels.error"), description: t("dashboard:queue.errors.createTicket"), variant: "destructive" });
+      }
     } else {
-      toast({ title: t("dashboard:queue.ticketCreated", { ticketLabel: ticket_lbl }) });
+      toast({ title: t("dashboard:queue.ticketCreated", { ticketLabel: data.ticket_label }) });
       setNewClient({ name: "", phone: "", service_id: "", staff_member_id: "" });
       setShowAddClient(false);
     }
