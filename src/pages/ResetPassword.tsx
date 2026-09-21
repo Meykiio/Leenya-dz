@@ -18,16 +18,18 @@ const ResetPassword = () => {
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
-    // Check for recovery event
+    // Check for recovery event (a valid recovery link fires this within milliseconds)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         if (timer) { clearTimeout(timer); timer = null; }
         setStatus("ready");
       }
     });
+    // Fallback: if no recovery event arrives, the link is invalid or expired.
+    // The guard keeps the timer from flipping an already-ready status to invalid.
     timer = setTimeout(() => {
       setStatus((current) => (current === "checking" ? "invalid" : current));
-    }, 2000);
+    }, 7000);
     return () => {
       if (timer) clearTimeout(timer);
       subscription.unsubscribe();

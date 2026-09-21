@@ -56,7 +56,7 @@ const BookingTrack = () => {
       });
   }, [token]);
 
-  // Refetch when the tab becomes visible again (staff may have changed the status meanwhile)
+  // Refetch when the user returns to the page (staff may have changed the status meanwhile)
   useEffect(() => {
     if (!token) return;
     const refetch = async () => {
@@ -67,8 +67,15 @@ const BookingTrack = () => {
       setBooking(data as BookingData);
       setBookingId(data.id);
     };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
     window.addEventListener("focus", refetch);
-    return () => { window.removeEventListener("focus", refetch); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", refetch);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [token]);
 
   useEffect(() => {

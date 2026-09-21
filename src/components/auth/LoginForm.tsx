@@ -39,9 +39,10 @@ const LoginForm = () => {
     }
     if (!user) return;
 
-    // Return the user to the page they originally requested (set by ProtectedRoute)
+    // Return the user to the page they originally requested (set by ProtectedRoute).
+    // Only allow same-origin in-app paths: must start with "/" and must not be protocol-relative ("//").
     const from = location.state?.from;
-    if (typeof from === "string") {
+    if (typeof from === "string" && from.startsWith("/") && !from.startsWith("//")) {
       navigate(from, { replace: true });
       return;
     }
