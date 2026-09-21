@@ -42,3 +42,7 @@ supabase/query_*.sql
 *.timestamp-*.mjs
 
 .vercel
+
+# Playwright artifacts
+test-results/
+playwright-report/
