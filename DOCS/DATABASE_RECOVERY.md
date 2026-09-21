@@ -19,13 +19,16 @@ The following work is not yet completed:
 
 ## Backup Metadata
 
-- Backup created: not yet
-- Timestamp: not available
+- Backup created: yes — verified 2026-09-21 by owner
+- Files: `leenya-live-schema.sql` (68,613 bytes) and `leenya-live-data.sql` (32,135 bytes) in `C:\Users\DELL\Desktop\Sifeddine\leenya-recovery-work` (outside this repository, file permissions restricted to the owner)
+- SHA-256 fingerprints:
+  - `leenya-live-schema.sql`: `2F50BE4DB9B70411947FA2DB19D0143B84BF0EEAABE3BE0D40B3D972BCBBAC79`
+  - `leenya-live-data.sql`: `F60CAA728BD1AFA4B0FD49E29034510D8C0BA5B9B8C20D225C90E8533277B72D`
 - Region: documented as `EU-West-3` in existing project records; the owner must verify this
 - Plan: free, according to the owner
 - PITR/daily backup status: not independently confirmed
 
-These fields describe the current record only. They are not proof that a backup or restore point exists.
+The hashes above are one-way fingerprints, not secrets. Re-running `Get-FileHash` on these files must reproduce them exactly; a mismatch means the backup changed or is corrupt and must not be trusted for restore.
 
 ## Safety Rules
 
