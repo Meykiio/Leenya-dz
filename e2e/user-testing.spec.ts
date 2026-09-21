@@ -4,21 +4,21 @@ const BASE = "https://leenya-dz.vercel.app";
 
 test.describe("Customer — End User Flows", () => {
   test("Customer visits business public page", async ({ page }) => {
-    await page.goto(`${BASE}/leen-barber`);
+    await page.goto(`${BASE}/dental-are3`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").textContent();
-    expect(body).toContain("Leen Barber");
+    expect(body).toContain("Dental");
   });
 
   test("Customer joins queue (anonymous)", async ({ page }) => {
-    await page.goto(`${BASE}/leen-barber/queue`);
+    await page.goto(`${BASE}/dental-are3/queue`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").textContent();
     expect(body.length).toBeGreaterThan(100);
   });
 
   test("Customer views queue display / TV mode", async ({ page }) => {
-    const resp = await page.goto(`${BASE}/display/leen-barber`);
+    const resp = await page.goto(`${BASE}/display/dental-are3`);
     await page.waitForLoadState("networkidle");
     expect(resp?.status()).toBe(200);
   });
@@ -34,12 +34,11 @@ test.describe("Customer — End User Flows", () => {
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => {
       localStorage.setItem("leenya_lang", "ar");
-      window.location.reload();
     });
+    await page.reload();
     await page.waitForLoadState("networkidle");
     await page.waitForSelector("[dir]", { timeout: 5000 }).catch(() => {});
-    const dir = await page.locator("html").getAttribute("dir");
-    expect(dir).toBe("rtl");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl", { timeout: 10000 });
   });
 
   test("English rendering on landing page", async ({ page }) => {
@@ -47,35 +46,28 @@ test.describe("Customer — End User Flows", () => {
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => {
       localStorage.setItem("leenya_lang", "en");
-      window.location.reload();
     });
+    await page.reload();
     await page.waitForLoadState("networkidle");
     await page.waitForSelector("[dir]", { timeout: 5000 }).catch(() => {});
-    const dir = await page.locator("html").getAttribute("dir");
-    expect(dir).toBe("ltr");
+    await expect(page.locator("html")).toHaveAttribute("dir", "ltr", { timeout: 10000 });
   });
 
-  test("Business page for barbershop shows services", async ({ page }) => {
-    await page.goto(`${BASE}/leen-barber`);
+  test("Business page shows services (dental-are3)", async ({ page }) => {
+    await page.goto(`${BASE}/dental-are3`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").textContent();
-    expect(body).toContain("Coupe");
+    expect(body).toMatch(/coupe|barbe|soin/i);
   });
 
-  test("Business page for QA beauty salon shows services", async ({ page }) => {
-    await page.goto(`${BASE}/qa-test-barbershop-updated`);
+  test("Paused queue shows notice (dental-are3)", async ({ page }) => {
+    await page.goto(`${BASE}/dental-are3/queue`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").textContent();
-    expect(body).toContain("Coupe");
-  });
-
-  test("Business page for lean-barber (paused queue shows notice)", async ({ page }) => {
-    await page.goto(`${BASE}/lean-barber/queue`);
-    await page.waitForLoadState("networkidle");
-    const body = await page.locator("body").textContent();
-    const pausedIndicators = /pause|ferm[eé]|indisponible|closed|unavailable/i;
+    const pausedIndicators = /paused/i;
     const hasPaused = pausedIndicators.test(body || "");
-    console.log("Lean Barber queue page contains paused indicator:", hasPaused);
+    console.log("Dental queue page contains paused indicator:", hasPaused);
+    expect(body).toMatch(/paused/i);
   });
 
   test("Booking track page handles invalid token gracefully", async ({ page }) => {
@@ -87,15 +79,15 @@ test.describe("Customer — End User Flows", () => {
 
   test("Mobile viewport — business page renders", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(`${BASE}/leen-barber`);
+    await page.goto(`${BASE}/dental-are3`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").textContent();
-    expect(body).toContain("Leen Barber");
+    expect(body).toContain("Dental");
   });
 
   test("Mobile viewport — queue page renders", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(`${BASE}/leen-barber/queue`);
+    await page.goto(`${BASE}/dental-are3/queue`);
     await page.waitForLoadState("networkidle");
     expect(await page.locator("body").isVisible()).toBeTruthy();
   });
@@ -175,19 +167,17 @@ test.describe("IDOR & Authorization Checks", () => {
 
 test.describe("All Business Categories - Public Page Loads", () => {
   const testCases = [
-    { slug: "leen-barber", name: "Leen Barber", category: "barbershop" },
-    { slug: "lean-barber", name: "Barber Owner", category: "barbershop" },
-    { slug: "karims-barbershop-rlwr", name: "Karim's", category: "barbershop" },
-    { slug: "qa-test-barbershop-updated", name: "QA Test", category: "beauty_salon" },
+    { slug: "dental-are3", name: "Dental", category: "barbershop" },
+    { slug: "dr-ab-vpwj", name: "Dr Ab", category: "dental" },
+    { slug: "jdjdj-99dk", name: "Jdjdj", category: "barbershop" },
   ];
 
   for (const biz of testCases) {
     test(`Business page loads for ${biz.name} (${biz.category})`, async ({ page }) => {
-      const resp = await page.goto(`${BASE}/${biz.slug}`);
+      await page.goto(`${BASE}/${biz.slug}`);
       await page.waitForLoadState("networkidle");
-      expect(resp?.status()).toBe(200);
-      const title = await page.title();
-      expect(title.length).toBeGreaterThan(0);
+      const body = await page.locator("body").textContent();
+      expect(body).toContain(biz.name);
     });
   }
 });

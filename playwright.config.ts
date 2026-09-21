@@ -11,6 +11,12 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:8080",
     trace: "on-first-retry",
   },
+  webServer: {
+    command: "npm run build && npm run preview -- --port 8080 --strictPort",
+    url: "http://localhost:8080",
+    reuseExistingServer: !process.env.CI,
+    timeout: 240000,
+  },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
