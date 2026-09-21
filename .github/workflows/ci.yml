@@ -46,3 +46,8 @@ jobs:
       - run: npm run build
         env:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+      - name: Check bundle size
+        run: |
+          SIZE=$(stat -c%s dist/assets/index-*.js | head -1)
+          echo "Main chunk: $SIZE bytes"
+          if [ "$SIZE" -gt 900000 ]; then echo "WARNING: bundle > 900KB"; fi
