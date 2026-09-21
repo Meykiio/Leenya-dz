@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-09-21 (evening) — Capability Tokens: Customers Get a Private Key + Last Holes Closed
+
+**What happened:** Every anonymous customer path now runs through validated server commands with a private capability token, instead of directly reading/writing shared tables. The two biggest holes from the audit (publicly readable customer queue data, forgeable inserts) are closed and verified live.
+
+| What changed | Why |
+|---|---|
+| Every queue ticket now has a private tracking token | Customers track, check in, cancel, and review through their own key — nobody else's |
+| Join, booking, and slot lookups are server-validated commands | Duplicates, fake tickets, invalid services/staff, closed queues, and full queues are rejected server-side |
+| Direct anonymous reads/writes on queue and booking tables removed | Customer names and phone numbers are no longer readable from the public API |
+| Anonymous reviews require token proof of a completed visit | Fake and duplicate reviews blocked; one review per ticket |
+| Public staff-per-service lookup fixed | Public visitors couldn't see which staff offer which service since July (missing grant) |
+| New URL: project now lives at github.com/Meykiio/Leenya-dz on the regular Vercel account, auto-deploying on every push | Clean home for the open-source release |
+
+**Verification:** 50/50 E2E against production after tightening; live end-to-end flow test passed (join → restore → check-in → duplicate rejection → cancel); privilege checks confirm anon has zero access to queue/booking tables; all migrations mirrored in `supabase/migrations/`.
+
+---
+
 ## 2026-09-21 — Security Containment + Restored Lost Safety Systems + Flow Fixes
 
 **What happened:** Full audit executed. Production database had been running since the July restore without its safety systems (state machines, plan limits, past-booking prevention) and with every privileged database function callable by anonymous users. Both fixed. Customer-facing flow bugs fixed and shipped.
