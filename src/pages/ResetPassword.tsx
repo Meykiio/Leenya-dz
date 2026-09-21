@@ -37,14 +37,14 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) {
-      toast({ title: t("common:toast.error"), description: t("auth:resetPassword.passwordsMismatch"), variant: "destructive" });
+      toast({ title: t("common:toast.error"), description: t("auth:resetPassword.passwordMismatch"), variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast({ title: t("auth:resetPassword.successTitle"), description: t("auth:resetPassword.successDesc") });
+      toast({ title: t("auth:resetPassword.success"), description: t("auth:resetPassword.successDesc") });
       navigate("/login");
     } catch (err: unknown) {
       toast({ title: t("common:toast.error"), description: err instanceof Error ? err.message : t("common:toast.error"), variant: "destructive" });
@@ -91,11 +91,11 @@ const ResetPassword = () => {
               <Input id="new-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-pw">{t("auth:resetPassword.confirmPasswordLabel")}</Label>
+              <Label htmlFor="confirm-pw">{t("auth:resetPassword.confirmLabel")}</Label>
               <Input id="confirm-pw" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? t("auth:resetPassword.updating") : t("auth:resetPassword.submit")}
+              {loading ? t("auth:resetPassword.loading") : t("auth:resetPassword.submit")}
             </Button>
           </form>
         </div>
