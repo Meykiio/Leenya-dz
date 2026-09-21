@@ -1,6 +1,7 @@
+// Transitional: targets production data until isolated fixtures land (Task 9).
 import { test, expect } from "@playwright/test";
 
-const BASE = "https://leenya-dz.vercel.app";
+const BASE = process.env.PLAYWRIGHT_BASE_URL || "https://leenya-dz.vercel.app";
 
 test.describe("Customer — End User Flows", () => {
   test("Customer visits business public page", async ({ page }) => {

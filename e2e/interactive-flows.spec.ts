@@ -1,16 +1,14 @@
 // Transitional: targets production data until isolated fixtures land (Task 9).
 import { test, expect } from "@playwright/test";
 
-const BASE = "https://leenya-dz.vercel.app";
+const BASE = process.env.PLAYWRIGHT_BASE_URL || "https://leenya-dz.vercel.app";
 
 test.describe("Customer - Queue Join Flow", () => {
   test("Queue join page has form elements (anon)", async ({ page }) => {
     await page.goto(`${BASE}/dental-are3/queue`);
     await page.waitForLoadState("networkidle");
-    const body = await page.locator("body").textContent();
     // Queue is paused: join form is hidden, paused notice is shown instead
-    const isPaused = /paused/i.test(body || "");
-    expect(isPaused).toBeTruthy();
+    await expect(page.locator("body")).toContainText(/paused/i);
   });
 
   test("Queue page shows correct business name", async ({ page }) => {
@@ -39,6 +37,7 @@ test.describe("TV Display Mode", () => {
     expect(body).toBeTruthy();
     // TV display should be minimal / full-screen
     const hasTicketLabel = /A-|ticket|file/i.test(body || "");
+    expect(hasTicketLabel).toBeTruthy();
   });
 
   test("Display page for non-existent slug still loads", async ({ page }) => {

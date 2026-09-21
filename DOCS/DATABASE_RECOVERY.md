@@ -4,7 +4,7 @@
 
 - As of 2026-09-21, the current evidence came from read-only checks only. No production write or backup operation was performed.
 - The canonical live Leenya project is `ieuhknpdhjvuuwtpsguw`.
-- This repository currently points to `oqsxrnvfleaajeulyfnb`. Do not change that setting without the owner's explicit confirmation.
+- As of 2026-09-21, the repository config points to the canonical project `ieuhknpdhjvuuwtpsguw` per owner confirmation. The canonical project remains the MCP-connected production project.
 - The free plan does not provide automatic backups or point-in-time recovery, according to the owner.
 - Supabase CLI `2.101.0` is installed.
 - Docker `29.7.2` is installed, but the Docker daemon was not running during the check.
