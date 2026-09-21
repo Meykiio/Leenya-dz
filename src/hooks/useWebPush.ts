@@ -57,23 +57,22 @@ export function useWebPush() {
       const subJSON = pushSub.toJSON();
       setSubscription(subJSON);
 
-      const { error: dbError } = await supabase.from("push_subscriptions").insert({
+      const { error: dbError } = await supabase.from("push_subscriptions").upsert({
         business_id: context.businessId,
         booking_id: context.bookingId || null,
         queue_ticket_id: context.queueTicketId || null,
         subscription: subJSON,
+        endpoint: subJSON.endpoint,
         locale: context.locale || "fr",
-      });
+      }, { onConflict: "endpoint" });
 
       if (dbError) {
-        console.error("Failed to save push subscription:", dbError);
         setError("Failed to save subscription");
         return null;
       }
 
       return pushSub;
     } catch (err) {
-      console.error("Push subscription error:", err);
       setError(err instanceof Error ? err.message : "Failed to subscribe");
       return null;
     } finally {
@@ -82,15 +81,14 @@ export function useWebPush() {
   }, [isSupported]);
 
   const sendPush = useCallback(async (
-    subscription: PushSubscriptionJSON,
+    target: { queue_ticket_id?: string; booking_id?: string },
     payload: { title: string; body: string; url?: string; icon?: string; badge?: string },
   ) => {
     const { error: fnError } = await supabase.functions.invoke("send-push", {
-      body: { subscription, ...payload },
+      body: { ...target, ...payload },
     });
 
     if (fnError) {
-      console.error("Failed to send push:", fnError);
       return false;
     }
     return true;

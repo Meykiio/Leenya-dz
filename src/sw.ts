@@ -3,22 +3,12 @@
 
 import { precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { NetworkFirst, CacheFirst } from "workbox-strategies";
+import { CacheFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 
 declare const self: ServiceWorkerGlobalScope;
 
 precacheAndRoute(self.__WB_MANIFEST);
-
-registerRoute(
-  ({ url }) => url.hostname.includes("supabase.co"),
-  new NetworkFirst({
-    cacheName: "supabase-cache",
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 86400 }),
-    ],
-  }),
-);
 
 registerRoute(
   ({ url }) => url.hostname === "fonts.gstatic.com",

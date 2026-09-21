@@ -154,19 +154,11 @@ const StaffView = () => {
       const url = buildQueueCalledUrl(ticketData.client_phone, business!.name, ticketData.ticket_label, serviceName);
       openWhatsApp(url);
 
-      const { data: subs } = await supabase
-        .from("push_subscriptions")
-        .select("subscription, locale")
-        .eq("queue_ticket_id", id);
-      if (subs && subs.length > 0) {
-        for (const sub of subs) {
-          await sendPush(sub.subscription, {
-            title: t("common:push.queueCalled"),
-            body: t("common:push.queueCalledBody", { business: business!.name, ticket: ticketData.ticket_label }),
-            url: `/booking/track/${id}`,
-          });
-        }
-      }
+      await sendPush({ queue_ticket_id: id }, {
+        title: t("common:push.queueCalled"),
+        body: t("common:push.queueCalledBody", { business: business!.name, ticket: ticketData.ticket_label }),
+        url: `/booking/track/${id}`,
+      });
     }
   };
 

@@ -196,23 +196,15 @@ const DashboardBookings = () => {
     await updateStatus(id, "confirmed");
     const booking = bookings.find(b => b.id === id);
     if (!booking || !business) return;
-    const { data: subs } = await supabase
-      .from("push_subscriptions")
-      .select("subscription, locale")
-      .eq("booking_id", id);
-    if (subs && subs.length > 0) {
-      const dateLabel = booking.date
-        ? new Date(booking.date + "T" + (booking.start_time || "00:00")).toLocaleDateString(i18n.language, { weekday: "short", day: "numeric", month: "short" })
-        : "";
-      const timeLabel = booking.start_time?.slice(0, 5) || "";
-      for (const sub of subs) {
-        await sendPush(sub.subscription, {
-          title: t("common:push.bookingConfirmed"),
-          body: t("common:push.bookingConfirmedBody", { business: business.name, date: dateLabel, time: timeLabel }),
-          url: `/booking/track/${booking.booking_token}`,
-        });
-      }
-    }
+    const dateLabel = booking.date
+      ? new Date(booking.date + "T" + (booking.start_time || "00:00")).toLocaleDateString(i18n.language, { weekday: "short", day: "numeric", month: "short" })
+      : "";
+    const timeLabel = booking.start_time?.slice(0, 5) || "";
+    await sendPush({ booking_id: id }, {
+      title: t("common:push.bookingConfirmed"),
+      body: t("common:push.bookingConfirmedBody", { business: business.name, date: dateLabel, time: timeLabel }),
+      url: `/booking/track/${booking.booking_token}`,
+    });
   };
 
   // Reject booking: pending → cancelled + send WhatsApp cancellation
