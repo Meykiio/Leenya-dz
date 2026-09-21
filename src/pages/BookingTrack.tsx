@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,10 +36,11 @@ const BookingTrack = () => {
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
-  const bookingIdRef = useRef<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
+    setBookingId(null);
     supabase
       .rpc("get_booking_by_token", { p_token: token })
       .single()
@@ -49,24 +50,39 @@ const BookingTrack = () => {
           setBooking(null);
         } else {
           setBooking(data as BookingData);
-          bookingIdRef.current = data.id;
+          setBookingId(data.id);
         }
         setLoading(false);
       });
   }, [token]);
 
+  // Refetch when the tab becomes visible again (staff may have changed the status meanwhile)
   useEffect(() => {
-    if (!bookingIdRef.current) return;
+    if (!token) return;
+    const refetch = async () => {
+      const { data, error } = await supabase
+        .rpc("get_booking_by_token", { p_token: token })
+        .single();
+      if (error || !data) return;
+      setBooking(data as BookingData);
+      setBookingId(data.id);
+    };
+    window.addEventListener("focus", refetch);
+    return () => { window.removeEventListener("focus", refetch); };
+  }, [token]);
+
+  useEffect(() => {
+    if (!bookingId) return;
 
     const channel = supabase
-      .channel(`booking-track-${bookingIdRef.current}`)
+      .channel(`booking-track-${bookingId}`)
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "bookings",
-          filter: `id=eq.${bookingIdRef.current}`,
+          filter: `id=eq.${bookingId}`,
         },
         (payload) => {
           const updated = payload.new as Partial<BookingData>;
@@ -78,7 +94,7 @@ const BookingTrack = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [token]);
+  }, [bookingId, token]);
 
   const handleCancel = async () => {
     if (!booking) return;

@@ -109,7 +109,7 @@ const HeroSection = () => {
                 {t("landing:nav.login")}
               </Link>
               <Link
-                to="/login"
+                to="/login?mode=signup"
                 className="bg-[#7b39fc] rounded-[8px] px-5 py-2 text-[#fafafa] text-[14px] font-semibold transition-all duration-200 hover:bg-[#6828e8] shadow-sm"
               >
                 {t("landing:nav.signup")}
@@ -187,7 +187,7 @@ const HeroSection = () => {
                   {t("landing:nav.login")}
                 </Link>
                 <Link
-                  to="/login"
+                  to="/login?mode=signup"
                   className="bg-[#7b39fc] rounded-[8px] px-8 py-3 text-white text-[16px] font-semibold text-center block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -214,7 +214,7 @@ const HeroSection = () => {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Link
-            to="/login"
+            to="/login?mode=signup"
             className="bg-[#7b39fc] hover:bg-[#6828e8] rounded-[10px] px-7 py-3.5 text-white font-medium text-[16px] transition-all duration-200 shadow-lg shadow-[#7b39fc]/25"
           >
             {t("landing:hero.cta")}

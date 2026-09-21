@@ -489,7 +489,11 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
             size="sm"
             className="w-full gap-1.5 h-[40px] text-[13px]"
             onClick={async () => {
-              await supabase.rpc("check_in_ticket", { p_ticket_id: ticketId });
+              const { error } = await supabase.rpc("check_in_ticket", { p_ticket_id: ticketId });
+              if (error) {
+                toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
+                return;
+              }
               setTicket(prev => prev ? { ...prev, checked_in_at: new Date().toISOString() } : prev);
             }}
           >

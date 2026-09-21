@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,10 @@ import ForgotPassword from "./ForgotPassword";
 const LoginForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { waitForRole } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [showForgot, setShowForgot] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +38,13 @@ const LoginForm = () => {
       user = u ?? undefined;
     }
     if (!user) return;
+
+    // Return the user to the page they originally requested (set by ProtectedRoute)
+    const from = location.state?.from;
+    if (typeof from === "string") {
+      navigate(from, { replace: true });
+      return;
+    }
 
     // Use AuthContext's waitForRole (single RPC code path, no race with fetchRole)
     const roleData = await waitForRole();

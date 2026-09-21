@@ -1,28 +1,37 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
+/** @description New-password page. Shows a spinner while the recovery session is detected, the form when the link is valid, and an expired-link notice when it is not. */
 const ResetPassword = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     // Check for recovery event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
-        setReady(true);
+        if (timer) { clearTimeout(timer); timer = null; }
+        setStatus("ready");
       }
     });
-    return () => subscription.unsubscribe();
+    timer = setTimeout(() => {
+      setStatus((current) => (current === "checking" ? "invalid" : current));
+    }, 2000);
+    return () => {
+      if (timer) clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +52,28 @@ const ResetPassword = () => {
       setLoading(false);
     }
   };
+
+  if (status === "checking") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="text-center space-y-3 max-w-md">
+          <h1 className="text-2xl font-bold text-foreground">{t("auth:resetPassword.invalidTitle")}</h1>
+          <p className="text-muted-foreground">{t("auth:resetPassword.invalidDesc")}</p>
+          <Button variant="outline" asChild>
+            <Link to="/login">{t("auth:resetPassword.backToLogin")}</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
