@@ -240,6 +240,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     setJoinedTicketId(null);
     setJoinedServiceName("");
     setJoinedLabel("");
+    setJoinedToken(null);
   };
 
   const handleRestoreTicket = useCallback(() => {

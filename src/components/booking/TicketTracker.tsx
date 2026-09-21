@@ -182,7 +182,10 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
 
     load.then(({ data, error }) => {
       if (error) { setIsOffline(true); return; }
-      if (!data) return;
+      if (!data) {
+        if (trackingToken) setIsOffline(true);
+        return;
+      }
       setIsOffline(false);
       const t: TicketData = {
         ticket_label: data.ticket_label,
@@ -681,11 +684,23 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
                     setSavingChange(true);
                     const oldServiceId = serviceIdRef.current;
                     const oldStaffId = staffMemberIdRef.current;
-                    const { error } = await supabase.rpc("update_ticket_service", {
-                      p_ticket_id: ticketId,
-                      p_service_id: selectedServiceId,
-                      p_staff_member_id: selectedStaffId !== (oldStaffId || "") ? (selectedStaffId || null) : undefined,
-                    });
+                    let error: { message: string } | null = null;
+                    if (trackingToken) {
+                      const { data, error: tokenError } = await supabase.rpc("update_ticket_service_by_token", {
+                        p_tracking_token: trackingToken,
+                        p_service_id: selectedServiceId,
+                        p_staff_member_id: selectedStaffId !== (oldStaffId || "") ? (selectedStaffId || null) : null,
+                      });
+                      if (tokenError) error = tokenError;
+                      else if (data !== true) error = { message: "update_ticket_service_by_token returned false" };
+                    } else {
+                      const { error: legacyError } = await supabase.rpc("update_ticket_service", {
+                        p_ticket_id: ticketId,
+                        p_service_id: selectedServiceId,
+                        p_staff_member_id: selectedStaffId !== (oldStaffId || "") ? (selectedStaffId || null) : undefined,
+                      });
+                      error = legacyError;
+                    }
                     if (error) {
                       console.error("changeService:", error);
                       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
