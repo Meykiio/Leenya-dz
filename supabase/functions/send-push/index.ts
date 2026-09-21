@@ -119,9 +119,6 @@ async function sendNotification(subscription: { endpoint: string; keys: { p256dh
   return fetch(subscription.endpoint, { method: "POST", headers: { "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", Authorization: `WebPush ${vapidJWT}`, "Crypto-Key": `p256ecdsa=${uint8ArrayToBase64Url(publicKeyBytes)}`, TTL: "86400" }, body });
 }
 
-// allow private key reference in inner scope
-let privateKeyBytes: Uint8Array;
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey" } });

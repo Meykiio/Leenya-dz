@@ -355,6 +355,7 @@
   "analytics.bookingHistory": "Historique des réservations",
   "analytics.bookingsPerDay": "Réservations par jour",
   "analytics.loadError": "Impossible de charger les données statistiques.",
+  "analytics.truncated": "Grand volume de données : seuls les 1 000 enregistrements les plus récents de cette période sont affichés.",
   "analytics.unknown": "Inconnu",
   "analytics.conversionRate": "Taux de conversion",
   "analytics.avgRating": "Note moyenne",

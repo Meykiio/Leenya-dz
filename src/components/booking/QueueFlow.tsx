@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,9 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const [joinedToken, setJoinedToken] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [statsError, setStatsError] = useState(false);
+  const [statsRetry, setStatsRetry] = useState(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     try {
@@ -86,8 +89,13 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         })
         .single();
 
-      if (error) { console.error("fetchStats:", error); return; }
+      if (error) {
+        if (import.meta.env.DEV) console.error("fetchStats:", error);
+        setStatsError(true);
+        return;
+      }
       if (!data) return;
+      setStatsError(false);
       setWaitingCount(data.waiting_count);
       setEstimatedWait(data.estimated_wait_minutes);
       setCurrentTicket(data.current_serving_label);
@@ -97,7 +105,8 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     const statsChannel = supabase
       .channel("queue-stats")
       .on("postgres_changes", { event: "*", schema: "public", table: "queue_tickets", filter: `business_id=eq.${businessId}` }, () => {
-        fetchStats();
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => fetchStats(), 500);
       })
       .subscribe();
 
@@ -111,10 +120,11 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       .subscribe();
 
     return () => {
+      clearTimeout(debounceRef.current);
       supabase.removeChannel(statsChannel);
       supabase.removeChannel(pauseChannel);
     };
-  }, [businessId, selectedService]);
+  }, [businessId, selectedService, statsRetry]);
 
   useEffect(() => {
     if (!selectedService) {
@@ -363,6 +373,18 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
             {t("booking:queueFlow.currentServing", { ticket: currentTicket })}
           </p>
         )}
+        {statsError && (
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-[12px] text-destructive">{t("booking:queueFlow.statsError")}</p>
+            <button
+              type="button"
+              onClick={() => { setStatsError(false); setStatsRetry((k) => k + 1); }}
+              className="text-[12px] font-medium text-foreground underline underline-offset-2 hover:text-foreground/70"
+            >
+              {t("common:buttons.retry")}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Everything below is hidden when queue is paused */}
@@ -419,13 +441,14 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
             <div className="space-y-3">
               <h3 className="text-[15px] font-semibold text-foreground">{t("booking:queueFlow.joinTitle")}</h3>
               <div>
-                <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.nameLabel")}</label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("booking:queueFlow.namePlaceholder")} className="mt-1" />
+                <label htmlFor="queue-name" className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.nameLabel")}</label>
+                <Input id="queue-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("booking:queueFlow.namePlaceholder")} className="mt-1" />
               </div>
               <div>
-                <label className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
+                <label htmlFor="queue-phone" className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
                 <div className="flex gap-2 mt-1">
                   <Input
+                    id="queue-phone"
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value.replace(/\D/g, "")); setPhoneError(""); }}
                     placeholder={t("booking:queueFlow.phonePlaceholder")}

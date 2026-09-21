@@ -49,6 +49,8 @@ const BusinessPublic = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [business, setBusiness] = useState<Business | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [hours, setHours] = useState<BusinessHour[]>([]);
@@ -61,9 +63,11 @@ const BusinessPublic = () => {
     if (!slug) return;
 
     const fetchAll = async () => {
+      setLoading(true);
+      setFetchError(null);
       const { data: biz, error: bizError } = await supabase
         .from("businesses")
-        .select("*")
+        .select("id, name, slug, category, is_active, address, wilaya_name, phone, logo_url, cover_url, accepts_appointments, accepts_walkins, advance_booking_days")
         .eq("slug", slug)
         .maybeSingle();
 
@@ -72,7 +76,14 @@ const BusinessPublic = () => {
       }
 
       if (!biz) {
-        navigate("/404", { replace: true });
+        // PGRST116 = row not found → the business genuinely doesn't exist
+        if (!bizError || bizError.code === "PGRST116") {
+          navigate("/404", { replace: true });
+          return;
+        }
+        // Network / permission / other errors → show retry state instead of 404
+        setFetchError(t("common:toast.error"));
+        setLoading(false);
         return;
       }
 
@@ -104,7 +115,7 @@ const BusinessPublic = () => {
     };
 
     fetchAll();
-  }, [slug, navigate]);
+  }, [slug, navigate, reloadKey, t]);
 
   // Set default tab based on business config (appointment first, queue fallback)
   useEffect(() => {
@@ -125,6 +136,25 @@ const BusinessPublic = () => {
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-40" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 flex items-center justify-center px-6 text-center">
+          <div className="space-y-4">
+            <p className="text-4xl">⚠️</p>
+            <p className="text-[14px] text-muted-foreground">{fetchError}</p>
+            <button
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="rounded-md border border-border px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted/60 transition-colors"
+            >
+              {t("common:buttons.retry")}
+            </button>
           </div>
         </div>
       </div>
@@ -177,10 +207,13 @@ const BusinessPublic = () => {
         {(showAppointments || showQueue) && (
           <>
             {/* Custom sticky tab bar */}
-            <div className="sticky top-0 z-10 bg-background border-b border-border px-5">
+            <div role="tablist" className="sticky top-0 z-10 bg-background border-b border-border px-5">
               <div className="flex">
                 {showAppointments && (
                   <button
+                    role="tab"
+                    aria-selected={activeTab === "appointment"}
+                    aria-controls="tab-appointment"
                     onClick={() => setActiveTab("appointment")}
                     className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
                       activeTab === "appointment"
@@ -193,6 +226,9 @@ const BusinessPublic = () => {
                 )}
                 {showQueue && (
                   <button
+                    role="tab"
+                    aria-selected={activeTab === "queue"}
+                    aria-controls="tab-queue"
                     onClick={() => setActiveTab("queue")}
                     className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
                       activeTab === "queue"
@@ -223,23 +259,27 @@ const BusinessPublic = () => {
             )}
 
             {/* Tab content */}
-            {activeTab === "appointment" && showAppointments && (
-              <AppointmentFlow
-                businessId={business.id}
-                businessName={business.name}
-                services={services}
-                businessHours={hours}
-                advanceBookingDays={business.advance_booking_days ?? 14}
-              />
-            )}
+            <div id="tab-appointment" role="tabpanel">
+              {activeTab === "appointment" && showAppointments && (
+                <AppointmentFlow
+                  businessId={business.id}
+                  businessName={business.name}
+                  services={services}
+                  businessHours={hours}
+                  advanceBookingDays={business.advance_booking_days ?? 14}
+                />
+              )}
+            </div>
 
-            {activeTab === "queue" && showQueue && (
-              <QueueFlow
-                businessId={business.id}
-                businessName={business.name}
-                services={services}
-              />
-            )}
+            <div id="tab-queue" role="tabpanel">
+              {activeTab === "queue" && showQueue && (
+                <QueueFlow
+                  businessId={business.id}
+                  businessName={business.name}
+                  services={services}
+                />
+              )}
+            </div>
           </>
         )}
 

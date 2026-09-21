@@ -253,7 +253,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[var(--bg-subtle)] border-r border-[var(--border-default)] rtl:left-auto rtl:right-0 rtl:border-l rtl:border-r-0">
-            <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rtl:right-auto rtl:left-3">
+            <button onClick={() => setMobileOpen(false)} aria-label={t("common:nav.close")} className="absolute top-3 right-3 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rtl:right-auto rtl:left-3">
               <X className="h-5 w-5" />
             </button>
             {sidebarContent}
@@ -266,7 +266,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top bar */}
         <header className="sticky top-0 z-40 flex items-center justify-between h-[50px] border-b border-[var(--border-subtle)] bg-[var(--bg-base)] px-4 lg:px-6">
           <div className="flex items-center gap-3">
-            <button className="lg:hidden text-foreground" onClick={() => setMobileOpen(true)}>
+            <button className="lg:hidden text-foreground" aria-label={t("common:nav.menu")} onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
             <span className="text-sm font-semibold text-[var(--text-primary)] hidden sm:inline">
@@ -290,7 +290,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border-default)] bg-[var(--bg-base)] flex items-center overflow-x-auto py-1.5 px-1 scrollbar-none">
+        <nav aria-label={t("dashboard:nav.label")} className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border-default)] bg-[var(--bg-base)] flex items-center overflow-x-auto pt-1.5 pb-[env(safe-area-inset-bottom)] px-1 scrollbar-none">
           {allNav.map((item) => (
             <NavLink
               key={item.to}

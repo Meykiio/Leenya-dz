@@ -35,6 +35,14 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: SENTRY_DSN ? "hidden" : false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ["recharts"],
+          "framer-motion": ["framer-motion"],
+        },
+      },
+    },
   },
   plugins: [
     react(),

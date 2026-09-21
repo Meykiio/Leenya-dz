@@ -58,6 +58,7 @@ const DashboardAnalytics = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [truncated, setTruncated] = useState(false);
 
   useEffect(() => {
     if (!business) return;
@@ -94,6 +95,11 @@ const DashboardAnalytics = () => {
       if (bRes.error || qRes.error) {
         toast({ title: t("common:toast.error"), description: t("dashboard:analytics.loadError"), variant: "destructive" });
       }
+
+      const isTruncated = [bRes.data, pRes.data, qRes.data, pqRes.data, rRes.data].some(
+        (rows) => Array.isArray(rows) && rows.length === MAX_ANALYTICS_ROWS + 1
+      );
+      setTruncated(isTruncated);
 
       setBookings(bRes.data || []);
       setPrevBookings(pRes.data || []);
@@ -300,6 +306,11 @@ const DashboardAnalytics = () => {
           </div>
         ) : (
           <>
+            {truncated && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] font-medium text-amber-800">
+                {t("dashboard:analytics.truncated")}
+              </div>
+            )}
             <MetricCards
               totalBookings={totalBookings}
               prevBookings={prevTotal}

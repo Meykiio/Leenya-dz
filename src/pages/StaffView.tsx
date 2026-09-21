@@ -374,8 +374,10 @@ const StaffView = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex px-4 gap-1">
+        <div role="tablist" className="flex px-4 gap-1">
           <button
+            role="tab"
+            aria-selected={tab === "queue"}
             onClick={() => setTab("queue")}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
               tab === "queue"
@@ -392,6 +394,8 @@ const StaffView = () => {
             )}
           </button>
           <button
+            role="tab"
+            aria-selected={tab === "bookings"}
             onClick={() => setTab("bookings")}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
               tab === "bookings"

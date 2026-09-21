@@ -56,6 +56,7 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [slots, setSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotError, setSlotError] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -146,10 +147,12 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
     const dayHours = businessHours.find((h) => h.day_of_week === getDayOfWeek(selectedDate));
     if (!dayHours || dayHours.is_closed) {
       setSlots([]);
+      setSlotError(false);
       return;
     }
 
     setLoadingSlots(true);
+    setSlotError(false);
     const dateStr = formatDateForDB(selectedDate);
     supabase
       .rpc("get_public_booking_slots", {
@@ -157,7 +160,14 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
         p_date: dateStr,
         p_staff_member_id: selectedStaff && selectedStaff !== "no_preference" ? selectedStaff.id : null,
       })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          if (import.meta.env.DEV) console.error("get_public_booking_slots:", error);
+          setSlots([]);
+          setSlotError(true);
+          setLoadingSlots(false);
+          return;
+        }
         const existing = (data ?? []).map((b) => ({ start_time: b.start_time, end_time: b.end_time }));
       const allSlots = generateTimeSlots(dayHours, selectedService.duration_minutes, existing);
       const now = new Date();
@@ -386,6 +396,12 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
           />
         )}
       </AnimatePresence>
+
+      {step === "datetime" && slotError && (
+        <p className="mt-2 text-center text-[13px] text-destructive">
+          {t("booking:appointmentFlow.error.slots")}
+        </p>
+      )}
     </div>
   );
 }

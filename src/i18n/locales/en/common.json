@@ -68,6 +68,10 @@
     "search": "Search businesses...",
     "noResults": "No businesses found"
   },
+  "nav": {
+    "menu": "Menu",
+    "close": "Close"
+  },
   "push": {
     "enableTitle": "Get notified",
     "enableMessage": "We'll let you know when your booking is confirmed or when it's your turn.",

@@ -37,6 +37,7 @@ const BookingTrack = () => {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -98,7 +99,10 @@ const BookingTrack = () => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR") setReconnecting(true);
+        if (status === "SUBSCRIBED") setReconnecting(false);
+      });
 
     return () => { supabase.removeChannel(channel); };
   }, [bookingId, token]);
@@ -175,6 +179,12 @@ const BookingTrack = () => {
             <p className="text-[12px] font-mono text-muted-foreground">#{booking.id.slice(0, 8).toUpperCase()}</p>
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
+
+          {reconnecting && (
+            <p className="text-[12px] text-amber-600" role="status">
+              {t("booking:bookingTrack.reconnecting")}
+            </p>
+          )}
 
           {/* Details card */}
           <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">

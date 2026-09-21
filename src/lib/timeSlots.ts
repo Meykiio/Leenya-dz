@@ -105,10 +105,15 @@ export function formatDateLabel(date: Date): { dayName: string; dayNum: number; 
 
 /**
  * Format a date as ISO string (YYYY-MM-DD) for database queries.
- * 
+ * Uses local date components (not UTC) so the date matches what the
+ * business sees in their own timezone.
+ *
  * @param date - The date to format
  * @returns Date string in "YYYY-MM-DD" format
  */
 export function formatDateForDB(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }

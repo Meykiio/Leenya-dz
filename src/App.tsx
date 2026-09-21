@@ -36,7 +36,7 @@ const DashboardFeedback = React.lazy(() => import("@/pages/dashboard/DashboardFe
 
 /** Spinner shown as a Suspense fallback while lazy-loaded page chunks load. */
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
+  <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]" role="status" aria-live="polite">
     <div className="h-8 w-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
   </div>
 );

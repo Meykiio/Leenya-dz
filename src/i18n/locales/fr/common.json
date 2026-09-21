@@ -68,6 +68,10 @@
     "search": "Rechercher des commerces...",
     "noResults": "Aucun commerce trouvé"
   },
+  "nav": {
+    "menu": "Menu",
+    "close": "Fermer"
+  },
   "push": {
     "enableTitle": "Recevoir des notifications",
     "enableMessage": "Nous vous préviendrons quand votre rendez-vous est confirmé ou quand c'est votre tour.",

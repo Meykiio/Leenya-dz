@@ -64,6 +64,14 @@
   "languages.english": "English",
   "languages.french": "Français",
   "languages.arabic": "العربية",
+  "admin": {
+    "search": "بحث",
+    "noResults": "لا توجد نتائج"
+  },
+  "nav": {
+    "menu": "القائمة",
+    "close": "إغلاق"
+  },
   "push": {
     "enableTitle": "تلقي الإشعارات",
     "enableMessage": "سنخبرك عندما يتم تأكيد حجزك أو عندما يحين دورك.",

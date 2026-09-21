@@ -51,20 +51,20 @@ export default function StepDetails({
 
       <div className="space-y-3">
         <div>
-          <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.nameLabel")}</label>
-          <Input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.namePlaceholder")} className="mt-1" />
+          <label htmlFor="booking-name" className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.nameLabel")}</label>
+          <Input id="booking-name" value={name} onChange={(e) => onNameChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.namePlaceholder")} className="mt-1" />
         </div>
         <div>
-          <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.phoneLabel")}</label>
+          <label htmlFor="booking-phone" className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.phoneLabel")}</label>
           <div className="flex gap-2 mt-1">
-            <Input value={phone} onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ""))} placeholder="555 123 456" type="tel" />
+            <Input id="booking-phone" value={phone} onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ""))} placeholder="555 123 456" type="tel" />
           </div>
           {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
           {!phoneError && <p className="text-[11px] text-muted-foreground/70">{t("common:validation.phone.hint")}</p>}
         </div>
         <div>
-          <label className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.noteLabel")}</label>
-          <Textarea value={note} onChange={(e) => onNoteChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.notePlaceholder")} rows={2} className="mt-1" />
+          <label htmlFor="booking-note" className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.noteLabel")}</label>
+          <Textarea id="booking-note" value={note} onChange={(e) => onNoteChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.notePlaceholder")} rows={2} className="mt-1" />
         </div>
       </div>
 

@@ -57,6 +57,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
   const serviceIdRef = useRef<string | null>(null);
   const staffMemberIdRef = useRef<string | null>(null);
   const ticketRef = useRef(ticket);
+  const refetchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
   const [bizIdReady, setBizIdReady] = useState(false);
   useEffect(() => { ticketRef.current = ticket; }, [ticket]);
   const [showServicePicker, setShowServicePicker] = useState(false);
@@ -255,13 +256,19 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "queue_tickets", filter: `business_id=eq.${businessIdRef.current}` },
-        async () => { refetchAll(); }
+        () => {
+          clearTimeout(refetchDebounceRef.current);
+          refetchDebounceRef.current = setTimeout(() => refetchAll(), 500);
+        }
       )
       .subscribe((status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setIsOffline(true);
         if (status === "SUBSCRIBED") setIsOffline(false);
       });
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      clearTimeout(refetchDebounceRef.current);
+      supabase.removeChannel(channel);
+    };
   }, [ticketId, refetchAll, bizIdReady]);
 
   const handleSubmitReview = async () => {
@@ -412,7 +419,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
         )}
       </AnimatePresence>
 
-      <div className="rounded-xl border border-border bg-muted/50 p-[28px_24px] text-center">
+      <div role="status" aria-live="polite" className="rounded-xl border border-border bg-muted/50 p-[28px_24px] text-center">
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-3.5">
           {t("booking:ticketTracker.yourTicket")}
         </p>
@@ -544,6 +551,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
         <Button
           variant="outline"
           size="sm"
+          aria-label="Cancel ticket"
           className="flex-1 gap-1.5 h-[40px] text-[13px]"
           onClick={async () => {
             const { data } = trackingToken

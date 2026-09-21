@@ -55,6 +55,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    partialBundledLanguages: true,
     fallbackLng: "en",
     defaultNS: "common",
     ns: ["common", "landing", "auth", "dashboard", "booking", "staff"],

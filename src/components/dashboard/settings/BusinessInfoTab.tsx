@@ -54,7 +54,7 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
   const [slugChecking, setSlugChecking] = useState(false);
 
   useEffect(() => {
-    supabase.from("businesses").select("*").eq("id", businessId).single().then(({ data, error }) => {
+    supabase.from("businesses").select("id, owner_id, name, slug, category, description, phone, address, wilaya_code, wilaya_name, logo_url, cover_url, is_active, accepts_walkins, accepts_appointments, advance_booking_days, plan, trial_ends_at, queue_capacity, is_queue_paused").eq("id", businessId).single().then(({ data, error }) => {
       if (error) {
         if (import.meta.env.DEV) console.error('[BusinessInfoTab] failed to fetch business:', error.message);
         return;
