@@ -151,17 +151,14 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
 
     setLoadingSlots(true);
     const dateStr = formatDateForDB(selectedDate);
-    let query = supabase
-      .from("bookings")
-      .select("start_time, end_time")
-      .eq("business_id", businessId)
-      .eq("date", dateStr)
-      .not("status", "in", "(cancelled,no_show)");
-    if (selectedStaff && selectedStaff !== "no_preference") {
-      query = query.eq("staff_member_id", selectedStaff.id);
-    }
-    query.then(({ data }) => {
-      const existing = (data ?? []).map((b) => ({ start_time: b.start_time, end_time: b.end_time }));
+    supabase
+      .rpc("get_public_booking_slots", {
+        p_business_id: businessId,
+        p_date: dateStr,
+        p_staff_member_id: selectedStaff && selectedStaff !== "no_preference" ? selectedStaff.id : null,
+      })
+      .then(({ data }) => {
+        const existing = (data ?? []).map((b) => ({ start_time: b.start_time, end_time: b.end_time }));
       const allSlots = generateTimeSlots(dayHours, selectedService.duration_minutes, existing);
       const now = new Date();
       const isToday = formatDateForDB(selectedDate) === formatDateForDB(now);
@@ -206,33 +203,30 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
     const staffMemberId = selectedStaff && selectedStaff !== "no_preference" ? selectedStaff.id : null;
 
     const { data, error } = await supabase
-      .from("bookings")
-      .insert({
-        business_id: businessId,
-        service_id: selectedService.id,
-        staff_member_id: staffMemberId,
-        date: dateStr,
-        start_time: selectedTime,
-        end_time: endTime,
-        client_name: name.trim(),
-        client_phone: normalizedPhone,
-        notes: note.trim() || null,
-        status: "pending",
+      .rpc("create_public_booking", {
+        p_business_id: businessId,
+        p_service_id: selectedService.id,
+        p_staff_member_id: staffMemberId,
+        p_date: dateStr,
+        p_start_time: selectedTime,
+        p_end_time: endTime,
+        p_client_name: name.trim(),
+        p_client_phone: normalizedPhone,
+        p_notes: note.trim() || null,
       })
-      .select("id, booking_token")
       .maybeSingle();
 
     setSubmitting(false);
-    if (error) {
-      const msg = error.message.includes("Trop de demandes")
+    if (error || !data) {
+      const msg = error?.message.includes("Trop de demandes")
         ? t("booking:appointmentFlow.error.rateLimited")
-        : error.message.includes("deja reserve")
+        : error?.message.includes("déjà réservé")
         ? t("booking:appointmentFlow.error.slotTaken")
         : t("booking:appointmentFlow.error.creationFailed");
       toast({ title: t("common:toast.error"), description: msg, variant: "destructive" });
       return;
     }
-    setBookingId(data.id);
+    setBookingId(data.booking_id);
     setBookingToken(data.booking_token);
     setStep("confirmed");
     try {

@@ -7,7 +7,6 @@ import { Clock, Users, Share2, ChevronRight, XCircle, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import TicketTracker from "./TicketTracker";
 import StepStaff from "@/components/booking/steps/StepStaff";
-import { formatDateForDB } from "@/lib/timeSlots";
 import { buildQueueTicketUrl } from "@/lib/whatsapp";
 import { validateAlgerianPhone } from "@/lib/phone/validation";
 
@@ -51,60 +50,9 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const [joinedTicketId, setJoinedTicketId] = useState<string | null>(null);
   const [joinedServiceName, setJoinedServiceName] = useState("");
   const [joinedLabel, setJoinedLabel] = useState("");
+  const [joinedToken, setJoinedToken] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-
-  const today = formatDateForDB(new Date());
-
-  const computeEWT = async (serviceId: string | null, waiting: number) => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const fromDate = formatDateForDB(thirtyDaysAgo);
-
-    let query = supabase
-      .from("queue_tickets")
-      .select("called_at, created_at")
-      .eq("business_id", businessId)
-      .eq("status", "completed")
-      .not("called_at", "is", null)
-      .not("created_at", "is", null)
-      .gte("queue_date", fromDate);
-
-    if (serviceId) query = query.eq("service_id", serviceId);
-
-    const { data: completed } = await query;
-
-    let avgWaitMin: number;
-    if (completed && completed.length > 0) {
-      const totalMin = completed.reduce((sum, t) => {
-        return sum + (new Date(t.called_at!).getTime() - new Date(t.created_at!).getTime()) / 60000;
-      }, 0);
-      avgWaitMin = Math.round(totalMin / completed.length);
-    } else {
-      const fallback = selectedService?.duration_minutes ?? 10;
-      avgWaitMin = Math.round(fallback * 1.5);
-    }
-
-    let staffCount = 1;
-    if (serviceId) {
-      const { data: ssData } = await supabase
-        .from("staff_services")
-        .select("staff_member_id")
-        .eq("service_id", serviceId);
-      if (ssData && ssData.length > 0) {
-        const ids = ssData.map((s) => s.staff_member_id);
-        const { count } = await supabase
-          .from("staff_members")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .eq("is_active", true)
-          .in("id", ids);
-        if (count && count > 0) staffCount = count;
-      }
-    }
-
-    return Math.round((waiting / staffCount) * avgWaitMin);
-  };
 
   useEffect(() => {
     try {
@@ -115,6 +63,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           setJoinedTicketId(saved.ticketId);
           setJoinedServiceName(saved.serviceName);
           setJoinedLabel(saved.ticketLabel);
+          setJoinedToken(saved.trackingToken ?? null);
           setPhone(saved.phone || "");
         }
       }
@@ -131,23 +80,17 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     const fetchStats = async () => {
       const { data, error } = await supabase
-        .from("queue_tickets")
-        .select("ticket_label, status, ticket_number")
-        .eq("business_id", businessId)
-        .eq("queue_date", today)
-        .in("status", ["waiting", "called", "in_service"])
-        .order("ticket_number", { ascending: true });
+        .rpc("get_public_queue_stats", {
+          p_business_id: businessId,
+          p_service_id: selectedService?.id ?? null,
+        })
+        .single();
 
       if (error) { console.error("fetchStats:", error); return; }
       if (!data) return;
-      const waiting = data.filter((t) => t.status === "waiting");
-      setWaitingCount(waiting.length);
-
-      const ewt = await computeEWT(selectedService?.id ?? null, waiting.length);
-      setEstimatedWait(ewt);
-
-      const serving = data.find((t) => t.status === "in_service" || t.status === "called");
-      setCurrentTicket(serving?.ticket_label ?? null);
+      setWaitingCount(data.waiting_count);
+      setEstimatedWait(data.estimated_wait_minutes);
+      setCurrentTicket(data.current_serving_label);
     };
     fetchStats();
 
@@ -171,8 +114,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       supabase.removeChannel(statsChannel);
       supabase.removeChannel(pauseChannel);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessId, today, selectedService]);
+  }, [businessId, selectedService]);
 
   useEffect(() => {
     if (!selectedService) {
@@ -243,26 +185,6 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     const normalizedPhone = validateAlgerianPhone(phone).normalized;
     setSubmitting(true);
 
-    const { data: existing, error: existingError } = await supabase
-      .from("queue_tickets")
-      .select("id, ticket_label")
-      .eq("business_id", businessId)
-      .eq("client_phone", normalizedPhone)
-      .eq("queue_date", today)
-      .in("status", ["waiting", "called", "in_service"])
-      .maybeSingle();
-
-    if (existingError) { console.error("checkExistingTicket:", existingError); }
-
-    if (existing) {
-      toast({
-        title: t("booking:queueFlow.duplicateTicket"),
-        variant: "destructive",
-      });
-      setSubmitting(false);
-      return;
-    }
-
     const staffMemberId = selectedStaff && selectedStaff !== "no_preference" ? selectedStaff.id : null;
 
     const { data, error } = await supabase
@@ -278,17 +200,32 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
 
     setSubmitting(false);
     if (error || !data) {
+      const errText = `${error?.hint ?? ""} ${error?.message ?? ""}`;
+      if (errText.includes("already_in_queue")) {
+        toast({
+          title: t("booking:queueFlow.duplicateTicket"),
+          variant: "destructive",
+        });
+        return;
+      }
+      if (errText.includes("queue_paused")) {
+        setIsPaused(true);
+        return;
+      }
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
       return;
     }
     const newId = data.ticket_id;
     const newLabel = data.ticket_label;
+    const newToken = data.tracking_token;
     setJoinedTicketId(newId);
     setJoinedServiceName(selectedService.name);
     setJoinedLabel(newLabel);
+    setJoinedToken(newToken ?? null);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         ticketId: newId,
+        trackingToken: newToken,
         businessId,
         businessName,
         serviceName: selectedService.name,
@@ -314,6 +251,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         setJoinedTicketId(saved.ticketId);
         setJoinedServiceName(saved.serviceName);
         setJoinedLabel(saved.ticketLabel);
+        setJoinedToken(saved.trackingToken ?? null);
         setPhone(saved.phone || "");
       }
     } catch { /* ignore */ }
@@ -322,13 +260,25 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
   const handleCancelTicket = async () => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
-    let ticketId: string;
-    try { ticketId = JSON.parse(raw).ticketId; } catch { return; }
+    let saved: { ticketId?: string; trackingToken?: string };
+    try { saved = JSON.parse(raw); } catch { return; }
+    const { ticketId, trackingToken } = saved;
     if (!ticketId) return;
     setCancelling(true);
-    const { data, error } = await supabase
-      .rpc("cancel_queue_ticket", { p_ticket_id: ticketId })
-      .maybeSingle();
+    let data: boolean | null = null;
+    let error: { message: string } | null = null;
+    if (trackingToken) {
+      const res = await supabase
+        .rpc("cancel_queue_ticket_by_token", { p_token: trackingToken });
+      data = res.data as boolean | null;
+      error = res.error;
+    } else {
+      const res = await supabase
+        .rpc("cancel_queue_ticket", { p_ticket_id: ticketId })
+        .maybeSingle();
+      data = res.data as boolean | null;
+      error = res.error;
+    }
     setCancelling(false);
     if (error || !data) {
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
@@ -347,6 +297,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       <div>
         <TicketTracker
           ticketId={joinedTicketId}
+          trackingToken={joinedToken}
           businessName={businessName}
           serviceName={joinedServiceName}
           onBack={handleGoBack}

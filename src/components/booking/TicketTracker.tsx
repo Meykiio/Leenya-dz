@@ -18,6 +18,7 @@ import TicketCancelled from "./TicketCancelled";
 
 interface Props {
   ticketId: string;
+  trackingToken?: string | null;
   businessName: string;
   serviceName: string;
   onBack: () => void;
@@ -37,7 +38,7 @@ interface TicketData {
 
 const CACHE_PREFIX = "leenya_ticket_";
 
-export default function TicketTracker({ ticketId, businessName, serviceName, onBack }: Props) {
+export default function TicketTracker({ ticketId, trackingToken, businessName, serviceName, onBack }: Props) {
   const { t, i18n } = useTranslation();
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const { isSupported, permission, subscribing, subscribe } = useWebPush();
@@ -169,45 +170,56 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
   };
 
   useEffect(() => {
-    supabase
-      .rpc("get_queue_ticket", { p_ticket_id: ticketId })
-      .single()
-      .then(({ data, error }) => {
-        if (error) { setIsOffline(true); return; }
-        if (!data) return;
-        setIsOffline(false);
-        const t: TicketData = {
-          ticket_label: data.ticket_label,
-          ticket_number: data.ticket_number,
-          status: data.status ?? "waiting",
-          position_in_queue: data.position_in_queue,
-          estimated_wait_minutes: data.estimated_wait_minutes,
-          service_id: data.service_id,
-          business_id: data.business_id,
-          queue_date: data.queue_date,
-          checked_in_at: data.checked_in_at || null,
-        };
-        setTicket(t);
-        businessIdRef.current = data.business_id;
-        queueDateRef.current = data.queue_date;
-        serviceIdRef.current = data.service_id;
-        staffMemberIdRef.current = data.staff_member_id;
-        setBizIdReady(true);
+    const load = trackingToken
+      ? supabase
+          .rpc("get_queue_ticket_by_token", { p_token: trackingToken })
+          .maybeSingle()
+          .then(({ data, error }) => ({ data, error }))
+      : supabase
+          .rpc("get_queue_ticket", { p_ticket_id: ticketId })
+          .single()
+          .then(({ data, error }) => ({ data, error }));
 
-        fetchHistoricalData(data.business_id, data.service_id);
-        refreshQueueContext(data.business_id, data.queue_date, data.ticket_number).then((ctx) => {
-          if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
-        });
+    load.then(({ data, error }) => {
+      if (error) { setIsOffline(true); return; }
+      if (!data) return;
+      setIsOffline(false);
+      const t: TicketData = {
+        ticket_label: data.ticket_label,
+        ticket_number: data.ticket_number,
+        status: data.status ?? "waiting",
+        position_in_queue: data.position_in_queue,
+        estimated_wait_minutes: data.estimated_wait_minutes,
+        service_id: data.service_id,
+        business_id: data.business_id,
+        queue_date: data.queue_date,
+        checked_in_at: data.checked_in_at || null,
+      };
+      setTicket(t);
+      businessIdRef.current = data.business_id;
+      queueDateRef.current = data.queue_date;
+      serviceIdRef.current = data.service_id;
+      staffMemberIdRef.current = data.staff_member_id;
+      setBizIdReady(true);
+
+      fetchHistoricalData(data.business_id, data.service_id);
+      refreshQueueContext(data.business_id, data.queue_date, data.ticket_number).then((ctx) => {
+        if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
       });
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId, fetchHistoricalData]);
+  }, [ticketId, trackingToken, fetchHistoricalData]);
 
   const refetchAll = useCallback(async () => {
     if (!businessIdRef.current || !queueDateRef.current || !ticketRef.current) return;
     setIsOffline(false);
-    const { data, error } = await supabase
-      .rpc("get_queue_ticket", { p_ticket_id: ticketId })
-      .single();
+    const { data, error } = trackingToken
+      ? await supabase
+          .rpc("get_queue_ticket_by_token", { p_token: trackingToken })
+          .maybeSingle()
+      : await supabase
+          .rpc("get_queue_ticket", { p_ticket_id: ticketId })
+          .single();
     if (error) { console.error("refetchAll:", error); return; }
     if (!data) return;
     const t: TicketData = {
@@ -231,7 +243,7 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
       );
       if (ctx) saveCache(t, ctx.aheadCount, ctx.cs);
     }
-  }, [ticketId, refreshQueueContext]);
+  }, [ticketId, trackingToken, refreshQueueContext]);
 
   useEffect(() => {
     if (!bizIdReady || !businessIdRef.current) return;
@@ -255,12 +267,23 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
     const bizId = businessIdRef.current || ticket?.business_id;
     if (!bizId) { setSubmitting(false); return; }
 
-    const { error } = await supabase.from("reviews").insert({
-      business_id: bizId,
-      ticket_id: ticketId,
-      rating,
-      comment: comment.trim() || null,
-    });
+    let error: { message?: string } | null = null;
+    if (trackingToken) {
+      const res = await supabase.rpc("submit_public_review", {
+        p_tracking_token: trackingToken,
+        p_rating: rating,
+        p_comment: comment.trim() || null,
+      });
+      error = res.error;
+    } else {
+      const res = await supabase.from("reviews").insert({
+        business_id: bizId,
+        ticket_id: ticketId,
+        rating,
+        comment: comment.trim() || null,
+      });
+      error = res.error;
+    }
     setSubmitting(false);
     if (error) {
       toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
@@ -489,6 +512,15 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
             size="sm"
             className="w-full gap-1.5 h-[40px] text-[13px]"
             onClick={async () => {
+              if (trackingToken) {
+                const { data, error } = await supabase.rpc("check_in_ticket_by_token", { p_token: trackingToken });
+                if (error || data !== true) {
+                  toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
+                  return;
+                }
+                setTicket(prev => prev ? { ...prev, checked_in_at: new Date().toISOString() } : prev);
+                return;
+              }
               const { error } = await supabase.rpc("check_in_ticket", { p_ticket_id: ticketId });
               if (error) {
                 toast({ title: t("common:toast.error"), description: t("common:toast.updateError"), variant: "destructive" });
@@ -511,7 +543,9 @@ export default function TicketTracker({ ticketId, businessName, serviceName, onB
           size="sm"
           className="flex-1 gap-1.5 h-[40px] text-[13px]"
           onClick={async () => {
-            const { data } = await supabase.rpc("cancel_queue_ticket", { p_ticket_id: ticketId }).maybeSingle();
+            const { data } = trackingToken
+              ? await supabase.rpc("cancel_queue_ticket_by_token", { p_token: trackingToken })
+              : await supabase.rpc("cancel_queue_ticket", { p_ticket_id: ticketId }).maybeSingle();
             if (data) {
               localStorage.removeItem(`${CACHE_PREFIX}${ticketId}`);
               localStorage.removeItem(`${CACHE_PREFIX}${ticketId}_reviewed`);
