@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-09-21 — Security Containment + Restored Lost Safety Systems + Flow Fixes
+
+**What happened:** Full audit executed. Production database had been running since the July restore without its safety systems (state machines, plan limits, past-booking prevention) and with every privileged database function callable by anonymous users. Both fixed. Customer-facing flow bugs fixed and shipped.
+
+| What changed | Why |
+|---|---|
+| Locked 16 privileged functions to signed-in roles only | Anonymous users could call dashboard/staff/skip/recalc functions — 27 advisor warnings now down to the intentional public surface |
+| Added caller authorization to staff queue, monthly counts, recalculation | Any signed-in user could previously read other businesses' customer data |
+| Restored booking + queue state machines | Invalid status changes (e.g. completed → pending) were silently allowed since July |
+| Restored plan limits (100 bookings / 300 tickets / 3 staff on free) | Caps were not enforced since July |
+| Restored past-booking, business-hours, and cross-business validation | Anyone could book yesterday, on closed days, or attach another shop's service |
+| Restored 10 `updated_at` triggers | Timestamps stopped auto-updating since July |
+| Recreated `create_staff_user` | Adding a staff login from the dashboard was silently broken since the July restore |
+| Fixed 5 customer flow bugs | Booking tracking now updates live, sign-up buttons open signup, password reset rejects expired links, login keeps your destination, "I'm here" no longer fakes success |
+| Fixed CI/E2E pipeline | Tests ran against deleted shops and never started the app; now 50/50 passing against production on every push/PR |
+| Verified full database backup | Schema + data dumps with SHA-256 fingerprints, restore guide in DOCS/DATABASE_RECOVERY.md |
+
+**Verification:** E2E 50/50 against production, 42/42 unit tests, typecheck + lint + build pass, advisor anomalies resolved, both migrations tracked in production history and mirrored in `supabase/migrations/`.
+
+---
+
 ## 2026-07-02 — Full Project Audit + Documentation Rebuild
 
 **What happened:** Every factual claim in every doc was checked against the live database, Vercel deployment, and source code. Found and fixed contradictions, removed dead code, and rebuilt DOCS/ from scratch.

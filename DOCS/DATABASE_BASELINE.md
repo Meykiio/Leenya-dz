@@ -16,10 +16,10 @@
 
 ## Function Security (verified via pg_proc + advisors)
 
-- 33 functions in `public`. Every one is executable by BOTH `anon` and `authenticated` (Postgres default `EXECUTE` to `PUBLIC` was never revoked live; the repo SQL file's REVOKE/GRANT block was never applied to production).
-- Advisors flag 27 `SECURITY DEFINER` functions callable by anon (lint 0028) and the same 27 by authenticated (lint 0029). Notable: `get_dashboard_queue`, `check_in_ticket`, `reassign_queue_ticket`, `recalculate_queue_positions`, `send_ticket_back_to_queue`, `skip_queue_ticket`, `get_staff_queue`, `cancel_queue_ticket`, `generate_ticket_number`, `assign_owner_role`, `delete_my_account`, `upsert_business`, `insert_services`, `create_staff_user`, `handle_new_user`.
-- 4 non-definer functions have a mutable search_path (lint 0011): `update_updated_at`, `application_status_timestamps`, `generate_invoice_number`, `set_invoice_number` (the latter three belong to another project's schema, present live).
-- Function bodies were NOT individually read live; body-level authorization gaps (e.g. `get_staff_queue` trusting a caller-supplied staff id, `get_monthly_business_counts`/`recalculate_queue_positions` lacking caller checks) are verified in the repo SQL and must be re-confirmed live before fixing.
+- 2026-09-21 UPDATE: containment applied via migrations `20260921170242_contain_rpc_grants_and_owner_checks` and `20260921170708_restore_guard_functions_and_triggers` (mirrored in `supabase/migrations/`). Default PUBLIC EXECUTE revoked; grants now match the designed matrix: 9 public customer functions callable by anon, everything else authenticated-only or revoked entirely. `is_superadmin` intentionally callable (used inside RLS policies). `create_staff_user` recreated (was missing since the July restore) and authenticated-only.
+- Pre-migration findings, kept for reference: 27 SECURITY DEFINER functions were callable by anon; `get_staff_queue`, `get_monthly_business_counts`, `recalculate_queue_positions` lacked caller authorization (now fixed); 4 leftover functions had mutable search_path (now pinned to empty).
+- Advisors now report 10 anon-callable SECURITY DEFINER functions: the intentional public surface (9 customer commands) plus `is_superadmin` (required by RLS policies). These are Task 3 hardening targets, not open holes.
+- Also missing live since the July restore and now restored: `check_business_limits`, `check_staff_plan_limit`, `check_booking_service_business`, `check_business_hours`, `check_past_booking`, both state machines, `update_updated_at_column`, and their 22 triggers. `get_default_whatsapp_templates` remains intentionally absent (unused by the frontend; will be included in the clean-schema rebuild).
 
 ## Row-Level Security (verified via pg_policies)
 
