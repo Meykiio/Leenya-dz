@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-09-22 — Full Remediation Complete (Tasks 0–10)
+
+All 10 remediation tasks from the audit are implemented, verified, and shipped.
+
+| Sprint | What it covered |
+|---|---|
+| 0–1 | Verified backup, confirmed canonical project, captured live baseline |
+| 2 — Security containment | Locked 16 privileged functions, added caller authorization, restored 22 safety triggers (plan limits, state machines, past-booking, business-hours) |
+| 3 — Capability tokens | Every customer ticket gets a private key; all anonymous paths use validated server commands; direct table access removed; RLS tightened |
+| 4 — Concurrency safety | Business/day-level locks for bookings and queue positions; atomic staff walk-in command; verified with live overlap + simultaneous-join tests |
+| 5 — Platform lockdown | Server-side push fanout (no arbitrary destinations), 5 MB upload cap, SW cache fix, browser data cleanup |
+| 6 — Flow repairs | Timezone fix, error/retry states on every public page, reconnect indicator, loading accessibility |
+| 7 — Accessibility | Form labels connected, tab roles, live regions, reduced motion, safe areas, locale gaps closed |
+| 8 — Performance | Explicit columns, realtime debounce (0.5s), analytics truncation warning, bundle splitting (recharts/framer-motion) |
+| 9 — Release gates | 2 pgTAP test files (RLS + function grants), CI workflow hardened, bundle-size check |
+| 10 — Docs | README, OVERVIEW, DATABASE_BASELINE, CHANGELOG rewritten to match verified reality |
+
+**Final state:** 50/50 E2E passing against production; 42/42 unit tests; typecheck + lint clean; all 12 migrations tracked in production and mirrored in the repo.
+
+**Open-source ready:** MIT license, clean README, no secrets in tracked files, pgTAP test suite for database verification.
+
+---
+
 ## 2026-09-21 (evening) — Capability Tokens: Customers Get a Private Key + Last Holes Closed
 
 **What happened:** Every anonymous customer path now runs through validated server commands with a private capability token, instead of directly reading/writing shared tables. The two biggest holes from the audit (publicly readable customer queue data, forgeable inserts) are closed and verified live.

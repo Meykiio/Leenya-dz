@@ -1,111 +1,94 @@
 # Leenya
 
-**Queue management & appointment scheduling for Algerian service businesses.**
+**Booking & queue management for Algerian service businesses.**
 
-Leenya helps salons, clinics, barbers, and other service businesses replace paper waiting lists and phone-based booking with a real-time digital system. Customers join from their phone, staff serve from a dedicated view, and owners get analytics — no app install required.
-
----
+Leenya helps salons, clinics, barbershops, and other walk-in service businesses replace paper waiting lists and phone-based scheduling with a real-time digital system. Customers join from their phone, staff serve from a dedicated view, and owners get analytics — no app install required.
 
 ## Features
 
-### For Business Owners
-- **Dashboard** — Real-time overview of bookings, queue, revenue, and staff activity with analytics and trend charts
-- **Booking management** — Accept/decline pending bookings, reschedule, cancel, WhatsApp integration for each action
-- **Queue management** — Live waiting list, call next, skip, send back to queue, check-in tracking, pause queue
-- **Service catalog** — CRUD services with duration, price, display order, active/inactive toggle
-- **Staff management** — Add staff with email/password login, assign services, manage avatars
-- **Settings** — Business info, hours (per-day with open/close), booking preferences, subscription, WhatsApp templates
-- **Subscriptions** — 3-tier (Free/Pro/Business) with server-enforced limits and 30-day trial
+### For Customers
+- **Public business page** — services, hours, reviews, booking + queue tabs
+- **Queue join** — take a ticket with a private tracking key, watch your position in real time
+- **Online booking** — 5-step flow (service → staff → date/time → details → confirmation)
+- **Ticket tracking** — live position, status changes, check-in, cancel — all via your private key
+- **Booking tracking** — follow your reservation status, cancel online
+- **WhatsApp integration** — every notification links to WhatsApp
 
 ### For Staff
-- **Staff view** — Simplified interface: see assigned/shop queue, call customers, mark complete, skip, check-in
-- **Status actions** — Call, start service, complete, no-show, send back to queue
-- **Ticket tracking** — See estimated wait, customer name, service, check-in indicator
+- **Staff view** — see assigned tickets, call next, mark complete, no-show
+- **Push notifications** — customers get notified when it's their turn
 
-### For Customers
-- **Public business page** — Business info, hours, reviews, active announcements
-- **Queue join** — Select service, optionally pick staff, enter name/phone, get ticket with live position
-- **Online booking** — 5-step flow: service → staff → date/time → details → confirmation via WhatsApp
-- **Ticket tracker** — Live position, queue state (waiting/called/in_service/done), ETA, check-in button
-- **Booking tracker** — Track booking by token, cancel online, submit reviews after service
-- **TV display** — Full-screen queue status for waiting areas
-
-### Cross-Cutting
-- **Multilingual** — French (default), Arabic (full RTL), English. ~992 keys per language across 6 namespaces
-- **Realtime** — Queue positions, ticket status, booking updates pushed instantly via Supabase Realtime
-- **WhatsApp templates** — 7 customizable message types (booking confirmation, reminders, queue ticket, etc.)
-- **Security** — Row-level security on all tables, SECURITY DEFINER RPCs for public access, rate limiting, state machine enforcement at DB level
-
----
-
-## Tech Stack
-
-| Category | Choice |
-|---|---|
-| **Framework** | React 18 + TypeScript + Vite |
-| **UI** | Tailwind CSS v3 + shadcn/ui (~50 components) |
-| **Backend** | Supabase (PostgreSQL 15, Auth, Realtime, Storage) |
-| **Forms** | React Hook Form + Zod |
-| **Charts** | Recharts |
-| **Animation** | Framer Motion |
-| **i18n** | react-i18next (6 namespaces × 3 locales) |
-| **Monitoring** | Sentry |
-| **Testing** | Vitest (unit) + Playwright (E2E) |
-| **CI/CD** | GitHub Actions |
-| **Deployment** | Vercel |
-| **Fonts** | Sora, JetBrains Mono, IBM Plex Sans Arabic |
+### For Owners
+- **Dashboard** — bookings, queue, services, staff, analytics, settings
+- **Realtime** — live queue positions, booking status updates via Supabase Realtime
+- **Analytics** — bookings, queue flow, peak hours, popular services, revenue trends
+- **Subscriptions** — free tier (100 bookings/mo, 300 tickets/mo, 3 staff) with upgrade path
 
 ---
 
 ## Architecture
 
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Browser     │────▶│  Vite + React    │────▶│  Supabase       │
-│  (Desktop/   │     │  PWA-ready       │     │  PostgreSQL     │
-│   Mobile)    │     │                  │     │  Auth           │
-└─────────────┘     │  i18n (fr/ar/en)  │     │  Realtime       │
-                    │  shadcn/ui        │     │  Storage        │
-                    └──────────────────┘     └─────────────────┘
-```
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 18 + TypeScript + Vite |
+| **Styling** | Tailwind CSS 3 + shadcn/ui (Radix primitives) |
+| **Backend** | Supabase (PostgreSQL, Auth, Realtime, Storage, Edge Functions) |
+| **i18n** | i18next — English, French, Arabic (RTL) |
+| **Testing** | Vitest (unit) + Playwright (E2E) + pgTAP (database) |
+| **CI/CD** | GitHub Actions |
+| **Deploy** | Vercel |
+
+### Security Model
+
+| Actor | What they can do | How |
+|---|---|---|
+| Anonymous visitors | Read public business info, join queue, book, track/cancel via private token | Scoped SECURITY DEFINER commands with capability tokens |
+| Authenticated clients | See own bookings, submit reviews | RLS policies |
+| Staff | See their queue, update ticket status | RLS + scoped RPCs |
+| Owners | Full business management | RLS + scoped RPCs |
+| Superadmin | Everything | RLS policies with `is_superadmin()` |
+
+Every table has RLS enabled. Every privileged function has explicit authorization checks. Every anonymous write goes through a validated server command — no direct table access from the browser.
 
 ### Key Design Decisions
-- **Single-file schema** — `supabase/schema/MASTER_SCHEMA.sql` is the single source of truth. Run this on any fresh Supabase project to reproduce the full database.
-- **RLS-first security** — Every table has row-level security. Public data exposed through SECURITY DEFINER RPCs that never leak PII.
-- **DB-enforced state machines** — Booking and queue ticket state transitions are enforced at the database level (triggers prevent invalid transitions).
-- **Concurrency-safe** — Advisory locks prevent race conditions on booking overlap, rate limits, and plan limits.
+- **Single-file schema** — `supabase/schema/MASTER_SCHEMA.sql` is the source of truth
+- **Capability tokens** — every customer ticket/booking gets a UUID token; tracking and actions are authorized by possession of the token, not by row IDs
+- **DB-enforced state machines** — booking and queue status transitions are enforced at the database level
+- **Advisory locks** — booking overlap check and queue position changes use per-business/date locks to prevent race conditions
+- **Server-side push fanout** — push notifications are sent by the Edge Function, which looks up subscriptions from the database after verifying the caller's authorization
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- A Supabase project ([free tier](https://supabase.com))
+- Node.js 22+
+- A [Supabase](https://supabase.com) project
 
 ### Setup
 
 ```sh
-git clone https://github.com/your-org/leenya
-cd leenya
-npm install
+git clone https://github.com/Meykiio/Leenya-dz.git
+cd Leenya-dz
+npm ci
 ```
 
 Create `.env`:
 
 ```env
 VITE_SUPABASE_URL=https://<your-project>.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
+VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
 VITE_SUPABASE_PROJECT_ID=<your-project-ref>
+VITE_SUPPORT_PHONE=<optional>
 VITE_SENTRY_DSN=<optional>
-VITE_SUPPORT_PHONE=<optional, default 213770000000>
+VITE_VAPID_PUBLIC_KEY=<optional, for push notifications>
 ```
 
 ### Database
 
 1. Open your Supabase project's SQL editor
-2. Run the contents of `supabase/schema/MASTER_SCHEMA.sql`
-3. Enable Realtime on these tables: `bookings`, `queue_tickets`, `businesses`, `whatsapp_templates`
+2. Run `supabase/schema/MASTER_SCHEMA.sql`
+3. Enable Realtime on: `queue_tickets`, `bookings`, `whatsapp_templates`, `businesses`
 4. Create a `business-assets` storage bucket (public)
 
 ### Run
@@ -114,7 +97,8 @@ VITE_SUPPORT_PHONE=<optional, default 213770000000>
 npm run dev          # → http://localhost:5173
 npm run build        # Production build
 npx tsc --noEmit     # Type-check only
-npx vitest run       # Unit tests (32+ tests)
+npx vitest run       # Unit tests (42 tests)
+npx playwright test  # E2E (50 tests, requires running app or PLAYWRIGHT_BASE_URL)
 ```
 
 ---
@@ -124,103 +108,51 @@ npx vitest run       # Unit tests (32+ tests)
 ```
 src/
 ├── components/
-│   ├── auth/           — Login, signup, forgot password
-│   ├── booking/        — AppointmentFlow, TicketTracker, QueueFlow
-│   ├── dashboard/      — DashboardLayout, StatsCards, sub-pages
-│   ├── landing/        — Hero, Features, Pricing, Testimonials, Footer
-│   ├── onboarding/     — 4-step business setup wizard
-│   └── ui/             — shadcn/ui (~50 Radix-based components)
-├── contexts/
-│   └── AuthContext.tsx  — Session, role, refresh, sign-out
-├── hooks/              — useBusinessInfo, useWhatsAppTemplates, useLanguage
-├── i18n/
-│   ├── locales/
-│   │   ├── en/         — 6 JSON namespace files
-│   │   ├── fr/         — 6 JSON namespace files
-│   │   └── ar/         — 6 JSON namespace files (RTL)
-│   └── index.ts
-├── lib/                — Time slots, WhatsApp URLs, wilayas, avatar gen
-├── pages/
-│   ├── dashboard/
-│   │   ├── bookings/   — PendingApprovals, BookingRow, filters
-│   │   ├── queue/      — WaitingList, ServingSection, dialogs
-│   │   ├── staff/      — StaffCard, ServiceAssignmentDialog
-│   │   └── whatsapp/   — Template editor, preview, test send
-│   ├── BookingTrack.tsx
-│   ├── MyBookings.tsx
-│   ├── QueueDisplay.tsx
-│   ├── StaffView.tsx
-│   └── ...page components
-├── types/              — booking.ts, business.ts, staff.ts, auth.ts
-└── integations/supabase/client.ts
+│   ├── auth/           — Login, signup, forgot password, protected routes
+│   ├── booking/        — AppointmentFlow, QueueFlow, TicketTracker, steps
+│   ├── dashboard/      — Layout, analytics components, settings tabs
+│   ├── landing/        — Hero, features, pricing, FAQ, footer
+│   ├── onboarding/     — Business setup wizard
+│   └── ui/             — shadcn/ui primitives (Radix-based)
+├── contexts/           — AuthContext (session + role)
+├── hooks/              — useBusinessInfo, useLanguage, useWebPush, useWhatsAppTemplates
+├── i18n/               — 6 namespaces × 3 locales (EN/FR/AR)
+├── lib/                — TimeSlots, WhatsApp URLs, Phone validation, Wilayas, Sentry
+├── pages/              — Landing, BusinessPublic, QueuePublic, StaffView, dashboard/*
+├── types/              — Booking, Business, Staff, Auth
+└── integrations/supabase/ — Client singleton
 
 supabase/
-├── schema/
-│   └── MASTER_SCHEMA.sql   — Single source of truth (tables, RLS, functions, triggers)
-├── seed/
-│   └── seed.sql            — Demo data
-├── tests/
-│   └── rls_policies.sql    — Security assertion tests
-└── config.toml             — CLI-managed config
+├── schema/MASTER_SCHEMA.sql   — Single source of truth
+├── migrations/                — Applied, tracked changes
+├── functions/send-push/       — Web Push Edge Function
+├── tests/database/            — pgTAP RLS + function grant tests
+└── config.toml
 ```
 
 ---
 
-## Docs
+## Security
 
-All documentation lives in `DOCS/`:
+All tables use Row Level Security. Anonymous customers never access tables directly — they interact through SECURITY DEFINER functions that:
 
-| File | What it covers |
-|---|---|
-| `ARCHITECTURE.md` | Stack, data flow, auth flow, routing, full schema overview |
-| `AI_CONTEXT.md` | Full project context for AI sessions — file map, DB, design, session history |
-| `CLAUDE.md` | 30-second onboarding for new developers |
-| `DESIGN.md` | Design tokens: colors, typography, spacing, dark mode, component patterns |
-| `ENVIRONMENT.md` | Full setup guide, env vars, DB migrations, Supabase checklist |
-| `FEATURES.md` | Every feature with status, files, and implementation notes |
-| `NEXT.md` | Priority-ordered roadmap (P0–P5) |
-| `PROJECT_STATUS.md` | % completion by domain, flow, and tech debt |
-| `SYSTEM_INSTRUCTIONS.md` | Dev conventions, build rules, DB patterns |
-| `CHANGELOG.md` | Full session-by-session changelog |
+1. Validate every input (business existence, service/staff ownership, phone format, capacity limits)
+2. Issue capability tokens for tracking/cancellation
+3. Enforce business settings (paused queues, walk-ins disabled, capacity limits)
+4. Serialize position mutations with advisory locks
+5. Enforce per-plan usage limits (bookings/tickets/month)
 
----
-
-## Deployment
-
-### Vercel (recommended)
-
-```sh
-npm i -g vercel
-vercel --prod
-```
-
-Set all `VITE_*` environment variables in the Vercel project dashboard.
-
-### Supabase Checklist
-
-Before going live:
-- [ ] Enable email confirmation in Auth settings (production)
-- [ ] Rate limits: adjust `check_insert_rate_limit` trigger defaults if needed
-- [ ] Storage: `business-assets` bucket created and public
-- [ ] Realtime: enabled for `bookings`, `queue_tickets`, `businesses`, `whatsapp_templates`
-- [ ] Review RLS policies in MASTER_SCHEMA.sql (all tables should have RLS enabled)
-- [ ] Set `VITE_SENTRY_DSN` for error monitoring
-
----
-
-## Contributing
-
-This is a private project. For bug reports or feature requests, contact the maintainer.
-
----
-
-## Contact
-
-- **Email:** sifeddine.meb96@gmail.com
-- **Support WhatsApp:** configurable via `VITE_SUPPORT_PHONE`
+See `supabase/tests/database/` for pgTAP tests that verify these guarantees.
 
 ---
 
 ## License
 
-Private — All rights reserved.
+MIT — see [LICENSE](LICENSE)
+
+---
+
+## Contact
+
+- **GitHub:** [Meykiio](https://github.com/Meykiio)
+- **Email:** sifeddine.meb96@gmail.com
