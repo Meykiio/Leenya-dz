@@ -119,8 +119,8 @@
   "footer.privacy": "الخصوصية",
   "footer.contact": "الاتصال",
   "footer.whatsapp": "واتساب",
-  "footer.copyright": "\u00a9 2025 لينيا. جميع الحقوق محفوظة.",
-  "footer.builtIn": "صُنع في الجزائر \ud83c\udde9\ud83c\uddff",
+  "footer.copyright": "© 2025 لينيا. جميع الحقوق محفوظة.",
+  "footer.builtIn": "صُنع في الجزائر 🇩🇿",
   "socialProof.benefit1": "موقع حجز لمتجلك",
   "socialProof.benefit2": "عملاؤك يحجزون من هواتفهم",
   "socialProof.benefit3": "طابور انتظار ولوحة تحكم",
@@ -154,7 +154,7 @@
   "demo.dashboard.week": "أسبوع {{number}}",
   "demo.dashboard.bookings": "الحجوزات",
   "demo.dashboard.revenue": "الإيرادات",
-  "floatingHelp.message": "مرحباً، أحتاج مساعدة مع لينيا. \ud83d\udc4b",
+  "floatingHelp.message": "مرحباً، أحتاج مساعدة مع لينيا. 👋",
   "floatingHelp.label": "هل تحتاج مساعدة؟",
   "404.phrase1": "هذه الصفحة في استراحة...",
   "404.phrase2": "نادينا عليها. لا رد.",
@@ -195,5 +195,7 @@
   "feedback.thanksTitle": "شكراً على رأيك!",
   "feedback.thanksSubtitle": "رأيك يساعدنا على تحسين لينيا.",
   "feedback.sendAnother": "إرسال رأي آخر",
-  "feedback.error": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+  "feedback.error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "nav.menu": "القائمة",
+  "nav.close": "إغلاق"
 }

@@ -35,7 +35,7 @@ export default function TemplatePreviewDialog({
 
         {compiledMessage && (
           <div className="space-y-4">
-            <div className="rounded-lg border bg-muted/50 p-4">
+            <div className="rounded-[12px] border border-[var(--border-default)] bg-[var(--bg-muted)] p-4">
               <pre className="text-sm whitespace-pre-wrap font-sans">
                 {compiledMessage}
               </pre>

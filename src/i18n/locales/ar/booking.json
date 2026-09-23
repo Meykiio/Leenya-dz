@@ -112,6 +112,7 @@
   "ticketTracker.selectedService": "الخدمة المختارة",
   "ticketTracker.changeStaffStep": "اختر عضو فريق",
   "ticketTracker.changeStaffDesc": "اختر من تريد تنفيذ هذه الخدمة، أو لا تفضل أحداً.",
+  "ticketTracker.noStaffAssigned": "لا يوجد موظفون معيّنون لهذه الخدمة",
   "ticketTracker.toast.cancelled": "تم إلغاء التذكرة",
   "ticketTracker.inServiceTitle": "استمتع بخدمتك!",
   "ticketTracker.inServiceSubtitle": "استرخِ، أنت في أيدٍ أمينة",
@@ -153,5 +154,9 @@
   "queueDisplay.nextUp": "التالي",
   "queueDisplay.waitingCount": "{{count}} في الانتظار",
   "queueDisplay.poweredBy": "مدعوم من Leenya",
-  "queueDisplay.clickToActivateSound": "انقر لتفعيل الصوت"
+  "queueDisplay.clickToActivateSound": "انقر لتفعيل الصوت",
+  "queueDisplay.called": "تم النداء",
+  "queueDisplay.inService": "قيد الخدمة",
+  "businessPublic.reviewsSection.title": "التقييمات",
+  "businessPublic.reviewsSection.seeMore": "عرض المزيد ({{count}})"
 }

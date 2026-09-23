@@ -79,3 +79,14 @@ Then ask "Want me to test anything or look at something else?"
 - **Database wiped clean** � All test data deleted (businesses, bookings, queue tickets, reviews, services, staff, feedback). Super admin kept with superadmin role only. Clean slate for beta launch.
 - **iOS "Add to Home Screen" card** � iPhone users see instructions to install Leenya as a PWA instead of a broken "Enable Notifications" button (on booking confirmation + queue tracking pages). FR/AR translations included.
 - **Input hints** � Small text below email ("We'll send a confirmation link"), password ("At least 6 characters"), and phone ("Algerian number starting with 05, 06, or 07") fields on login, signup, booking, queue, and dashboard forms in EN/FR/AR.
+
+### 2026-09-23 — Design System v2 + Auth Fix + Launch Wipe
+- **Design system v2 rolled out platform-wide** — light default, dark toggle (persisted); Outfit/Noto Sans/DM Mono; theme aliases added (`--nav-bg`, `--bg-dim`, `--outline`, `--outline-hi`); buttons, inputs, cards, chips, dialogs aligned to spec
+- **Auth flow fixed** — signup switches to login view with credentials kept; role-based redirect intact
+- **Modal anchoring bug fixed** — page-transition animation no longer creates a containing block; all popups center on the viewport
+- **28 missing i18n keys added (en/fr/ar)** + duration label interpolation fix
+- **Dashboard de-carded** — flat ledger sections (`Section` component), smooth page transitions + branded `LoadingScreen`, mobile drawer slide + scroll lock, icon-only bottom nav with count badges
+- **Landing polish** — sticky nav + signal scroll-progress line, Lenis smooth scroll, magnetic CTAs, marquee band, mobile spacing fixes
+- **404 route fixed** — `/404` was swallowed by `/:slug` causing a redirect loop
+- **Launch wipe** — all public tables + auth users + storage objects + auth logs emptied (no exception); backup at %TEMP%\opencode\leenya-pre-launch-backup.json
+- **Verified** — lint clean, 42/42 tests, production build, full logged-in walkthrough (temporary test business created then deleted)

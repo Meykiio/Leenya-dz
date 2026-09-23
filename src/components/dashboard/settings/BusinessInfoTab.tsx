@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,34 +146,34 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
   return (
     <div className="space-y-4">
       {/* Public link */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.publicLink")}</CardTitle></CardHeader>
-        <CardContent>
+      <section className="space-y-3">
+        <div className="border-b border-[var(--border-default)] pb-2.5"><h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:settings.business.publicLink")}</h3></div>
+        <div>
           <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-md bg-muted px-3 py-2 font-mono text-sm text-primary truncate min-w-0">
+            <div className="flex-1 rounded-[5px] bg-muted px-3 py-2 font-mono text-sm text-primary truncate min-w-0">
               {window.location.host}/{form.slug}
             </div>
             <Button variant="outline" size="sm" onClick={copyLink} className="gap-1 shrink-0">
               <Copy className="h-3 w-3" /> {t("common:buttons.copy")}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* Images */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.images")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+      <section className="space-y-3">
+        <div className="border-b border-[var(--border-default)] pb-2.5"><h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:settings.business.images")}</h3></div>
+        <div className="space-y-4">
           <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:items-start">
             <div className="space-y-2 text-center">
-              <Label className="text-sm">{t("dashboard:settings.business.logo")}</Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.logo")}</Label>
               <div className="relative inline-block">
                 <Avatar className="h-16 w-16 border mx-auto">
                   <AvatarImage src={form.logo_url || generatePixelAvatar(form.name || " ", 64)} alt={t("dashboard:settings.business.logo")} />
                   <AvatarFallback className="bg-muted" />
                 </Avatar>
                 {form.logo_url && (
-                  <button onClick={() => removeImage("logo")} className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90">
+                  <button onClick={() => removeImage("logo")} className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-[var(--error)] text-white flex items-center justify-center">
                     <X className="h-3 w-3" />
                   </button>
                 )}
@@ -186,12 +185,12 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
               </label>
             </div>
             <div className="space-y-2 w-full max-w-full">
-              <Label className="text-sm text-center sm:text-left block">{t("dashboard:settings.business.cover")}</Label>
-              <div className="relative h-[120px] sm:h-[140px] w-full rounded-lg overflow-hidden bg-muted">
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground text-center sm:text-left block">{t("dashboard:settings.business.cover")}</Label>
+              <div className="relative h-[120px] sm:h-[140px] w-full rounded-[8px] overflow-hidden bg-muted">
                 {form.cover_url ? (
                   <>
                     <img src={form.cover_url} alt="" className="h-full w-full object-cover" />
-                    <button onClick={() => removeImage("cover")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 z-10">
+                    <button onClick={() => removeImage("cover")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-[var(--error)] text-white flex items-center justify-center z-10">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </>
@@ -206,19 +205,19 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
               </label>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* Business info */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.general")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+      <section className="space-y-3">
+        <div className="border-b border-[var(--border-default)] pb-2.5"><h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:settings.business.general")}</h3></div>
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.name")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.name")}</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.slug")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.slug")}</Label>
             <div className="relative">
               <Input
                 value={form.slug}
@@ -226,16 +225,16 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
               />
               {slugAvailable !== null && !slugChecking && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {slugAvailable ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-destructive" />}
+                  {slugAvailable ? <Check className="h-4 w-4 text-[var(--success)]" /> : <X className="h-4 w-4 text-[var(--error)]" />}
                 </div>
               )}
             </div>
             {slugAvailable === false && (
-              <p className="text-xs text-destructive">{t("dashboard:settings.business.error.slugTaken")}</p>
+              <p className="text-xs text-[var(--error)]">{t("dashboard:settings.business.error.slugTaken")}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.category")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.category")}</Label>
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -246,19 +245,19 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.description")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.description")}</Label>
             <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t("dashboard:settings.business.descriptionPlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.phone")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.phone")}</Label>
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.address")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.address")}</Label>
             <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.business.wilaya")}</Label>
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.wilaya")}</Label>
             <Select
               value={form.wilaya_code}
               onValueChange={(v) => {
@@ -274,22 +273,22 @@ export default function BusinessInfoTab({ businessId }: BusinessInfoTabProps) {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* Queue settings */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.business.queueSettings")}</CardTitle></CardHeader>
-        <CardContent>
+      <section className="space-y-3">
+        <div className="border-b border-[var(--border-default)] pb-2.5"><h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:settings.business.queueSettings")}</h3></div>
+        <div>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>{t("dashboard:settings.business.pauseQueue")}</Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.business.pauseQueue")}</Label>
               <p className="text-xs text-muted-foreground">{t("dashboard:settings.business.pauseQueueHint")}</p>
             </div>
             <Switch checked={form.is_queue_paused} onCheckedChange={(v) => setForm({ ...form, is_queue_paused: v })} />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <Button onClick={save} disabled={loading || slugAvailable === false} className="w-full sm:w-auto">
         {loading ? t("common:buttons.saving") : t("dashboard:settings.business.save")}

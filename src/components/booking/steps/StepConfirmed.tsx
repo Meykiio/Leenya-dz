@@ -59,12 +59,12 @@ export default function StepConfirmed({
       >
         <CheckCircle2 className="h-6 w-6" style={{ color: 'var(--success)' }} />
       </motion.div>
-      <h2 className="text-[20px] font-bold text-foreground">{t("booking:appointmentFlow.stepConfirmed.title")}</h2>
+      <h2 className="font-display text-[20px] font-bold text-foreground tracking-[-0.02em]">{t("booking:appointmentFlow.stepConfirmed.title")}</h2>
       <p className="text-[13px] text-muted-foreground">
         {t("booking:appointmentFlow.stepConfirmed.pending")}
       </p>
 
-      <div className="rounded-md border border-border bg-muted/50 p-[14px_16px] text-left space-y-1">
+      <div className="rounded-[12px] border border-[var(--border-default)] bg-[var(--bg-muted)] p-[14px_16px] text-left space-y-1">
         <p className="text-[14px] font-medium text-foreground">{selectedService?.name}</p>
         <p className="text-[12px] text-muted-foreground">
           {selectedDate && t("booking:appointmentFlow.dateTimeLine", {
@@ -76,7 +76,7 @@ export default function StepConfirmed({
       </div>
 
       {showIOSPrompt && (
-        <div className="rounded-md border border-primary/20 bg-primary/5 p-[14px_16px] space-y-2">
+        <div className="rounded-[12px] border border-primary/20 bg-[var(--accent-light)] p-[14px_16px] space-y-2">
           <div className="flex items-center gap-2">
             <Smartphone className="h-4 w-4 text-primary" />
             <p className="text-[13px] font-medium text-foreground">{t("common:push.iosTitle")}</p>
@@ -98,7 +98,7 @@ export default function StepConfirmed({
       )}
 
       {!isIOS && showPushPrompt && (
-        <div className="rounded-md border border-primary/20 bg-primary/5 p-[14px_16px] space-y-2">
+        <div className="rounded-[12px] border border-primary/20 bg-[var(--accent-light)] p-[14px_16px] space-y-2">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4 text-primary" />
             <p className="text-[13px] font-medium text-foreground">{t("common:push.enableTitle")}</p>
@@ -119,9 +119,9 @@ export default function StepConfirmed({
       )}
 
       {permission === "denied" && (
-        <div className="rounded-md border border-destructive/20 bg-destructive/5 p-[14px_16px] space-y-1">
+        <div className="rounded-[12px] border border-[var(--error-border)] bg-[var(--error-bg)] p-[14px_16px] space-y-1">
           <div className="flex items-center gap-2">
-            <BellOff className="h-4 w-4 text-destructive" />
+            <BellOff className="h-4 w-4 text-[var(--error)]" />
             <p className="text-[13px] font-medium text-foreground">{t("common:push.permissionDenied")}</p>
           </div>
           <p className="text-[12px] text-muted-foreground">{t("common:push.permissionDeniedDesc")}</p>
@@ -129,7 +129,7 @@ export default function StepConfirmed({
       )}
 
       {bookingId && (
-        <div className="rounded-md border border-primary/20 bg-primary/5 p-[14px_16px] space-y-2">
+        <div className="rounded-[12px] border border-primary/20 bg-[var(--accent-light)] p-[14px_16px] space-y-2">
           <p className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepConfirmed.trackingLink")}</p>
           <p className="text-[12px] text-muted-foreground">{t("booking:appointmentFlow.stepConfirmed.trackingHint")}</p>
           <div className="flex gap-2">
@@ -146,17 +146,17 @@ export default function StepConfirmed({
       )}
 
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" size="sm" className="flex-1 h-[44px]" asChild>
+        <Button variant="outline" size="sm" className="flex-1 h-11" asChild>
           <a href={googleCalUrl} target="_blank" rel="noopener noreferrer">
             <Calendar className="h-4 w-4 mr-1.5" /> {t("booking:appointmentFlow.stepConfirmed.calendar")}
           </a>
         </Button>
-        <Button variant="outline" size="sm" className="flex-1 h-[44px] gap-1" asChild>
+        <Button variant="outline" size="sm" className="flex-1 h-11 gap-1" asChild>
           <a href={shareToBusinessUrl}>
             <MessageCircle className="h-4 w-4" /> {t("booking:appointmentFlow.stepConfirmed.contactBusiness")}
           </a>
         </Button>
-        <Button variant="outline" size="sm" className="flex-1 h-[44px] gap-1" asChild>
+        <Button variant="outline" size="sm" className="flex-1 h-11 gap-1" asChild>
           <a href={whatsappShareUrl}>
             <Share2 className="h-4 w-4" /> {t("booking:appointmentFlow.stepConfirmed.whatsapp")}
           </a>

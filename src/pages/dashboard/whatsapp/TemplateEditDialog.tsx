@@ -41,7 +41,7 @@ export default function TemplateEditDialog({
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">{t("settings.whatsapp.variables")}:</label>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground mb-2 block">{t("settings.whatsapp.variables")}:</label>
             <div className="flex flex-wrap gap-1.5">
               {variables.map((v) => (
                 <Badge key={v} variant="outline" className="text-xs font-mono">

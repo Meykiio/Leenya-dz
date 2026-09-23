@@ -22,15 +22,15 @@ export default function ReviewsSection({ reviews }: { reviews: Review[] }) {
 
   return (
     <div className="px-5 py-6 space-y-4">
-      <h2 className="text-[15px] font-semibold text-foreground">{t("booking:businessPublic.reviewsSection.title")}</h2>
+      <h2 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em]">{t("booking:businessPublic.reviewsSection.title")}</h2>
       <div className="space-y-2">
         {visible.map((r) => (
-          <div key={r.id} className="rounded-md border border-border p-4 space-y-1.5">
+          <div key={r.id} className="rounded-[12px] border border-[var(--border-default)] p-4 space-y-1.5">
             <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-3.5 w-3.5 ${i < r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`}
+                  className={`h-3.5 w-3.5 ${i < r.rating ? "fill-[var(--warning)] text-[var(--warning)]" : "text-muted-foreground/20"}`}
                 />
               ))}
             </div>

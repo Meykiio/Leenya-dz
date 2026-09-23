@@ -86,8 +86,12 @@ const LoginForm = () => {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        setIsSignUp(false);
         if (data?.session) {
-          await handlePostAuth();
+          toast({
+            title: t("auth:signup.accountCreated"),
+            description: t("auth:signup.accountCreatedDesc"),
+          });
         } else {
           toast({
             title: t("auth:signup.emailSent"),
@@ -114,18 +118,21 @@ const LoginForm = () => {
   return (
     <div className="w-full max-w-[400px] mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-[22px] font-bold text-foreground tracking-tight">
-          Leenya
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-[8px] bg-primary font-mono text-[19px] font-medium tracking-[-0.04em] text-primary-foreground">
+          Ln
+        </div>
+        <h1 className="font-display text-[26px] font-extrabold tracking-[-0.02em] text-foreground">
+          Leenya<span className="text-[var(--signal)]">.</span>
         </h1>
         <p className="text-[14px] text-muted-foreground mt-2">
           {t(isSignUp ? "auth:signup.title" : "auth:login.title")}
         </p>
       </div>
 
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <div className="rounded-2xl border bg-card p-6 shadow-sm">
         <form onSubmit={handleEmailSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[13px]">{t(isSignUp ? "auth:signup.emailLabel" : "auth:login.emailLabel")}</Label>
+              <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t(isSignUp ? "auth:signup.emailLabel" : "auth:login.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -139,7 +146,7 @@ const LoginForm = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-[13px]">{t(isSignUp ? "auth:signup.passwordLabel" : "auth:login.passwordLabel")}</Label>
+                <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t(isSignUp ? "auth:signup.passwordLabel" : "auth:login.passwordLabel")}</Label>
                 {!isSignUp && (
                   <button
                     type="button"
@@ -162,7 +169,7 @@ const LoginForm = () => {
               />
               <p className="text-[11px] text-muted-foreground/70">{t(isSignUp ? "auth:signup.passwordHint" : "auth:login.passwordHint")}</p>
             </div>
-            <Button type="submit" className="w-full h-[44px]" disabled={loading}>
+            <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading ? t(isSignUp ? "auth:signup.loading" : "auth:login.loading") : isSignUp ? t("auth:signup.submit") : t("auth:login.submit")}
             </Button>
           </form>

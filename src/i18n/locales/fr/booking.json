@@ -112,6 +112,7 @@
   "ticketTracker.selectedService": "Service sélectionné",
   "ticketTracker.changeStaffStep": "Choisissez un membre",
   "ticketTracker.changeStaffDesc": "Sélectionnez qui doit effectuer ce service, ou aucune préférence.",
+  "ticketTracker.noStaffAssigned": "Aucun membre du personnel assigné à ce service",
   "ticketTracker.toast.cancelled": "Ticket annulé",
   "ticketTracker.inServiceTitle": "Profitez de votre service !",
   "ticketTracker.inServiceSubtitle": "Détendez-vous, vous êtes entre de bonnes mains",
@@ -153,5 +154,9 @@
   "queueDisplay.nextUp": "Prochains",
   "queueDisplay.waitingCount": "{{count}} en attente",
   "queueDisplay.poweredBy": "Propulsé par Leenya",
-  "queueDisplay.clickToActivateSound": "Cliquer pour activer le son"
+  "queueDisplay.clickToActivateSound": "Cliquer pour activer le son",
+  "queueDisplay.called": "Appelé",
+  "queueDisplay.inService": "En service",
+  "businessPublic.reviewsSection.title": "Avis",
+  "businessPublic.reviewsSection.seeMore": "Voir plus ({{count}})"
 }

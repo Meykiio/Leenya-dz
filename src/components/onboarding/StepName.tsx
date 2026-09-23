@@ -49,7 +49,7 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="font-display text-2xl font-bold text-foreground tracking-[-0.02em]">
           {t("auth:onboarding.name.title")}
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -58,7 +58,7 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
       </div>
 
       <div className="space-y-2 max-w-sm mx-auto">
-        <Label htmlFor="fullName">{t("auth:onboarding.name.label")}</Label>
+        <Label htmlFor="fullName" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("auth:onboarding.name.label")}</Label>
         <Input
           id="fullName"
           placeholder={t("auth:onboarding.name.placeholder")}
@@ -66,12 +66,12 @@ const StepName = ({ defaultName, onNext }: StepNameProps) => {
           onChange={(e) => setName(e.target.value)}
           required
           autoFocus
-          className="text-lg h-12"
+          className="h-12 text-[16px]"
         />
       </div>
 
       <div className="flex justify-center">
-        <Button type="submit" disabled={!name.trim() || loading} className="px-8">
+        <Button type="submit" disabled={!name.trim() || loading} className="px-8 h-11">
           {loading ? t("common:buttons.saving") : t("auth:onboarding.continue") + " →"}
         </Button>
       </div>

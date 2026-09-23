@@ -26,16 +26,16 @@ const WelcomeModal = ({ slug, onClose }: WelcomeModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 px-4">
-      <div className="w-full max-w-md rounded-xl bg-card p-8 shadow-lg text-center space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(9,13,22,0.7)] px-4">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-lg text-center space-y-6">
         <div className="text-5xl">🎉</div>
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="font-display text-2xl font-bold text-foreground tracking-[-0.02em]">
           {t("auth:onboarding.welcome.title")}
         </h2>
         <p className="text-muted-foreground">
           {t("auth:onboarding.welcome.subtitle")}
         </p>
-        <div className="rounded-md bg-muted px-4 py-3 font-mono text-primary text-lg">
+        <div className="rounded-[5px] border border-[var(--border-default)] bg-muted px-4 py-3 font-mono text-primary text-[15px]">
           {link}
         </div>
 

@@ -35,6 +35,7 @@
   "staffView.emptyNoClients": "Aucun client en attente",
   "staffView.emptyNoBookings": "Aucune réservation aujourd'hui",
   "staffView.serviceDefault": "Service",
+  "staffView.onDuty": "En service",
   "staffView.toast.queueLoadError": "Impossible de charger la file.",
   "staffView.toast.bookingsLoadError": "Impossible de charger les réservations.",
   "staffView.toast.updateError": "Impossible de mettre à jour.",
@@ -49,5 +50,6 @@
   "staffView.statusInProgress": "En cours",
   "staffView.since": "Depuis",
   "staffView.timeJustNow": "À l'instant",
-  "staffView.timeMin": "{{mins}} min"
+  "staffView.timeMin": "{{mins}} min",
+  "staffView.sectionInProgress": "En service"
 }

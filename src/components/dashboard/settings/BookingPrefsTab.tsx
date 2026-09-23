@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import Section from "@/components/dashboard/Section";
 
 export default function BookingPrefsTab({ businessId }: { businessId: string }) {
   const { t } = useTranslation();
@@ -60,43 +60,39 @@ export default function BookingPrefsTab({ businessId }: { businessId: string }) 
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.booking.modes")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+    <div className="space-y-8">
+      <Section title={t("dashboard:settings.booking.modes")}>
+        <div className="space-y-4 max-w-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">{t("dashboard:settings.booking.online")}</p>
-              <p className="text-xs text-muted-foreground">{t("dashboard:settings.booking.onlineDesc")}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t("dashboard:settings.booking.onlineDesc")}</p>
             </div>
             <Switch checked={form.accepts_appointments} onCheckedChange={(v) => setForm({ ...form, accepts_appointments: v })} />
           </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">{t("dashboard:settings.booking.walkins")}</p>
-              <p className="text-xs text-muted-foreground">{t("dashboard:settings.booking.walkinsDesc")}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t("dashboard:settings.booking.walkinsDesc")}</p>
             </div>
             <Switch checked={form.accepts_walkins} onCheckedChange={(v) => setForm({ ...form, accepts_walkins: v })} />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Section>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.booking.deadlines")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t("dashboard:settings.booking.advanceDays", { days: form.advance_booking_days })}</Label>
-            <Input
-              type="number"
-              min={1}
-              max={90}
-              value={form.advance_booking_days}
-              onChange={(e) => setForm({ ...form, advance_booking_days: parseInt(e.target.value) || 14 })}
-              className="w-32"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <Section title={t("dashboard:settings.booking.deadlines")}>
+        <div className="space-y-2 max-w-lg">
+          <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:settings.booking.advanceDays", { days: form.advance_booking_days })}</Label>
+          <Input
+            type="number"
+            min={1}
+            max={90}
+            value={form.advance_booking_days}
+            onChange={(e) => setForm({ ...form, advance_booking_days: parseInt(e.target.value) || 14 })}
+            className="w-32"
+          />
+        </div>
+      </Section>
 
       <Button onClick={save} disabled={loading} className="w-full sm:w-auto">
         {loading ? t("common:buttons.saving") : t("dashboard:settings.booking.save")}

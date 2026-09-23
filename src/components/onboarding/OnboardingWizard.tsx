@@ -42,42 +42,45 @@ const OnboardingWizard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col">
+    <div className="min-h-screen bg-[var(--bg-subtle)] flex flex-col">
       {/* Header */}
-      <div className="border-b bg-background px-4 py-4">
+      <div className="border-b border-[var(--border-default)] bg-[var(--bg-base)] px-4 py-4">
         <div className="max-w-[480px] mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-[15px] font-bold text-foreground tracking-tight">Leenya</h1>
-            <span className="text-[13px] text-muted-foreground">
+            <h1 className="font-display text-[16px] font-extrabold tracking-[-0.02em] text-foreground">
+              Leenya<span className="text-[var(--signal)]">.</span>
+            </h1>
+            <span className="font-mono text-[12px] text-muted-foreground">
               {t("auth:onboarding.stepIndicator", { current: step + 1, total: STEPS.length })}
             </span>
           </div>
 
-          {/* Dot-line progress indicator */}
-          <div className="flex items-center justify-between px-2">
+          {/* Numbered step rail */}
+          <div className="flex items-center justify-between px-1">
             {STEPS.map((label, i) => (
               <div key={label} className="flex items-center flex-1 last:flex-none">
-                {/* Dot */}
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                    className={`w-6 h-6 rounded-[5px] border flex items-center justify-center font-mono text-[11px] transition-colors ${
                       i < step
-                        ? "bg-foreground border-foreground"
+                        ? "bg-primary border-primary text-primary-foreground"
                         : i === step
-                        ? "bg-primary border-primary"
-                        : "bg-background border-border"
+                        ? "border-primary text-primary bg-[var(--bg-base)]"
+                        : "border-[var(--border-default)] text-muted-foreground"
                     }`}
-                  />
-                  <span className={`text-[10px] mt-1.5 whitespace-nowrap ${
-                    i <= step ? "text-foreground font-medium" : "text-muted-foreground"
+                  >
+                    {i + 1}
+                  </div>
+                  <span className={`mt-1.5 whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.08em] ${
+                    i <= step ? "text-foreground" : "text-muted-foreground"
                   }`}>
                     {label}
                   </span>
                 </div>
                 {/* Connecting line */}
                 {i < STEPS.length - 1 && (
-                  <div className={`flex-1 h-[1px] mx-1.5 mt-[-14px] ${
-                    i < step ? "bg-foreground" : "bg-border"
+                  <div className={`flex-1 h-[2px] mx-1.5 mt-[-14px] ${
+                    i < step ? "bg-primary" : "bg-[var(--border-default)]"
                   }`} />
                 )}
               </div>
@@ -88,7 +91,7 @@ const OnboardingWizard = () => {
 
       {/* Content */}
       <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-[480px]">
+        <div className="w-full max-w-[480px] rounded-2xl border bg-card p-6 shadow-sm">
           {step === 0 && (
             <StepName
               defaultName={data.fullName || ""}

@@ -124,7 +124,7 @@ export default function SettingsWhatsApp() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{t('dashboard:settings.whatsapp.title')}</h2>
+          <h2 className="font-display text-lg font-bold tracking-[-0.015em]">{t('dashboard:settings.whatsapp.title')}</h2>
           <p className="text-sm text-muted-foreground">
             {t('dashboard:settings.whatsapp.description')}
           </p>
@@ -136,22 +136,18 @@ export default function SettingsWhatsApp() {
       </div>
 
       {templates.map((template) => (
-        <Card key={template.id}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-base flex items-center gap-2">
-                  {template.name}
-                  {template.is_active && (
-                    <Badge variant="secondary" className="text-xs">{t('dashboard:settings.whatsapp.active')}</Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>{template.description}</CardDescription>
-              </div>
+        <section key={template.id} className="space-y-3">
+          <div className="border-b border-[var(--border-default)] pb-2.5 space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{template.name}</h3>
+              {template.is_active && (
+                <Badge variant="secondary" className="text-xs">{t('dashboard:settings.whatsapp.active')}</Badge>
+              )}
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md border bg-muted/50 p-3">
+            <p className="text-sm text-[var(--text-secondary)]">{template.description}</p>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-[8px] border border-[var(--border-default)] bg-[var(--bg-muted)] p-3">
               <pre className="text-xs whitespace-pre-wrap font-sans">
                 {template.message_template}
               </pre>
@@ -182,8 +178,8 @@ export default function SettingsWhatsApp() {
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       ))}
 
       <TemplateEditDialog

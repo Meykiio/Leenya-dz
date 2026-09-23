@@ -35,6 +35,7 @@
   "staffView.emptyNoClients": "No clients waiting",
   "staffView.emptyNoBookings": "No bookings today",
   "staffView.serviceDefault": "Service",
+  "staffView.onDuty": "On duty",
   "staffView.toast.queueLoadError": "Unable to load the queue.",
   "staffView.toast.bookingsLoadError": "Unable to load the bookings.",
   "staffView.toast.updateError": "Unable to update.",
@@ -49,5 +50,6 @@
   "staffView.statusInProgress": "In progress",
   "staffView.since": "Since",
   "staffView.timeJustNow": "Just now",
-  "staffView.timeMin": "{{mins}} min"
+  "staffView.timeMin": "{{mins}} min",
+  "staffView.sectionInProgress": "In service"
 }

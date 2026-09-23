@@ -31,14 +31,14 @@ export default function CalendarDemo() {
   return (
     <div className="select-none pointer-events-auto min-h-[260px] flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[10px] font-medium text-white/40">{t("landing:features.demo.today")}</div>
+        <div className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#7A8BAD]">{t("landing:features.demo.today")}</div>
         <div className="flex items-center gap-1">
           <div className="flex -space-x-1">
-            {["accent", "#36BC8B", "#F59E0B"].map((c, i) => (
+            {["#3B82F6", "#10B981", "#F59E0B"].map((c, i) => (
               <div
                 key={i}
-                className="h-4 w-4 rounded-full border border-[#141413]"
-                style={{ background: c === "accent" ? "hsl(var(--accent))" : c }}
+                className="h-4 w-4 rounded-full border border-[#1A2235]"
+                style={{ background: c }}
               />
             ))}
           </div>
@@ -47,15 +47,15 @@ export default function CalendarDemo() {
 
       <div className="grid grid-cols-6 gap-1 mb-3">
         {days.map((d) => (
-          <div key={d} className="text-[8px] text-white/25 font-medium text-center py-1">
+          <div key={d} className="text-[8px] text-[#7A8BAD] font-medium text-center py-1">
             {t("landing:features.demo." + d)}
           </div>
         ))}
         {days.map((_, i) => (
           <div
             key={i}
-            className={`h-6 rounded text-[9px] flex items-center justify-center font-medium ${
-              i === 2 ? "bg-accent/20 text-accent" : "text-white/30"
+            className={`h-6 rounded-[5px] text-[9px] flex items-center justify-center font-mono ${
+              i === 2 ? "bg-[rgba(59,130,246,0.13)] text-[#3B82F6]" : "text-[#5A6C90]"
             }`}
           >
             {8 + i}
@@ -74,22 +74,22 @@ export default function CalendarDemo() {
               key={slot}
               onClick={() => handleClick(slot)}
               disabled={!!booked}
-              className={`flex items-center gap-2 h-8 rounded-md px-2.5 text-left transition-all duration-200 ${
+              className={`flex items-center gap-2 h-8 rounded-[5px] px-2.5 text-left transition-all duration-150 ${
                 booked
                   ? "bg-white/[0.04] opacity-50 cursor-not-allowed"
                   : isConfirmed
-                    ? "bg-accent/15 border border-accent/30"
+                    ? "bg-[rgba(16,185,129,0.13)] border border-[rgba(16,185,129,0.3)]"
                     : isSelected
-                      ? "bg-white/[0.08] border border-white/[0.12]"
-                      : "bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06]"
+                      ? "bg-[rgba(59,130,246,0.13)] border border-[rgba(59,130,246,0.3)]"
+                      : "bg-white/[0.03] border border-[#263044] hover:bg-white/[0.06]"
               }`}
               whileTap={{ scale: 0.97 }}
             >
-              <span className="font-mono text-[9px] text-white/30 w-9">{slot}</span>
-              <span className={`text-[10px] flex-1 ${booked ? "text-white/40" : isConfirmed ? "text-accent" : "text-white/50"}`}>
+              <span className="font-mono text-[9px] text-[#7A8BAD] w-9">{slot}</span>
+              <span className={`text-[10px] flex-1 ${booked ? "text-[#7A8BAD]" : isConfirmed ? "text-[#10B981]" : isSelected ? "text-[#3B82F6]" : "text-[#7A8BAD]"}`}>
                 {booked || (isConfirmed ? t("landing:features.demo.confirmed") : t("landing:features.demo.available"))}
               </span>
-              {isConfirmed && <Check className="h-3 w-3 text-accent" />}
+              {isConfirmed && <Check className="h-3 w-3 text-[#10B981]" />}
             </motion.button>
           );
         })}
@@ -101,7 +101,7 @@ export default function CalendarDemo() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="mt-2 text-[9px] text-center text-accent font-medium"
+            className="mt-2 text-[9px] text-center text-[#10B981] font-medium"
           >
             {t("landing:features.demo.appointmentConfirmed", { time: confirmed })}
           </motion.div>

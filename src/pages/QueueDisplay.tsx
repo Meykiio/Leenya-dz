@@ -57,6 +57,21 @@ function playChime() {
   });
 }
 
+/* Leenya Design System — dark tokens (TV mode is always the dark register) */
+const DS = {
+  bg: "#0F1623",
+  surface: "#1A2235",
+  surfaceHigh: "#263044",
+  outline: "#263044",
+  onSurface: "#E8EEFF",
+  muted: "#7A8BAD",
+  primary: "#3B82F6",
+  signal: "#FF4D2E",
+  positive: "#10B981",
+  mono: "'DM Mono', monospace",
+  body: "'Noto Sans', system-ui, sans-serif",
+};
+
 /**
  * Queue TV display — full-screen real-time queue board for waiting rooms.
  * Shows the currently served ticket and upcoming tickets with audio chime on update.
@@ -155,18 +170,23 @@ export default function QueueDisplay() {
     unlockAudio();
   };
 
+  const servingColor = servingTicket
+    ? servingTicket.status === "called" ? DS.primary : DS.signal
+    : DS.muted;
+
   return (
     <div
       onClick={handleClick}
       className="h-screen w-screen flex flex-col overflow-hidden relative"
       style={{
-        background: "#0C0C0A",
+        background: DS.bg,
         cursor: cursorHidden ? "none" : "default",
+        fontFamily: DS.body,
       }}
     >
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-10 py-7 z-10">
-        <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "15px", fontWeight: 500 }}>
+        <p style={{ color: DS.muted, fontSize: "15px", fontWeight: 500 }}>
           {businessName}
         </p>
         {waitingTickets.length > 0 && (
@@ -180,18 +200,20 @@ export default function QueueDisplay() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "6px 14px",
-                borderRadius: "999px",
-                background: "rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.5)",
-                fontSize: "13px",
+                padding: "5px 10px",
+                borderRadius: "2px",
+                background: DS.surfaceHigh,
+                color: DS.muted,
+                fontFamily: DS.mono,
+                fontSize: "12px",
                 fontWeight: 500,
+                letterSpacing: "0.04em",
               }}
             >
               <span
                 style={{
-                  width: "8px", height: "8px", borderRadius: "50%",
-                  background: "#22C55E", display: "inline-block",
+                  width: "6px", height: "6px", borderRadius: "50%",
+                  background: DS.positive, display: "inline-block",
                 }}
               />
               {t("booking:queueDisplay.waitingCount", { count: waitingTickets.length })}
@@ -208,23 +230,26 @@ export default function QueueDisplay() {
             flexDirection: "column",
             alignItems: "center",
             padding: "48px 64px",
-            borderRadius: "24px",
-            border: "1px solid rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.02)",
+            borderRadius: "16px",
+            border: `1px solid ${DS.outline}`,
+            borderInlineStart: `2px solid ${servingColor}`,
+            background: DS.surface,
             minWidth: "420px",
+            position: "relative",
           }}
         >
           <p
             style={{
-              fontSize: "13px",
-              fontWeight: 600,
+              fontFamily: DS.mono,
+              fontSize: "11px",
+              fontWeight: 500,
               textTransform: "uppercase",
-              letterSpacing: "0.14em",
-              color: "rgba(255,255,255,0.3)",
+              letterSpacing: "0.12em",
+              color: DS.muted,
               marginBottom: "16px",
             }}
           >
-            {servingTicket?.status === "called" ? t("booking:queueDisplay.currentTicket") : t("booking:queueDisplay.currentTicket")}
+            {t("booking:queueDisplay.currentTicket")}
           </p>
 
           <AnimatePresence mode="wait">
@@ -239,26 +264,51 @@ export default function QueueDisplay() {
               >
                 <p
                   style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: "128px",
-                    fontWeight: 900,
-                    color: "#FFFFFF",
+                    fontFamily: DS.mono,
+                    fontSize: "120px",
+                    fontWeight: 500,
+                    color: servingColor,
                     letterSpacing: "-0.04em",
                     lineHeight: 1,
-                    marginBottom: "12px",
+                    marginBottom: "16px",
+                    fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   {servingTicket.ticket_label}
                 </p>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    borderRadius: "2px",
+                    fontFamily: DS.mono,
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    background: servingTicket.status === "called"
+                      ? "rgba(59,130,246,0.13)"
+                      : "rgba(255,77,46,0.12)",
+                    color: servingColor,
+                    marginBottom: "14px",
+                  }}
+                >
+                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "currentColor" }} />
+                  {servingTicket.status === "called"
+                    ? t("booking:queueDisplay.called")
+                    : t("booking:queueDisplay.inService")}
+                </span>
                 {(servingTicket.service_name || servingTicket.staff_name) && (
                   <div style={{ textAlign: "center" }}>
                     {servingTicket.service_name && (
-                      <p style={{ fontSize: "18px", color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>
+                      <p style={{ fontSize: "18px", color: DS.onSurface, fontWeight: 500 }}>
                         {servingTicket.service_name}
                       </p>
                     )}
                     {servingTicket.staff_name && (
-                      <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.3)", marginTop: "4px" }}>
+                      <p style={{ fontSize: "15px", color: DS.muted, marginTop: "4px" }}>
                         {t("booking:queueDisplay.withStaff", { staffName: servingTicket.staff_name })}
                       </p>
                     )}
@@ -281,12 +331,12 @@ export default function QueueDisplay() {
                       transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
                       style={{
                         width: "10px", height: "10px", borderRadius: "50%",
-                        background: "rgba(255,255,255,0.4)", display: "inline-block",
+                        background: DS.muted, display: "inline-block",
                       }}
                     />
                   ))}
                 </div>
-                <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>
+                <p style={{ fontSize: "16px", color: DS.muted, fontWeight: 400 }}>
                   {t("booking:queueDisplay.waitingForClients")}
                 </p>
               </motion.div>
@@ -301,11 +351,12 @@ export default function QueueDisplay() {
           <div>
             <p
               style={{
+                fontFamily: DS.mono,
                 fontSize: "11px",
-                fontWeight: 600,
+                fontWeight: 500,
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
-                color: "rgba(255,255,255,0.2)",
+                color: DS.muted,
                 marginBottom: "12px",
               }}
             >
@@ -324,25 +375,26 @@ export default function QueueDisplay() {
                     style={{
                       padding: "10px 18px",
                       borderRadius: "12px",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${DS.outline}`,
+                      background: DS.surface,
                       textAlign: "center",
                       minWidth: "80px",
                     }}
                   >
                     <p
                       style={{
-                        fontFamily: "'JetBrains Mono', monospace",
+                        fontFamily: DS.mono,
                         fontSize: "22px",
-                        fontWeight: 600,
-                        color: i === 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+                        fontWeight: 500,
+                        color: i === 0 ? DS.onSurface : DS.muted,
                         lineHeight: 1.2,
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
                       {ticket.ticket_label}
                     </p>
                     {ticket.service_name && (
-                      <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", marginTop: "2px" }}>
+                      <p style={{ fontSize: "10px", color: DS.muted, marginTop: "2px" }}>
                         {ticket.service_name}
                       </p>
                     )}
@@ -359,18 +411,19 @@ export default function QueueDisplay() {
         <div style={{ textAlign: "right" }}>
           <p
             style={{
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: DS.mono,
               fontSize: "14px",
-              color: "rgba(255,255,255,0.15)",
+              color: DS.muted,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {clockStr}
           </p>
-          <p style={{ fontSize: "11px", marginTop: "4px", color: "rgba(255,255,255,0.07)" }}>
+          <p style={{ fontSize: "11px", marginTop: "4px", color: DS.muted, opacity: 0.6 }}>
             {t("booking:queueDisplay.poweredBy")}
           </p>
           {!audioUnlocked && (
-            <p style={{ fontSize: "10px", marginTop: "6px", color: "rgba(255,255,255,0.12)" }}>
+            <p style={{ fontSize: "10px", marginTop: "6px", color: DS.muted, opacity: 0.7 }}>
               {t("booking:queueDisplay.clickToActivateSound")}
             </p>
           )}

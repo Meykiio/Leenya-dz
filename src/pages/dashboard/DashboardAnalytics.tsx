@@ -277,16 +277,16 @@ const DashboardAnalytics = () => {
 
   return (
       <div className="space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:analytics.pageTitle")}</h2>
-          <div className="flex gap-0.5 bg-[var(--bg-muted)] rounded-lg p-0.5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[var(--border-default)] pb-2.5">
+          <h2 className="font-display text-lg font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:analytics.pageTitle")}</h2>
+          <div className="flex gap-0.5 bg-[var(--bg-muted)] rounded-[5px] p-0.5">
             {rangeButtons.map((r) => (
               <Button
                 key={r.key}
                 variant={range === r.key ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setRange(r.key)}
-                className="text-xs h-7"
+                className="text-xs h-8"
               >
                 {t(r.labelKey)}
               </Button>
@@ -297,17 +297,17 @@ const DashboardAnalytics = () => {
         {loading ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
+              {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Skeleton className="h-72 rounded-lg" />
-              <Skeleton className="h-72 rounded-lg" />
+              <Skeleton className="h-72 rounded-2xl" />
+              <Skeleton className="h-72 rounded-2xl" />
             </div>
           </div>
         ) : (
           <>
             {truncated && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-[12px] font-medium text-amber-800">
+              <div className="rounded-[8px] border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-2 text-[12px] font-medium text-[var(--warning)]">
                 {t("dashboard:analytics.truncated")}
               </div>
             )}
@@ -343,13 +343,13 @@ const DashboardAnalytics = () => {
             {/* Reviews list */}
             {reviews.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">{t("dashboard:analytics.reviewsList")}</h3>
-                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[var(--accent-light)] text-accent font-mono text-[10px] font-semibold px-1.5">
+                <div className="flex items-center gap-2 border-b border-[var(--border-default)] pb-2.5">
+                  <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:analytics.reviewsList")}</h3>
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-[2px] bg-[var(--accent-light)] text-accent font-mono text-[10px] font-medium px-1.5">
                     {reviews.length}
                   </span>
                 </div>
-                <div className="rounded-lg border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
+                <div className="divide-y divide-[var(--border-default)]">
                   {reviews.map((r) => {
                     const client = (r as Record<string, unknown>).profiles as { full_name: string } | null;
                     return (
@@ -366,7 +366,7 @@ const DashboardAnalytics = () => {
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-3 w-3 ${i < r.rating ? "fill-amber-400 text-amber-400" : "text-[var(--text-tertiary)]/20"}`}
+                                  className={`h-3 w-3 ${i < r.rating ? "fill-[var(--warning)] text-[var(--warning)]" : "text-[var(--text-tertiary)]/20"}`}
                                 />
                               ))}
                             </div>

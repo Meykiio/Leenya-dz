@@ -119,8 +119,8 @@
   "footer.privacy": "Confidentialité",
   "footer.contact": "Contact",
   "footer.whatsapp": "WhatsApp",
-  "footer.copyright": "\u00a9 2025 Leenya. Tous droits réservés.",
-  "footer.builtIn": "Fabriqué en Algérie \ud83c\udde9\ud83c\uddff",
+  "footer.copyright": "© 2025 Leenya. Tous droits réservés.",
+  "footer.builtIn": "Fabriqué en Algérie 🇩🇿",
   "socialProof.benefit1": "Site de réservation pour votre commerce",
   "socialProof.benefit2": "Vos clients réservent depuis leur téléphone",
   "socialProof.benefit3": "File d'attente et tableau de bord",
@@ -154,7 +154,7 @@
   "demo.dashboard.week": "Sem {{number}}",
   "demo.dashboard.bookings": "Réservations",
   "demo.dashboard.revenue": "Revenu",
-  "floatingHelp.message": "Bonjour, j'ai besoin d'aide avec Leenya. \ud83d\udc4b",
+  "floatingHelp.message": "Bonjour, j'ai besoin d'aide avec Leenya. 👋",
   "floatingHelp.label": "Besoin d'aide ?",
   "404.phrase1": "Cette page est en pause...",
   "404.phrase2": "On l'a appelée. Pas de réponse.",
@@ -195,5 +195,7 @@
   "feedback.thanksTitle": "Merci pour votre avis !",
   "feedback.thanksSubtitle": "Votre avis nous aide à améliorer Leenya.",
   "feedback.sendAnother": "Envoyer un autre",
-  "feedback.error": "Une erreur est survenue. Veuillez réessayer."
+  "feedback.error": "Une erreur est survenue. Veuillez réessayer.",
+  "nav.menu": "Menu",
+  "nav.close": "Fermer"
 }

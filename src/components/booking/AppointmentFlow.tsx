@@ -291,7 +291,7 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
   return (
     <div className="px-5 py-5">
       {step !== "confirmed" && (
-        <p className="text-xs text-center text-[var(--text-tertiary)] mb-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-center text-muted-foreground mb-2">
           {t("booking:appointmentFlow.stepIndicator", { current: currentStepIndex + 1, total: allSteps.length })}
         </p>
       )}
@@ -300,20 +300,20 @@ export default function AppointmentFlow({ businessId, businessName, services, bu
           {allSteps.map((s, i) => (
             <div key={s.key} className="flex items-center gap-1">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold transition-colors ${
+                className={`w-6 h-6 rounded-[5px] border flex items-center justify-center font-mono text-[11px] transition-colors ${
                   i === currentStepIndex
-                    ? "bg-foreground text-background"
+                    ? "bg-primary border-primary text-primary-foreground"
                     : i < currentStepIndex
-                    ? "bg-foreground/15 text-foreground/50"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-[var(--accent-light)] border-primary text-primary"
+                    : "border-[var(--border-default)] text-muted-foreground"
                 }`}
               >
                 {i + 1}
               </div>
               {i < allSteps.length - 1 && (
                 <div
-                  className={`w-6 h-px transition-colors ${
-                    i < currentStepIndex ? "bg-foreground/30" : "bg-muted"
+                  className={`w-6 h-[2px] transition-colors ${
+                    i < currentStepIndex ? "bg-primary/40" : "bg-muted"
                   }`}
                 />
               )}

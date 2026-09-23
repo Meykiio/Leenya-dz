@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import LoadingScreen from "@/components/LoadingScreen";
 
 // Lazy-loaded pages for code splitting
 const Landing = React.lazy(() => import("@/pages/Landing"));
@@ -34,13 +35,6 @@ const DashboardSettings = React.lazy(() => import("@/pages/dashboard/DashboardSe
 const DashboardAnalytics = React.lazy(() => import("@/pages/dashboard/DashboardAnalytics"));
 const DashboardFeedback = React.lazy(() => import("@/pages/dashboard/DashboardFeedback"));
 
-/** Spinner shown as a Suspense fallback while lazy-loaded page chunks load. */
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]" role="status" aria-live="polite">
-    <div className="h-8 w-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-  </div>
-);
-
 /**
  * Root application component.
  * Sets up:
@@ -60,7 +54,7 @@ const App = () => (
             <Sonner />
             <ErrorBoundary>
               <BrowserRouter>
-                <Suspense fallback={<PageLoader />}>
+                <Suspense fallback={<LoadingScreen />}>
                   <Routes>
                     {/* Public routes */}
                     <Route path="/" element={<Landing />} />
@@ -97,6 +91,7 @@ const App = () => (
                     {/* Public business routes — MUST be last before catch-all */}
                     <Route path="/terms" element={<TermsOfService />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/404" element={<NotFound />} />
                     <Route path="/:slug/queue" element={<QueuePublic />} />
                     <Route path="/:slug" element={<BusinessPublic />} />
 

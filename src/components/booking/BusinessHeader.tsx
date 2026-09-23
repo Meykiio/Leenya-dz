@@ -57,7 +57,7 @@ export default function BusinessHeader({ business, openStatus }: BusinessHeaderP
         </Avatar>
 
         {/* Business name */}
-        <h1 className="text-lg font-bold mt-2.5">{business.name}</h1>
+        <h1 className="font-display text-[20px] font-bold tracking-[-0.015em] mt-2.5">{business.name}</h1>
 
         {/* Category + location */}
         {locationParts.length > 0 && (
@@ -84,7 +84,7 @@ export default function BusinessHeader({ business, openStatus }: BusinessHeaderP
             <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
               <span
                 className={`h-[5px] w-[5px] rounded-full ${
-                  openStatus.isOpen ? "bg-green-500" : "bg-destructive"
+                  openStatus.isOpen ? "bg-[var(--success)]" : "bg-[var(--error)]"
                 }`}
               />
               {openStatus.isOpen ? (
@@ -102,7 +102,7 @@ export default function BusinessHeader({ business, openStatus }: BusinessHeaderP
               href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[13px] text-accent hover:underline"
+              className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline"
             >
               <Navigation className="h-3.5 w-3.5" />
               {t("booking:businessPublic.takeMeThere")}

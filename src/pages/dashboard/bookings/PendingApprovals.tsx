@@ -52,17 +52,17 @@ export default function PendingApprovals({ businessId, onStatusChange, onAccept,
     fetchPending();
   };
 
-  if (loading) return <Skeleton className="h-32 rounded-lg" />;
+  if (loading) return <Skeleton className="h-32 rounded-2xl" />;
   if (pending.length === 0) return null;
 
   const visible = pending.slice(0, MAX_VISIBLE);
   const remaining = pending.length - MAX_VISIBLE;
 
   return (
-    <div className="rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] overflow-hidden">
+    <div className="rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-bg)] overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--warning-border)] bg-[var(--warning-bg)]">
         <AlertCircle className="h-4 w-4 text-[var(--warning)]" />
-        <span className="text-sm font-semibold text-[var(--warning)]">
+        <span className="text-[13px] font-semibold text-[var(--warning)]">
           {t("dashboard:bookings.pendingCount", { count: pending.length })}
         </span>
       </div>
@@ -70,27 +70,27 @@ export default function PendingApprovals({ businessId, onStatusChange, onAccept,
         {visible.map((b) => (
           <div key={b.id} className="flex items-center gap-3 px-4 py-3">
             <div className="flex items-center gap-2 min-w-[120px] shrink-0">
-              <Clock className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
-              <span className="text-xs text-[var(--text-tertiary)]">
+              <Clock className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+              <span className="text-xs text-[var(--text-secondary)]">
                 {format(new Date(b.date), "d MMM", { locale: dateLocale })} {t("dashboard:bookings.at")} {b.start_time?.slice(0, 5)}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--text-primary)] truncate">{b.client_name}</p>
-              <p className="text-xs text-[var(--text-tertiary)]">{b.services?.name || "—"} {b.staff_members?.display_name ? `· ${b.staff_members.display_name}` : ""}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{b.services?.name || "—"} {b.staff_members?.display_name ? `· ${b.staff_members.display_name}` : ""}</p>
             </div>
             <div className="flex gap-1.5 shrink-0">
-              <Button size="sm" onClick={() => handleAccept(b.id)} className="h-7 text-xs px-3">
+              <Button size="sm" onClick={() => handleAccept(b.id)} className="h-8 text-xs px-3">
                 {t("dashboard:bookings.accept")}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleReject(b.id)} className="h-7 text-xs px-3 text-[var(--error)] border-[var(--error-border)]">
+              <Button size="sm" variant="outline" onClick={() => handleReject(b.id)} className="h-8 text-xs px-3 text-[var(--error)] border-[var(--error-border)]">
                 {t("dashboard:bookings.reject")}
               </Button>
             </div>
           </div>
         ))}
         {remaining > 0 && (
-          <div className="px-4 py-2.5 text-center text-xs text-[var(--text-tertiary)]">
+          <div className="px-4 py-2.5 text-center text-xs text-[var(--text-secondary)]">
             {t("dashboard:bookings.pendingMore", { remaining })}
           </div>
         )}

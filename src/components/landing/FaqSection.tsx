@@ -18,13 +18,13 @@ const faqs = [
 export default function FaqSection() {
   const { t } = useTranslation();
   return (
-    <section id="faq" className="py-20 px-6 bg-background">
+    <section id="faq" className="py-12 px-6 bg-background">
       <div className="max-w-2xl mx-auto">
         <div className="text-center max-w-xl mx-auto mb-10">
-          <h2 className="text-[28px] font-bold text-foreground tracking-tight mb-3">
+          <h2 className="font-display text-[28px] font-extrabold text-foreground tracking-[-0.02em] mb-3">
             {t("landing:faq.title")}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[var(--text-secondary)]">
             {t("landing:faq.subtitle")}
           </p>
         </div>
@@ -32,10 +32,10 @@ export default function FaqSection() {
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, i) => (
             <AccordionItem key={i} value={`item-${i}`}>
-              <AccordionTrigger className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+              <AccordionTrigger className="text-sm font-medium text-foreground hover:text-primary transition-colors">
                 {t("landing:" + faq.qKey)}
               </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+              <AccordionContent className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 {t("landing:" + faq.aKey)}
               </AccordionContent>
             </AccordionItem>

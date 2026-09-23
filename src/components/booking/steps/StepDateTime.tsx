@@ -46,7 +46,7 @@ export default function StepDateTime({
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
         <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> {t("common:buttons.back")}
       </button>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepDateTime.titleDate")}</h2>
+      <h2 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em] mb-3.5">{t("booking:appointmentFlow.stepDateTime.titleDate")}</h2>
 
       <div className="flex gap-2 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
         {dates.map((d) => {
@@ -59,21 +59,21 @@ export default function StepDateTime({
               key={d.toISOString()}
               disabled={closed}
               onClick={() => { onSelectDate(d); }}
-              className={`flex-shrink-0 flex flex-col items-center justify-center rounded-md border min-w-[52px] h-[62px] transition-all ${
+              className={`flex-shrink-0 flex flex-col items-center justify-center rounded-[8px] border min-w-[52px] h-[62px] transition-all ${
                 closed ? "opacity-[0.35] cursor-not-allowed" : ""
               } ${
                 dateSelected
-                  ? "bg-foreground text-background border-transparent"
-                  : "border-border hover:border-foreground/20"
+                  ? "bg-primary text-primary-foreground border-transparent"
+                  : "border-[var(--border-default)] hover:border-[var(--border-strong)]"
               }`}
             >
               <span className={`text-[10px] font-medium uppercase ${
-                dateSelected ? "text-background/60" : today ? "text-primary" : "text-muted-foreground"
+                dateSelected ? "text-primary-foreground/60" : today ? "text-primary" : "text-muted-foreground"
               }`}>
                 {today ? t("booking:appointmentFlow.stepDateTime.today") : label.dayName}
               </span>
-              <span className={`font-mono text-[18px] font-semibold leading-tight ${
-                dateSelected ? "text-background" : "text-foreground"
+              <span className={`font-mono text-[18px] font-medium leading-tight ${
+                dateSelected ? "text-primary-foreground" : "text-foreground"
               }`}>
                 {label.dayNum}
               </span>
@@ -84,7 +84,7 @@ export default function StepDateTime({
 
       {selectedDate && (
         <div className="mt-4">
-          <h3 className="text-[15px] font-semibold text-foreground mb-3">{t("booking:appointmentFlow.stepDateTime.titleTime")}</h3>
+          <h3 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em] mb-3">{t("booking:appointmentFlow.stepDateTime.titleTime")}</h3>
           {loadingSlots ? (
             <p className="text-[13px] text-muted-foreground">{t("common:loading")}</p>
           ) : slots.length === 0 ? (
@@ -95,10 +95,10 @@ export default function StepDateTime({
                 <button
                   key={slot}
                   onClick={() => onSelectTime(slot)}
-                  className={`h-[38px] rounded-sm text-[13px] font-mono font-medium transition-all ${
+                  className={`h-[38px] rounded-[5px] text-[13px] font-mono font-medium transition-all ${
                     selectedTime === slot
-                      ? "bg-foreground text-background border-transparent"
-                      : "border border-border hover:border-foreground/20 hover:bg-muted/50 text-foreground"
+                      ? "bg-primary text-primary-foreground border-transparent"
+                      : "border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-muted/50 text-foreground"
                   }`}
                 >
                   {slot}
@@ -110,7 +110,7 @@ export default function StepDateTime({
       )}
 
       {selectedTime && (
-        <Button className="w-full mt-5 h-[44px]" onClick={onContinue}>
+        <Button className="w-full mt-5 h-11" onClick={onContinue}>
           {t("booking:appointmentFlow.stepService.continue")}
         </Button>
       )}

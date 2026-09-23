@@ -112,6 +112,7 @@
   "ticketTracker.selectedService": "Selected service",
   "ticketTracker.changeStaffStep": "Choose a staff member",
   "ticketTracker.changeStaffDesc": "Select who you want to perform this service, or choose no preference.",
+  "ticketTracker.noStaffAssigned": "No staff members assigned to this service",
   "ticketTracker.toast.cancelled": "Ticket cancelled",
   "ticketTracker.inServiceTitle": "Enjoy your service!",
   "ticketTracker.inServiceSubtitle": "Please relax, you're in good hands",
@@ -153,5 +154,9 @@
   "queueDisplay.nextUp": "Next up",
   "queueDisplay.waitingCount": "{{count}} waiting",
   "queueDisplay.poweredBy": "powered by leenya",
-  "queueDisplay.clickToActivateSound": "click to enable sound"
+  "queueDisplay.clickToActivateSound": "click to enable sound",
+  "queueDisplay.called": "Called",
+  "queueDisplay.inService": "In service",
+  "businessPublic.reviewsSection.title": "Reviews",
+  "businessPublic.reviewsSection.seeMore": "See more ({{count}})"
 }

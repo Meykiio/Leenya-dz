@@ -26,15 +26,15 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
         <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> {t("common:buttons.back")}
       </button>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepStaff.title")}</h2>
+      <h2 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em] mb-3.5">{t("booking:appointmentFlow.stepStaff.title")}</h2>
       <div className="flex flex-col gap-2">
         <button
           type="button"
           onClick={() => onSelect("no_preference")}
-          className={`flex items-center justify-between rounded-md border p-[14px_16px] text-left transition-all ${
+          className={`flex items-center justify-between rounded-[12px] border p-[14px_16px] text-left transition-all ${
             selectedStaff === "no_preference"
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-foreground/20 hover:bg-muted/50"
+              ? "border-primary bg-[var(--accent-light)]"
+              : "border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-muted/50"
           }`}
         >
           <div className="flex items-center gap-3">
@@ -48,7 +48,7 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
               <p className="text-[12px] text-muted-foreground mt-0.5">{t("booking:appointmentFlow.stepStaff.firstAvailable")}</p>
             </div>
           </div>
-          <ChevronRight className={`h-4 w-4 shrink-0 ${selectedStaff === "no_preference" ? "text-primary" : "text-muted-foreground"}`} />
+          <ChevronRight className={`h-4 w-4 shrink-0 rtl:scale-x-[-1] ${selectedStaff === "no_preference" ? "text-primary" : "text-muted-foreground"}`} />
         </button>
         {staffMembers.map((s) => {
           const isSelected = selectedStaff !== "no_preference" && selectedStaff?.id === s.id;
@@ -57,10 +57,10 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
               key={s.id}
               type="button"
               onClick={() => onSelect(s)}
-              className={`flex items-center justify-between rounded-md border p-[14px_16px] text-left transition-all ${
+              className={`flex items-center justify-between rounded-[12px] border p-[14px_16px] text-left transition-all ${
                 isSelected
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-foreground/20 hover:bg-muted/50"
+                  ? "border-primary bg-[var(--accent-light)]"
+                  : "border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-muted/50"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -75,12 +75,12 @@ export default function StepStaff({ staffMembers, selectedStaff, onSelect, onBac
                   </p>
                 </div>
               </div>
-              <ChevronRight className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+              <ChevronRight className={`h-4 w-4 shrink-0 rtl:scale-x-[-1] ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
             </button>
           );
         })}
       </div>
-      <Button className="w-full mt-5 h-[44px]" onClick={onContinue}>
+      <Button className="w-full mt-5 h-11" onClick={onContinue}>
         {t("common:buttons.continue")}
       </Button>
     </motion.div>

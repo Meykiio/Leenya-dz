@@ -50,21 +50,20 @@ export default function FeaturesSection() {
   const [activeTab, setActiveTab] = useState("bookings");
 
   return (
-    <section id="features" className="py-20 px-6 bg-background relative overflow-hidden">
-      <div className="absolute inset-0 bg-dot-grid opacity-20 pointer-events-none" />
+    <section id="features" className="py-12 px-6 bg-background relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-10">
-          <h2 className="text-[28px] font-bold text-foreground tracking-tight mb-3">
+          <h2 className="font-display text-[28px] font-extrabold text-foreground tracking-[-0.02em] mb-3">
             {t("landing:features.title")}
           </h2>
-          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+          <p className="text-sm text-[var(--text-secondary)] max-w-lg mx-auto">
             {t("landing:features.subtitle")}
           </p>
         </div>
 
         {/* Tab bar */}
         <div className="flex items-center justify-center gap-1 mb-8">
-          <div className="inline-flex items-center gap-1 bg-muted rounded-lg p-1">
+          <div className="inline-flex items-center gap-1 bg-[var(--bg-muted)] rounded-[8px] p-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -72,10 +71,10 @@ export default function FeaturesSection() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[5px] text-xs font-medium transition-all duration-150 ${
                     isActive
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-[var(--text-secondary)] hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -93,41 +92,41 @@ export default function FeaturesSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
             className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"
           >
             {/* Text side */}
             <div>
-              <h3 className="text-xl font-bold text-foreground tracking-tight mb-4">
+              <h3 className="font-display text-xl font-bold text-foreground tracking-[-0.02em] mb-4">
                 {t("landing:" + content[activeTab].titleKey)}
               </h3>
               <ul className="space-y-2.5 mb-6">
                 {content[activeTab].benefitKeys.map((bk) => (
                   <li key={bk} className="flex items-start gap-2.5">
-                    <div className="h-5 w-5 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="h-3 w-3 text-accent" />
+                    <div className="h-5 w-5 rounded-full bg-[var(--accent-light)] flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="h-3 w-3 text-primary" />
                     </div>
-                    <span className="text-sm text-muted-foreground">{t("landing:" + bk)}</span>
+                    <span className="text-sm text-[var(--text-secondary)]">{t("landing:" + bk)}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Demo side */}
+            {/* Demo side — the demo register stays dark, like the product board */}
             <div className="relative">
               <div
-                className="rounded-xl overflow-hidden transition-all duration-500"
+                className="rounded-2xl overflow-hidden transition-all duration-med"
                 style={{
-                  border: "1px solid var(--border-default)",
-                  background: "#141413",
-                  boxShadow: "0 0 60px rgba(99,102,241,0.06), 0 20px 60px rgba(0,0,0,0.08)",
+                  border: "1px solid #263044",
+                  background: "#1A2235",
+                  boxShadow: "var(--shadow-md)",
                 }}
               >
-                <div className="h-7 bg-[#1C1C1A] border-b border-white/[0.06] flex items-center px-3 gap-1.5">
+                <div className="h-7 bg-[#1F2A3F] border-b border-[#263044] flex items-center px-3 gap-1.5">
                   <div className="flex gap-1">
-                    <div className="h-2 w-2 rounded-full bg-white/[0.12]" />
-                    <div className="h-2 w-2 rounded-full bg-white/[0.12]" />
-                    <div className="h-2 w-2 rounded-full bg-white/[0.08]" />
+                    <div className="h-2 w-2 rounded-full bg-[#3A4D6A]" />
+                    <div className="h-2 w-2 rounded-full bg-[#3A4D6A]" />
+                    <div className="h-2 w-2 rounded-full bg-[#263044]" />
                   </div>
                 </div>
                 <div className="p-4">

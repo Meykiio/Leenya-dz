@@ -28,7 +28,7 @@ const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeP
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-[20px] font-bold text-foreground tracking-tight">
+        <h2 className="font-display text-[20px] font-bold text-foreground tracking-[-0.015em]">
           {t("auth:onboarding.type.title")}
         </h2>
         <p className="text-[14px] text-muted-foreground mt-1.5">
@@ -42,10 +42,10 @@ const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeP
             key={cat.value}
             type="button"
             onClick={() => setSelected(cat.value)}
-            className={`flex flex-col items-center gap-2 rounded-md border p-4 transition-all ${
+            className={`flex flex-col items-center gap-2 rounded-[8px] border p-4 transition-all ${
               selected === cat.value
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-foreground/20 hover:bg-muted/50"
+                ? "border-primary bg-[var(--accent-light)]"
+                : "border-border hover:border-[var(--border-strong)] hover:bg-muted/50"
             }`}
           >
             <span className="text-2xl">{cat.emoji}</span>
@@ -62,7 +62,7 @@ const StepBusinessType = ({ defaultCategory, onNext, onBack }: StepBusinessTypeP
         <Button variant="outline" onClick={onBack}>
           ← {t("auth:onboarding.back")}
         </Button>
-        <Button onClick={() => selected && onNext(selected)} disabled={!selected} className="px-8 h-[44px]">
+        <Button onClick={() => selected && onNext(selected)} disabled={!selected} className="px-8 h-11">
           {t("auth:onboarding.continue")} →
         </Button>
       </div>

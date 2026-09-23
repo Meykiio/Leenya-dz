@@ -23,7 +23,7 @@ export default function StepService({ services, selectedService, onSelect, onCon
   const { t } = useTranslation();
   return (
     <motion.div key="service" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepService.title")}</h2>
+      <h2 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em] mb-3.5">{t("booking:appointmentFlow.stepService.title")}</h2>
       <div className="flex flex-col gap-2">
         {services.map((s) => {
           const isSelected = selectedService?.id === s.id;
@@ -32,10 +32,10 @@ export default function StepService({ services, selectedService, onSelect, onCon
               key={s.id}
               type="button"
               onClick={() => onSelect(s)}
-              className={`flex items-center justify-between rounded-md border p-[14px_16px] text-left transition-all ${
+              className={`flex items-center justify-between rounded-[12px] border p-[14px_16px] text-left transition-all ${
                 isSelected
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-foreground/20 hover:bg-muted/50"
+                  ? "border-primary bg-[var(--accent-light)]"
+                  : "border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-muted/50"
               }`}
             >
               <div>
@@ -49,13 +49,13 @@ export default function StepService({ services, selectedService, onSelect, onCon
                   )}
                 </p>
               </div>
-              <ChevronRight className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+              <ChevronRight className={`h-4 w-4 shrink-0 rtl:scale-x-[-1] ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
             </button>
           );
         })}
       </div>
       {selectedService && (
-        <Button className="w-full mt-5 h-[44px]" disabled={loadingStaff} onClick={onContinue}>
+        <Button className="w-full mt-5 h-11" disabled={loadingStaff} onClick={onContinue}>
           {loadingStaff ? t("common:loading") : t("booking:appointmentFlow.stepService.continue")}
         </Button>
       )}

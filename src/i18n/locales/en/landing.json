@@ -119,8 +119,8 @@
   "footer.privacy": "Privacy",
   "footer.contact": "Contact",
   "footer.whatsapp": "WhatsApp",
-  "footer.copyright": "\u00a9 2025 Leenya. All rights reserved.",
-  "footer.builtIn": "Built in Algeria \ud83c\udde9\ud83c\uddff",
+  "footer.copyright": "© 2025 Leenya. All rights reserved.",
+  "footer.builtIn": "Built in Algeria 🇩🇿",
   "socialProof.benefit1": "Booking website for your business",
   "socialProof.benefit2": "Your clients book from their phone",
   "socialProof.benefit3": "Queue and dashboard",
@@ -154,7 +154,7 @@
   "demo.dashboard.week": "Wk {{number}}",
   "demo.dashboard.bookings": "Bookings",
   "demo.dashboard.revenue": "Revenue",
-  "floatingHelp.message": "Hello, I need help with Leenya. \ud83d\udc4b",
+  "floatingHelp.message": "Hello, I need help with Leenya. 👋",
   "floatingHelp.label": "Need help?",
   "404.phrase1": "This page is on a break...",
   "404.phrase2": "We called it. No answer.",
@@ -195,5 +195,7 @@
   "feedback.thanksTitle": "Thanks for your feedback!",
   "feedback.thanksSubtitle": "Your feedback helps us improve Leenya.",
   "feedback.sendAnother": "Send another",
-  "feedback.error": "Something went wrong. Please try again."
+  "feedback.error": "Something went wrong. Please try again.",
+  "nav.menu": "Menu",
+  "nav.close": "Close"
 }

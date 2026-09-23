@@ -108,34 +108,34 @@ const DashboardServices = () => {
 
   return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:services.title")}</h2>
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2.5">
+          <h2 className="font-display text-lg font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:services.title")}</h2>
           <Button size="sm" onClick={openNew} className="gap-1.5 text-xs"><Plus className="h-3.5 w-3.5" /> {t("dashboard:services.add")}</Button>
         </div>
 
         {loading ? (
           <div className="space-y-2">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-2xl" />)}
           </div>
         ) : services.length === 0 ? (
-          <div className="rounded-lg border border-[var(--border-default)] py-12 text-center">
-            <Scissors className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-            <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:services.empty")}</p>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("dashboard:services.emptyDesc")}</p>
+<div className="py-12 text-center">
+            <Scissors className="h-7 w-7 text-[var(--text-secondary)] mx-auto mb-2" />
+            <p className="text-sm text-[var(--text-secondary)]">{t("dashboard:services.empty")}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">{t("dashboard:services.emptyDesc")}</p>
             <Button onClick={openNew} variant="outline" size="sm" className="mt-3 text-xs">{t("dashboard:services.add")}</Button>
           </div>
         ) : (
-          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {services.map((s) => {
               const actions = (
                 <div className="flex items-center gap-1">
                   <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
-                  <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-7 w-7 p-0 text-[var(--text-tertiary)]">
+                  <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-8 w-8 p-0 text-[var(--text-tertiary)]">
                     <Pencil className="h-3 w-3" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -144,7 +144,7 @@ const DashboardServices = () => {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common:buttons.delete")}</AlertDialogAction>
+                        <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-[var(--error)] text-white">{t("common:buttons.delete")}</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -153,13 +153,13 @@ const DashboardServices = () => {
               return (
                 <div key={s.id}>
                   {/* Desktop row */}
-                  <div className="hidden sm:flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
+                  <div className="hidden sm:flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--bg-muted)] transition-colors">
                     <GripVertical className="h-4 w-4 text-[var(--text-disabled)] shrink-0 cursor-grab" />
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${s.is_active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)] line-through"}`}>{s.name}</p>
                       {s.name_ar && <p className="text-xs text-[var(--text-tertiary)] font-arabic">{s.name_ar}</p>}
                     </div>
-                    <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded shrink-0">
+                    <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded-[2px] shrink-0">
                       {s.duration_minutes} min
                     </span>
                     <span className="text-sm text-[var(--text-secondary)] shrink-0 w-20 text-right">
@@ -168,7 +168,7 @@ const DashboardServices = () => {
                     {actions}
                   </div>
                   {/* Mobile card */}
-                  <div className="sm:hidden px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors">
+                  <div className="sm:hidden px-4 py-3.5 hover:bg-[var(--bg-muted)] transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -181,18 +181,18 @@ const DashboardServices = () => {
                         {(s.price_dzd || 0).toLocaleString()} DZD
                       </span>
                     </div>
-                    <div className="flex items-center justify-between mt-2 ml-6">
-                      <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2.5 mt-2 ml-6">
+                      <span className="font-mono text-xs bg-[var(--bg-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded-[2px]">
                         {s.duration_minutes} min
                       </span>
                       <div className="flex items-center gap-1">
                         <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
-                        <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-7 w-7 p-0 text-[var(--text-tertiary)]">
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(s)} className="h-8 w-8 p-0 text-[var(--text-tertiary)]">
                           <Pencil className="h-3 w-3" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-[var(--error)]"><Trash2 className="h-3 w-3" /></Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -201,7 +201,7 @@ const DashboardServices = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("common:buttons.delete")}</AlertDialogAction>
+                              <AlertDialogAction onClick={() => deleteService(s.id)} className="bg-[var(--error)] text-white">{t("common:buttons.delete")}</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -217,35 +217,35 @@ const DashboardServices = () => {
         {/* Form modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-            <div className="relative w-full max-w-md rounded-xl bg-[var(--bg-base)] border border-[var(--border-default)] p-6 space-y-4" style={{ boxShadow: 'var(--shadow-lg)' }}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-[var(--text-primary)]">{editing ? t("dashboard:services.edit") : t("dashboard:services.form.new")}</h3>
-                <button onClick={() => setShowForm(false)}><X className="h-4 w-4 text-[var(--text-tertiary)]" /></button>
+            <div className="absolute inset-0 bg-[rgba(9,13,22,0.7)]" onClick={() => setShowForm(false)} />
+            <div className="relative w-full max-w-md rounded-2xl bg-card border border-primary p-6 space-y-4" style={{ boxShadow: 'var(--shadow-lg)' }}>
+              <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2.5">
+                <h3 className="font-display text-base font-bold text-[var(--text-primary)] tracking-[-0.015em]">{editing ? t("dashboard:services.edit") : t("dashboard:services.form.new")}</h3>
+                <button onClick={() => setShowForm(false)} aria-label={t("common:nav.close")}><X className="h-4 w-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" /></button>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("dashboard:services.form.nameFr")}</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("dashboard:services.form.namePlaceholder")} className="h-8 text-sm" />
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:services.form.nameFr")}</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("dashboard:services.form.namePlaceholder")} className="h-11" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("dashboard:services.form.nameAr")}</Label>
-                  <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} placeholder="قص الشعر" dir="rtl" className="font-arabic h-8 text-sm" />
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:services.form.nameAr")}</Label>
+                  <Input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} placeholder="قص الشعر" dir="rtl" className="font-arabic h-11" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("dashboard:services.form.duration")}: <span className="font-mono">{form.duration_minutes}</span> min</Label>
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:services.form.duration", { minutes: form.duration_minutes })}</Label>
                   <Slider value={[form.duration_minutes]} onValueChange={([v]) => setForm({ ...form, duration_minutes: v })} min={15} max={180} step={15} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("dashboard:services.form.price")}</Label>
-                  <Input type="number" value={form.price_dzd} onChange={(e) => setForm({ ...form, price_dzd: parseInt(e.target.value) || 0 })} className="h-8 text-sm" />
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:services.form.price")}</Label>
+                  <Input type="number" value={form.price_dzd} onChange={(e) => setForm({ ...form, price_dzd: parseInt(e.target.value) || 0 })} className="h-11" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs">{t("dashboard:services.form.active")}</Label>
+                <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("dashboard:services.form.active")}</Label>
                   <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                 </div>
               </div>
-              <Button onClick={saveService} disabled={!form.name.trim()} className="w-full h-8 text-sm">
+              <Button onClick={saveService} disabled={!form.name.trim()} className="w-full h-11">
                 {editing ? t("dashboard:common.save") : t("dashboard:common.add")}
               </Button>
             </div>

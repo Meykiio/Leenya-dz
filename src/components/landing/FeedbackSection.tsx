@@ -12,6 +12,8 @@ import { toast } from "@/hooks/use-toast";
 
 const categories = ["bug", "feature", "general"] as const;
 
+const labelClass = "text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground";
+
 export default function FeedbackSection() {
   const { t } = useTranslation();
   const [category, setCategory] = useState<string>("general");
@@ -41,9 +43,9 @@ export default function FeedbackSection() {
 
   if (sent) {
     return (
-      <section className="py-20 px-4 bg-[var(--bg-subtle)]">
+      <section className="py-12 px-4 bg-[var(--bg-dim)]">
         <div className="max-w-md mx-auto text-center space-y-3">
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">{t("landing:feedback.thanksTitle")}</h2>
+          <h2 className="font-display text-xl font-extrabold text-foreground tracking-[-0.02em]">{t("landing:feedback.thanksTitle")}</h2>
           <p className="text-sm text-[var(--text-secondary)]">{t("landing:feedback.thanksSubtitle")}</p>
           <Button variant="outline" size="sm" onClick={() => { setSent(false); setMessage(""); setCategory("general"); }}>
             {t("landing:feedback.sendAnother")}
@@ -54,15 +56,15 @@ export default function FeedbackSection() {
   }
 
   return (
-    <section className="py-20 px-4 bg-[var(--bg-subtle)]" id="feedback">
+    <section className="py-12 px-4 bg-[var(--bg-dim)] border-t border-[var(--outline)]" id="feedback">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">{t("landing:feedback.title")}</h2>
+          <h2 className="font-display text-xl font-extrabold text-foreground tracking-[-0.02em]">{t("landing:feedback.title")}</h2>
           <p className="text-sm text-[var(--text-secondary)] mt-1">{t("landing:feedback.subtitle")}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-[var(--text-secondary)]">{t("landing:feedback.category")}</Label>
+            <Label className={labelClass}>{t("landing:feedback.category")}</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -73,16 +75,16 @@ export default function FeedbackSection() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-[var(--text-secondary)]">{t("landing:feedback.message")} *</Label>
+            <Label className={labelClass}>{t("landing:feedback.message")} *</Label>
             <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} required placeholder={t("landing:feedback.messagePlaceholder")} />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-[var(--text-secondary)]">
-              {t("landing:feedback.email")} <span className="text-[var(--text-tertiary)]">{t("landing:feedback.optional")}</span>
+            <Label className={labelClass}>
+              {t("landing:feedback.email")} <span className="normal-case tracking-normal text-[var(--text-secondary)]">{t("landing:feedback.optional")}</span>
             </Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("landing:feedback.emailPlaceholder")} />
           </div>
-          <Button type="submit" disabled={sending || !message.trim()} className="w-full">
+          <Button type="submit" disabled={sending || !message.trim()} className="w-full h-11">
             {sending ? t("landing:feedback.sending") : t("landing:feedback.send")}
           </Button>
         </form>

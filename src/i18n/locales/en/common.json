@@ -72,6 +72,9 @@
     "menu": "Menu",
     "close": "Close"
   },
+  "theme": {
+    "toggle": "Switch theme"
+  },
   "push": {
     "enableTitle": "Get notified",
     "enableMessage": "We'll let you know when your booking is confirmed or when it's your turn.",
@@ -95,5 +98,6 @@
       "invalidTooShort": "Must be at least 10 digits",
       "invalidTooLong": "Must be exactly 10 digits"
     }
-  }
+  },
+  "user": "User"
 }

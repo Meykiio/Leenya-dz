@@ -163,7 +163,8 @@ serve(async (req) => {
     if (!subs || subs.length === 0) return new Response(JSON.stringify({ success: true, sent: 0 }), { headers: { "Content-Type": "application/json" } });
 
     const payload = JSON.stringify({ title: title || "Leenya", body: messageBody || "", url: url || "/", icon: icon || "/pwa-icon-192.png", badge: badge || "/pwa-icon-192.png" });
-    let sent = 0, expired: string[] = [];
+    let sent = 0;
+    const expired: string[] = [];
 
     for (const sub of subs) {
       try {

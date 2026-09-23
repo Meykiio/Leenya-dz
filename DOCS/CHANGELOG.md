@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-09-23 — Design System v2 Rollout, Auth Flow Fix & Launch Wipe
+
+**What happened:** The whole platform now wears the Leenya Design System v2 (light by default, dark optional), new accounts land on the login screen with their credentials kept, the dashboard was redesign from boxed cards to a flat operational "ledger" layout, and the database was emptied, by request, for a clean launch.
+
+| What changed | Why |
+|---|---|
+| Design system applied to every screen — public pages, booking steps, queue tickets, dashboard, staff view, TV display, auth, onboarding, landing, legal, 404 | One consistent product identity: navy/blue palette, Outfit headings, Noto Sans text, DM Mono for numbers only, 2px status lines, red reserved for "your turn" moments |
+| Light is now the default; dark is an opt-in toggle that is remembered per device | Matches the founder's direction; no flash on load |
+| Signup now switches to the login view with email + password preserved, plus a confirmation message | New users could previously land on the homepage and couldn't reach their dashboard |
+| Dashboard sections redesigned from boxed cards to flat ledger sections (hairline titles, open lists) | Founder feedback: less "cards inside cards", more operational feel |
+| Smooth page transitions + branded loading screen (logomark with pulsing dots) | Navigation felt abrupt |
+| Mobile: sidebar drawer slides smoothly and locks page scroll; bottom nav is icons-only with small count badges | Broken mobile drawer and oversized bottom nav |
+| Landing rebuilt around the design system: sticky nav that solidifies on scroll, red scroll-progress line, smooth scrolling (Lenis), magnetic CTA buttons, auto-moving board strip, responsive "How it works" cards | Founder wanted more "feeling" and modern interactions |
+| Fixed modal anchoring bug (popups were shifted to the content column), 28 missing translations (EN/FR/AR), `{{minutes}}` label, and the 404 redirect loop | Raw codes like "common.save" showed in the UI and popups appeared broken |
+| Database emptied, no exception: all businesses, bookings, queue tickets, services, staff, reviews, feedback, profiles, roles, auth users, uploads and logs | Clean slate for launch; the founder will create a fresh account |
+| Pre-wipe backup saved to `%TEMP%\opencode\leenya-pre-launch-backup.json` | Safety net before the irreversible wipe |
+
+**Verified:** lint clean, 42/42 unit tests, production build green, and a full logged-in walkthrough of every dashboard page (temporary test business created and removed afterwards).
+
+---
+
 ## 2026-09-22 — Full Remediation Complete (Tasks 0–10)
 
 All 10 remediation tasks from the audit are implemented, verified, and shipped.

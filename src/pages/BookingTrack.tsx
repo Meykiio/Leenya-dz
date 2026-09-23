@@ -127,10 +127,10 @@ const BookingTrack = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 p-5">
+      <div className="min-h-screen bg-[var(--bg-subtle)]">
+        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)] p-5">
           <Skeleton className="h-8 w-48 mb-4" />
-          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -138,8 +138,8 @@ const BookingTrack = () => {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--bg-subtle)]">
+        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)] flex items-center justify-center p-6">
           <div className="text-center space-y-3">
             <XCircle className="h-10 w-10 text-muted-foreground/30 mx-auto" />
             <p className="text-[14px] text-muted-foreground">{t("booking:bookingTrack.notFound")}</p>
@@ -150,44 +150,54 @@ const BookingTrack = () => {
     );
   }
 
-  const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    pending: { label: t("common:statuses.pending"), variant: "secondary" },
-    confirmed: { label: t("common:statuses.confirmed"), variant: "default" },
-    arrived: { label: t("common:statuses.arrived"), variant: "default" },
-    in_service: { label: t("common:statuses.inProgress"), variant: "default" },
-    completed: { label: t("common:statuses.completed"), variant: "secondary" },
-    cancelled: { label: t("common:statuses.cancelled"), variant: "destructive" },
-    no_show: { label: t("common:statuses.noShow"), variant: "destructive" },
+  const statusLabels: Record<string, string> = {
+    pending: t("common:statuses.pending"),
+    confirmed: t("common:statuses.confirmed"),
+    arrived: t("common:statuses.arrived"),
+    in_service: t("common:statuses.inProgress"),
+    completed: t("common:statuses.completed"),
+    cancelled: t("common:statuses.cancelled"),
+    no_show: t("common:statuses.noShow"),
   };
-  const status = statusLabels[booking.status] || statusLabels.pending;
+  const statusClasses: Record<string, string> = {
+    pending: "badge-waiting",
+    confirmed: "badge-confirmed",
+    arrived: "badge-confirmed",
+    in_service: "badge-in-service",
+    completed: "badge-completed",
+    cancelled: "badge-cancelled",
+    no_show: "badge-no-show",
+  };
+  const statusLabel = statusLabels[booking.status] || statusLabels.pending;
+  const statusClass = statusClasses[booking.status] || statusClasses.pending;
   const canCancel = ["pending", "confirmed"].includes(booking.status);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50">
+    <div className="min-h-screen bg-[var(--bg-subtle)]">
+      <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)]">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-background border-b border-border px-5 h-[50px] flex items-center gap-3">
+        <div className="sticky top-0 z-10 bg-background border-b border-[var(--border-default)] px-5 h-[50px] flex items-center gap-3">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5 rtl:scale-x-[-1]" />
           </Link>
-          <h1 className="text-[14px] font-semibold text-foreground">{t("booking:bookingTrack.title")}</h1>
+          <h1 className="font-display text-[14px] font-bold text-foreground tracking-[-0.01em]">{t("booking:bookingTrack.title")}</h1>
         </div>
 
         <div className="p-5 space-y-5">
           {/* Status + ref */}
           <div className="flex items-center justify-between">
             <p className="text-[12px] font-mono text-muted-foreground">#{booking.id.slice(0, 8).toUpperCase()}</p>
-            <Badge variant={status.variant}>{status.label}</Badge>
+            <Badge variant="outline" className={statusClass}>{statusLabel}</Badge>
           </div>
 
           {reconnecting && (
-            <p className="text-[12px] text-amber-600" role="status">
+            <p className="text-[12px] text-[var(--warning)]" role="status">
               {t("booking:bookingTrack.reconnecting")}
             </p>
           )}
 
           {/* Details card */}
-          <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
+          <div className="rounded-[12px] border border-[var(--border-default)] bg-[var(--bg-muted)] p-4 space-y-3">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
               <div>
@@ -219,7 +229,7 @@ const BookingTrack = () => {
           {canCancel && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full h-[44px] text-destructive border-destructive/20 hover:bg-destructive/5" disabled={cancelling}>
+                <Button variant="destructive" className="w-full h-11" disabled={cancelling}>
                   {cancelling ? t("booking:bookingTrack.cancelling") : t("booking:bookingTrack.cancel")}
                 </Button>
               </AlertDialogTrigger>
@@ -230,7 +240,7 @@ const BookingTrack = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>{t("common:buttons.no")}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground">
+                  <AlertDialogAction onClick={handleCancel} className="bg-[var(--error)] text-white">
                     {t("common:buttons.yes")}
                   </AlertDialogAction>
                 </AlertDialogFooter>

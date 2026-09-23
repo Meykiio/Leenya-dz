@@ -312,17 +312,17 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
     return (
       <div className="flex flex-col px-5 py-4">
         <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5 rtl:scale-x-[-1]" />
           <span className="font-medium">{businessName}</span>
         </button>
-        <div className="rounded-xl p-8 text-center space-y-4" style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}>
-          <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center mx-auto" style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}>
-            <span style={{ color: 'var(--success)' }} className="text-xl">&#x2713;</span>
+        <div className="rounded-2xl p-8 text-center space-y-4" style={{ background: 'var(--signal-dim)', border: '1px solid var(--badge-signal-border)' }}>
+          <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center mx-auto" style={{ background: 'var(--signal-dim)', border: '1px solid var(--badge-signal-border)' }}>
+            <span style={{ color: 'var(--signal)' }} className="text-xl">&#x25CF;</span>
           </div>
-          <h2 className="text-[20px] font-bold text-foreground">{t("booking:ticketTracker.inServiceTitle")}</h2>
+          <h2 className="font-display text-[20px] font-bold text-foreground tracking-[-0.02em]">{t("booking:ticketTracker.inServiceTitle")}</h2>
           <p className="text-[14px] text-muted-foreground">{t("booking:ticketTracker.inServiceSubtitle")}</p>
           <div className="pt-2">
-            <p className="font-mono text-[48px] font-bold text-foreground leading-none">{ticket.ticket_label}</p>
+            <p className="font-mono text-[48px] font-medium tracking-[-0.02em] leading-none" style={{ color: 'var(--signal)' }}>{ticket.ticket_label}</p>
             <p className="text-[14px] text-muted-foreground mt-2">{serviceName}</p>
           </div>
         </div>
@@ -339,12 +339,12 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
             <span className="font-medium">{businessName}</span>
           </button>
           <div className="rounded-xl border border-border bg-muted/50 p-6 text-center space-y-5">
-            <h2 className="text-[18px] font-bold text-foreground">{t("booking:ticketTracker.reviewTitle")}</h2>
+            <h2 className="font-display text-[18px] font-bold text-foreground tracking-[-0.02em]">{t("booking:ticketTracker.reviewTitle")}</h2>
             <p className="text-[13px] text-muted-foreground">{t("booking:ticketTracker.reviewSubtitle")}</p>
             <div className="flex items-center justify-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} type="button" onClick={() => setRating(star)} className="text-3xl transition-colors">
-                  <span style={{ color: star <= rating ? 'var(--accent)' : 'var(--text-tertiary)' }}>{star <= rating ? '\u2605' : '\u2606'}</span>
+                  <span style={{ color: star <= rating ? 'var(--warning)' : 'var(--text-tertiary)' }}>{star <= rating ? '\u2605' : '\u2606'}</span>
                 </button>
               ))}
             </div>
@@ -394,7 +394,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
       </button>
 
       {isOffline && (
-        <div className="flex items-center gap-2 text-[12px] text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-4">
+        <div className="flex items-center gap-2 text-[12px] text-[var(--warning)] bg-[var(--warning-bg)] border border-[var(--warning-border)] rounded-[8px] px-3 py-2 mb-4">
           <WifiOff className="h-4 w-4" /> {t("common:loading")}
         </div>
       )}
@@ -404,28 +404,36 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-xl p-6 text-center mb-4 space-y-3"
-            style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}
+            className="rounded-2xl p-6 text-center mb-4 space-y-3"
+            style={{ background: 'var(--accent-light)', border: '1px solid var(--badge-blue-border)' }}
           >
             <div
               className="w-[52px] h-[52px] rounded-full flex items-center justify-center mx-auto"
-              style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}
+              style={{ background: 'var(--accent-light)', border: '1px solid var(--badge-blue-border)' }}
             >
-              <span style={{ color: 'var(--success)' }} className="text-xl">&#x2713;</span>
+              <span style={{ color: 'var(--primary)' }} className="text-xl">&#x2713;</span>
             </div>
-            <h2 className="text-[22px] font-bold text-foreground">{t("booking:ticketTracker.calledTitle")}</h2>
+            <h2 className="font-display text-[22px] font-bold text-foreground tracking-[-0.02em]">{t("booking:ticketTracker.calledTitle")}</h2>
             <p className="text-[14px] text-muted-foreground">{t("booking:ticketTracker.calledSubtitle")}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div role="status" aria-live="polite" className="rounded-xl border border-border bg-muted/50 p-[28px_24px] text-center">
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-3.5">
+      <div
+        role="status"
+        aria-live="polite"
+        className="relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-card p-[28px_24px] text-center"
+      >
+        <span
+          aria-hidden="true"
+          className={`absolute inset-y-0 start-0 w-[2px] ${isCalled ? "bg-primary" : "bg-[var(--border-strong)]"}`}
+        />
+        <p className="font-mono text-[10px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-3.5">
           {t("booking:ticketTracker.yourTicket")}
         </p>
 
         <motion.p
-          className="font-mono text-[56px] font-bold text-foreground leading-none tracking-tight"
+          className={`font-mono text-[56px] font-medium leading-none tracking-[-0.02em] ${isCalled ? "text-primary" : "text-foreground"}`}
           animate={isCalled ? { scale: [1, 1.02, 1] } : {}}
           transition={isCalled ? { repeat: Infinity, duration: 2 } : {}}
         >
@@ -439,7 +447,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
         <div className="flex items-center justify-center">
           <div className="flex-1 text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{t("booking:ticketTracker.nowServing")}</p>
-            <p className="font-mono text-[17px] font-semibold text-foreground">
+            <p className="font-mono text-[17px] font-medium text-foreground">
               {currentServing ?? "---"}
             </p>
           </div>
@@ -448,7 +456,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
 
           <div className="flex-1 text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{t("booking:ticketTracker.aheadOfYou")}</p>
-            <p className="font-mono text-[22px] font-semibold text-foreground">{waitingCount}</p>
+            <p className="font-mono text-[22px] font-medium text-foreground">{waitingCount}</p>
             <p className="text-[11px] text-muted-foreground">{waitingCount !== 1 ? t("booking:ticketTracker.people") : t("booking:ticketTracker.person")}</p>
           </div>
 
@@ -456,7 +464,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
 
           <div className="flex-1 text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{t("booking:ticketTracker.estimatedWait")}</p>
-            <p className="font-mono text-[22px] font-semibold text-foreground">~{estimatedMin}</p>
+            <p className="font-mono text-[22px] font-medium text-foreground">~{estimatedMin}</p>
             <p className="text-[11px] text-muted-foreground">{t("booking:ticketTracker.minutes")}</p>
           </div>
         </div>
@@ -518,9 +526,9 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
       {ticket.status === "waiting" && !ticket.checked_in_at && (
         <div className="mt-5">
           <Button
-            variant="default"
+            variant="signal"
             size="sm"
-            className="w-full gap-1.5 h-[40px] text-[13px]"
+            className="w-full gap-1.5 h-11 text-[13px]"
             onClick={async () => {
               if (trackingToken) {
                 const { data, error } = await supabase.rpc("check_in_ticket_by_token", { p_token: trackingToken });
@@ -551,8 +559,8 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
         <Button
           variant="outline"
           size="sm"
-          aria-label="Cancel ticket"
-          className="flex-1 gap-1.5 h-[40px] text-[13px]"
+          aria-label={t("booking:ticketTracker.cancelTicket")}
+          className="flex-1 gap-1.5 h-11 text-[13px]"
           onClick={async () => {
             const { data } = trackingToken
               ? await supabase.rpc("cancel_queue_ticket_by_token", { p_token: trackingToken })
@@ -570,7 +578,7 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
         <Button
           variant="ghost"
           size="sm"
-          className="flex-1 gap-1.5 h-[40px] text-[13px]"
+          className="flex-1 gap-1.5 h-11 text-[13px]"
           onClick={async () => {
             const bizId = businessIdRef.current;
             if (!bizId) return;
@@ -678,8 +686,8 @@ export default function TicketTracker({ ticketId, trackingToken, businessName, s
                     </RadioGroup>
                   </div>
                 ) : (
-                  <div className="rounded-md bg-muted/50 border border-border p-3 text-center">
-                    <p className="text-sm text-muted-foreground">No staff members assigned to this service</p>
+                  <div className="rounded-[8px] bg-[var(--bg-muted)] border border-[var(--border-default)] p-3 text-center">
+                    <p className="text-sm text-muted-foreground">{t("booking:ticketTracker.noStaffAssigned")}</p>
                   </div>
                 )}
               </div>

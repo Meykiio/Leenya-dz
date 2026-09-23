@@ -34,6 +34,8 @@ interface Props {
   submitting: boolean;
 }
 
+const labelClass = "text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground";
+
 /** @description Booking step that collects client name, phone, and optional note, shows a summary of the selected service/date/staff, and submits the booking. */
 export default function StepDetails({
   onBack, name, phone, note, phoneError,
@@ -47,15 +49,15 @@ export default function StepDetails({
       <button onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted-foreground mb-4">
         <ArrowLeft className="h-4 w-4 rtl:scale-x-[-1]" /> {t("common:buttons.back")}
       </button>
-      <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:appointmentFlow.stepDetails.title")}</h2>
+      <h2 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em] mb-3.5">{t("booking:appointmentFlow.stepDetails.title")}</h2>
 
       <div className="space-y-3">
         <div>
-          <label htmlFor="booking-name" className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.nameLabel")}</label>
+          <label htmlFor="booking-name" className={labelClass}>{t("booking:appointmentFlow.stepDetails.nameLabel")}</label>
           <Input id="booking-name" value={name} onChange={(e) => onNameChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.namePlaceholder")} className="mt-1" />
         </div>
         <div>
-          <label htmlFor="booking-phone" className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.phoneLabel")}</label>
+          <label htmlFor="booking-phone" className={labelClass}>{t("booking:appointmentFlow.stepDetails.phoneLabel")}</label>
           <div className="flex gap-2 mt-1">
             <Input id="booking-phone" value={phone} onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ""))} placeholder="555 123 456" type="tel" />
           </div>
@@ -63,12 +65,12 @@ export default function StepDetails({
           {!phoneError && <p className="text-[11px] text-muted-foreground/70">{t("common:validation.phone.hint")}</p>}
         </div>
         <div>
-          <label htmlFor="booking-note" className="text-[13px] font-medium text-foreground">{t("booking:appointmentFlow.stepDetails.noteLabel")}</label>
+          <label htmlFor="booking-note" className={labelClass}>{t("booking:appointmentFlow.stepDetails.noteLabel")}</label>
           <Textarea id="booking-note" value={note} onChange={(e) => onNoteChange(e.target.value)} placeholder={t("booking:appointmentFlow.stepDetails.notePlaceholder")} rows={2} className="mt-1" />
         </div>
       </div>
 
-      <div className="mt-5 rounded-md border border-border bg-muted/50 p-[14px_16px] space-y-1">
+      <div className="mt-5 rounded-[12px] border border-[var(--border-default)] bg-[var(--bg-muted)] p-[14px_16px] space-y-1">
         <p className="text-[14px] font-medium text-foreground">{selectedService?.name}</p>
         <p className="text-[12px] text-muted-foreground">
           {selectedService?.price_dzd ? `${selectedService.price_dzd.toLocaleString("fr-FR")} DZD` : t("booking:appointmentFlow.stepDetails.priceOnRequest")}
@@ -88,7 +90,7 @@ export default function StepDetails({
       </div>
 
       <Button
-        className="w-full mt-5 h-[44px]"
+        className="w-full mt-5 h-11"
         disabled={!name.trim() || !phone.trim() || submitting}
         onClick={onSubmit}
       >

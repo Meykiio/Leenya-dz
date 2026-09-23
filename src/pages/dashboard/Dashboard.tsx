@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -224,12 +224,12 @@ const Dashboard = () => {
           <>
             <Skeleton className="h-14 w-72" />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-[100px] rounded-lg" />)}
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-[100px] rounded-2xl" />)}
             </div>
-            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-64 rounded-2xl" />
           </>
         ) : error ? (
-          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-12 text-center space-y-3">
+          <div className="rounded-2xl border border-[var(--border-default)] bg-card py-12 text-center space-y-3">
             <p className="text-destructive">{error}</p>
             <Button variant="outline" onClick={() => { setError(""); fetchAll(); }}>{t("dashboard:overview.retry")}</Button>
           </div>
@@ -238,10 +238,10 @@ const Dashboard = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
               <div>
-                <h1 className="text-lg sm:text-[22px] font-semibold text-[var(--text-primary)] tracking-[-0.01em] break-words">
+                <h1 className="font-display text-lg sm:text-[22px] font-extrabold text-[var(--text-primary)] tracking-[-0.02em] break-words">
                   {(GREETINGS[i18n.language] || GREETINGS.en)[timeBlock][greetingIndex].replace("{{name}}", profileName)}
                 </h1>
-                <p className="text-[13px] text-[var(--text-tertiary)] capitalize mt-0.5">
+                <p className="text-[13px] text-[var(--text-secondary)] capitalize mt-0.5">
                   {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
                 </p>
               </div>
@@ -256,24 +256,24 @@ const Dashboard = () => {
             </div>
 
             {/* Stats grid — clean, no nested cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--border-default)] rounded-lg overflow-hidden border border-[var(--border-default)]">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--border-default)] rounded-2xl overflow-hidden border border-[var(--border-default)]">
               {stats.map((s) => (
                 <div
                   key={s.label}
-                  className="bg-[var(--bg-base)] p-5"
+                  className="bg-card p-5"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-semibold uppercase text-[var(--text-tertiary)] tracking-[0.04em]">
+                  <div className="flex items-center justify-between mb-3 border-b border-[var(--border-default)] pb-2.5">
+                    <span className="font-mono text-[10px] font-medium uppercase text-[var(--text-secondary)] tracking-[0.08em]">
                       {s.label}
                     </span>
-                    <s.icon className="h-[14px] w-[14px] text-[var(--text-tertiary)]" />
+                    <s.icon className="h-[14px] w-[14px] text-[var(--text-secondary)]" />
                   </div>
                   <div className="flex items-center gap-2.5">
                     {s.pulse && (
                       <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
                     )}
                     <span
-                      className={`font-mono text-[26px] font-semibold leading-none tracking-tight ${
+                      className={`font-mono text-[28px] font-medium leading-none tracking-[-0.02em] ${
                         s.accent ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
                       }`}
                     >
@@ -285,37 +285,37 @@ const Dashboard = () => {
             </div>
 
             {/* Quick link */}
-            <Button variant="ghost" size="sm" onClick={copyLink} className="gap-1.5 text-xs text-[var(--text-tertiary)]">
+            <Button variant="ghost" size="sm" onClick={copyLink} className="gap-1.5 text-xs text-[var(--text-secondary)]">
               <Copy className="h-3.5 w-3.5" /> {t("dashboard:overview.copyLink")}
             </Button>
 
             {/* Today's bookings */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 border-b border-[var(--border-default)] pb-2.5">
                 <div className="flex items-baseline gap-2">
-                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">{t("dashboard:overview.today")}</h2>
-                  <span className="text-[13px] text-[var(--text-tertiary)] capitalize">
+                  <h2 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:overview.today")}</h2>
+                  <span className="text-[13px] text-[var(--text-secondary)] capitalize">
                     {format(new Date(), "EEEE d MMMM", { locale: fr })}
                   </span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/bookings")} className="gap-1 text-xs text-[var(--text-tertiary)]">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/bookings")} className="gap-1 text-xs text-[var(--text-secondary)]">
                   {t("dashboard:overview.viewAll")} <ArrowRight className="h-3 w-3 rtl:scale-x-[-1]" />
                 </Button>
               </div>
 
               {bookings.length === 0 ? (
-                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-10 text-center">
-                  <CalendarDays className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-                  <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:overview.noBookings")}</p>
+                <div className="py-10 text-center">
+                  <CalendarDays className="h-7 w-7 text-[var(--text-secondary)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-secondary)]">{t("dashboard:overview.noBookings")}</p>
                 </div>
               ) : (
-                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+                <div className="divide-y divide-[var(--border-subtle)]">
                   {bookings.map((b) => (
                     <div key={b.id} className="flex items-center gap-4 px-4 py-3">
-                      <span className="font-mono text-[13px] text-[var(--text-tertiary)] w-14 shrink-0">{b.start_time?.slice(0, 5)}</span>
+                      <span className="font-mono text-[13px] text-[var(--text-secondary)] w-14 shrink-0">{b.start_time?.slice(0, 5)}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-[var(--text-primary)] truncate">{b.client_name}</p>
-                        <p className="text-xs text-[var(--text-tertiary)]">{b.services?.name || "—"} • {b.staff_members?.display_name || "—"}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{b.services?.name || "—"} • {b.staff_members?.display_name || "—"}</p>
                       </div>
                       <Badge variant="outline" className={statusBadgeClasses[b.status || "pending"]}>{statusLabels[b.status || "pending"]}</Badge>
                     </div>
@@ -326,34 +326,34 @@ const Dashboard = () => {
 
             {/* Queue preview */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 border-b border-[var(--border-default)] pb-2.5">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">{t("dashboard:overview.queueTitle")}</h2>
+                  <h2 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:overview.queueTitle")}</h2>
                   {queueCount > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent)]">
+                    <span className="inline-flex items-center gap-1 rounded-[2px] bg-[var(--accent-light)] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.05em] text-[var(--accent)]">
                       <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                       {t("dashboard:overview.live")}
                     </span>
                   )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/queue")} className="gap-1 text-xs text-[var(--text-tertiary)]">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/queue")} className="gap-1 text-xs text-[var(--text-secondary)]">
                   {t("dashboard:overview.manage")} <ArrowRight className="h-3 w-3 rtl:scale-x-[-1]" />
                 </Button>
               </div>
 
               {queueTickets.length === 0 ? (
-                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] py-8 text-center">
-                  <Users2 className="h-6 w-6 text-[var(--text-tertiary)] mx-auto mb-2" />
-                  <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:overview.queueEmpty")}</p>
+                <div className="py-8 text-center">
+                  <Users2 className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-secondary)]">{t("dashboard:overview.queueEmpty")}</p>
                 </div>
               ) : (
-                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+                <div className="divide-y divide-[var(--border-subtle)]">
                   {queueTickets.map((t) => (
                     <div key={t.id} className="flex items-center gap-4 px-4 py-3">
-                      <span className="font-mono text-[13px] font-semibold text-[var(--accent)]">{t.ticket_label}</span>
+                      <span className="font-mono text-[13px] font-medium text-[var(--accent)]">{t.ticket_label}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.client_name}</p>
-                        <p className="text-xs text-[var(--text-tertiary)]">{t.services?.name || "—"}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{t.services?.name || "—"}</p>
                       </div>
                     </div>
                   ))}

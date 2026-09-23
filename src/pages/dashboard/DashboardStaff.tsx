@@ -214,8 +214,8 @@ const DashboardStaff = () => {
 
   return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:staff.title")}</h2>
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-2.5">
+          <h2 className="font-display text-lg font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:staff.title")}</h2>
           <div className="flex items-center gap-3">
             {atLimit && maxStaff !== Infinity && (
               <span className="text-xs text-muted-foreground">
@@ -229,9 +229,9 @@ const DashboardStaff = () => {
         </div>
 
         {atLimit && maxStaff !== Infinity && (
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
-            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-            <p className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-2.5">
+            <Users className="h-4 w-4 text-[var(--warning)] shrink-0" />
+            <p className="text-xs text-[var(--warning)]">
               {t("dashboard:staff.limitReached", { count: staffCount, max: maxStaff })}
             </p>
           </div>
@@ -239,17 +239,17 @@ const DashboardStaff = () => {
 
         {initialLoading ? (
           <div className="space-y-2">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-2xl" />)}
           </div>
         ) : staff.length === 0 ? (
-          <div className="rounded-lg border border-[var(--border-default)] py-12 text-center">
-            <UserCheck className="h-7 w-7 text-[var(--text-tertiary)] mx-auto mb-2" />
-            <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:staff.empty")}</p>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("dashboard:staff.emptyDesc")}</p>
+          <div className="py-12 text-center">
+            <UserCheck className="h-7 w-7 text-[var(--text-secondary)] mx-auto mb-2" />
+            <p className="text-sm text-[var(--text-secondary)]">{t("dashboard:staff.empty")}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">{t("dashboard:staff.emptyDesc")}</p>
             <Button onClick={() => setShowForm(true)} disabled={atLimit && maxStaff !== Infinity} variant="outline" size="sm" className="mt-3 text-xs">{t("dashboard:staff.add")}</Button>
           </div>
         ) : (
-          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] divide-y divide-[var(--border-subtle)]">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {staff.map((s) => (
               <StaffRow
                 key={s.id}

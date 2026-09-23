@@ -17,8 +17,8 @@ export default function DashboardDemo() {
   return (
     <div className="select-none pointer-events-auto min-h-[260px] flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[10px] font-medium text-white/40">{t("landing:features.demo.overview")}</div>
-        <span className="text-[8px] text-white/20">{t("landing:features.demo.week", { num: 3 })}</span>
+        <div className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#7A8BAD]">{t("landing:features.demo.overview")}</div>
+        <span className="text-[8px] text-[#5A6C90]">{t("landing:features.demo.week", { num: 3 })}</span>
       </div>
 
       <div className="flex gap-2 mb-3">
@@ -28,17 +28,17 @@ export default function DashboardDemo() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, duration: 0.4 }}
-            className="flex-1 rounded-lg bg-white/[0.04] border border-white/[0.06] p-2.5"
+            className="flex-1 rounded-[8px] bg-white/[0.04] border border-[#263044] p-2.5"
           >
-            <div className="text-[8px] text-white/30 mb-1">{t("landing:" + m.labelKey)}</div>
-            <div className="text-sm font-semibold text-white/80 font-mono">{m.value}</div>
+            <div className="text-[8px] text-[#7A8BAD] mb-1">{t("landing:" + m.labelKey)}</div>
+            <div className="font-mono text-sm font-medium text-[#E8EEFF]">{m.value}</div>
             <div className="flex items-center gap-0.5 mt-0.5">
               {m.up ? (
-                <TrendingUp className="h-2.5 w-2.5 text-accent" />
+                <TrendingUp className="h-2.5 w-2.5 text-[#10B981]" />
               ) : (
-                <TrendingDown className="h-2.5 w-2.5 text-white/30" />
+                <TrendingDown className="h-2.5 w-2.5 text-[#7A8BAD]" />
               )}
-              <span className={`text-[8px] ${m.up ? "text-accent" : "text-white/30"}`}>
+              <span className={`font-mono text-[8px] ${m.up ? "text-[#10B981]" : "text-[#7A8BAD]"}`}>
                 {m.change}
               </span>
             </div>
@@ -46,24 +46,24 @@ export default function DashboardDemo() {
         ))}
       </div>
 
-      <div className="flex-1 rounded-lg bg-white/[0.03] border border-white/[0.06] p-3">
+      <div className="flex-1 rounded-[8px] bg-white/[0.03] border border-[#263044] p-3">
         <div className="flex items-end gap-1 h-full">
           {chartData.map((h, i) => (
             <motion.div
               key={i}
               initial={{ height: 0 }}
               animate={{ height: `${h}%` }}
-              transition={{ delay: 0.3 + i * 0.03, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 0.3 + i * 0.03, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex-1 flex flex-col items-center gap-0.5 justify-end"
             >
               <div
-                className="w-full rounded-t-sm"
+                className="w-full rounded-t-[2px]"
                 style={{
                   height: "100%",
-                  background: i === 4 ? "hsl(var(--accent))" : "hsl(var(--accent) / 0.18)",
+                  background: i === 4 ? "#3B82F6" : "rgba(59,130,246,0.18)",
                 }}
               />
-              <span className="text-[6px] text-white/15 font-mono">{dayKeys[i]}</span>
+              <span className="text-[6px] text-[#5A6C90] font-mono">{dayKeys[i]}</span>
             </motion.div>
           ))}
         </div>

@@ -129,8 +129,8 @@ const BusinessPublic = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50">
+      <div className="min-h-screen bg-[var(--bg-subtle)]">
+        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)]">
           <Skeleton className="h-[140px] w-full" />
           <div className="px-5 pt-16 space-y-3">
             <Skeleton className="h-6 w-48" />
@@ -144,14 +144,14 @@ const BusinessPublic = () => {
 
   if (fetchError) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 flex items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-[var(--bg-subtle)]">
+        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)] flex items-center justify-center px-6 text-center">
           <div className="space-y-4">
             <p className="text-4xl">⚠️</p>
             <p className="text-[14px] text-muted-foreground">{fetchError}</p>
             <button
               onClick={() => setReloadKey((k) => k + 1)}
-              className="rounded-md border border-border px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted/60 transition-colors"
+              className="rounded-[5px] border border-[var(--border-default)] px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted/60 transition-colors"
             >
               {t("common:buttons.retry")}
             </button>
@@ -165,11 +165,11 @@ const BusinessPublic = () => {
 
   if (!business.is_active) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50 flex items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-[var(--bg-subtle)]">
+        <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)] flex items-center justify-center px-6 text-center">
           <div className="space-y-2">
             <p className="text-4xl">🚫</p>
-            <h1 className="text-xl font-bold text-foreground">{t("booking:businessPublic.closedTitle")}</h1>
+            <h1 className="font-display text-xl font-bold text-foreground tracking-[-0.02em]">{t("booking:businessPublic.closedTitle")}</h1>
             <p className="text-sm text-muted-foreground">{t("booking:businessPublic.closedSubtitle")}</p>
           </div>
         </div>
@@ -197,8 +197,8 @@ const BusinessPublic = () => {
   const showQueue = business.accepts_walkins !== false;
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-border/50">
+    <div className="min-h-screen bg-[var(--bg-subtle)]">
+      <div className="max-w-[480px] mx-auto min-h-screen bg-background border-x border-[var(--border-default)]">
         <BusinessHeader
           business={business}
           openStatus={openStatus}
@@ -207,7 +207,7 @@ const BusinessPublic = () => {
         {(showAppointments || showQueue) && (
           <>
             {/* Custom sticky tab bar */}
-            <div role="tablist" className="sticky top-0 z-10 bg-background border-b border-border px-5">
+            <div role="tablist" className="sticky top-0 z-10 bg-background border-b border-[var(--border-default)] px-5">
               <div className="flex">
                 {showAppointments && (
                   <button
@@ -215,9 +215,9 @@ const BusinessPublic = () => {
                     aria-selected={activeTab === "appointment"}
                     aria-controls="tab-appointment"
                     onClick={() => setActiveTab("appointment")}
-                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
+                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-semibold border-b-2 transition-colors ${
                       activeTab === "appointment"
-                        ? "text-foreground border-foreground"
+                        ? "text-primary border-primary"
                         : "text-muted-foreground border-transparent hover:text-foreground/70"
                     }`}
                   >
@@ -230,9 +230,9 @@ const BusinessPublic = () => {
                     aria-selected={activeTab === "queue"}
                     aria-controls="tab-queue"
                     onClick={() => setActiveTab("queue")}
-                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-medium border-b-2 transition-colors ${
+                    className={`flex-1 h-[44px] flex items-center justify-center text-[13px] font-semibold border-b-2 transition-colors ${
                       activeTab === "queue"
-                        ? "text-foreground border-foreground"
+                        ? "text-primary border-primary"
                         : "text-muted-foreground border-transparent hover:text-foreground/70"
                     }`}
                   >
@@ -245,14 +245,14 @@ const BusinessPublic = () => {
             {/* Info cards */}
             {activeTab === "appointment" && (
               <div className="px-5 pt-3 pb-1">
-                <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
+                <div className="rounded-[8px] border border-[var(--border-default)] bg-[var(--bg-muted)] px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
                   {t("booking:businessPublic.infoAppointment")}
                 </div>
               </div>
             )}
             {activeTab === "queue" && (
               <div className="px-5 pt-3 pb-1">
-                <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
+                <div className="rounded-[8px] border border-[var(--border-default)] bg-[var(--bg-muted)] px-4 py-3 text-[13px] text-muted-foreground leading-relaxed">
                   {t("booking:businessPublic.infoQueue")}
                 </div>
               </div>

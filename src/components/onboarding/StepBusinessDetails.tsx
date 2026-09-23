@@ -19,6 +19,8 @@ interface StepBusinessDetailsProps {
   onBack: () => void;
 }
 
+const labelClass = "text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground";
+
 /** @description Onboarding step that collects business name, phone, address, and wilaya, creates the business record and default hours via Supabase RPC. */
 const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusinessDetailsProps) => {
   const { t } = useTranslation();
@@ -87,7 +89,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="font-display text-2xl font-bold text-foreground tracking-[-0.02em]">
           {t("auth:onboarding.details.title")}
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -97,7 +99,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
 
       <div className="space-y-4 max-w-md mx-auto">
         <div className="space-y-2">
-          <Label htmlFor="bizName">{t("auth:onboarding.details.nameLabel")}</Label>
+          <Label htmlFor="bizName" className={labelClass}>{t("auth:onboarding.details.nameLabel")}</Label>
           <Input
             id="bizName"
             placeholder={t("auth:onboarding.details.namePlaceholder")}
@@ -113,9 +115,9 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="bizPhone">{t("auth:onboarding.details.phoneLabel")}</Label>
+          <Label htmlFor="bizPhone" className={labelClass}>{t("auth:onboarding.details.phoneLabel")}</Label>
           <div className="flex gap-2">
-            <div className="flex items-center gap-1.5 rounded-md border bg-muted px-3 text-sm text-muted-foreground shrink-0">
+            <div className="flex h-11 items-center gap-1.5 rounded-[5px] border border-[var(--border-default)] bg-muted px-3 text-sm text-muted-foreground shrink-0">
               🇩🇿 +213
             </div>
             <Input
@@ -131,7 +133,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="address">{t("auth:onboarding.details.addressLabel")}</Label>
+          <Label htmlFor="address" className={labelClass}>{t("auth:onboarding.details.addressLabel")}</Label>
           <Input
             id="address"
             placeholder={t("auth:onboarding.details.addressPlaceholder")}
@@ -142,7 +144,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         </div>
 
         <div className="space-y-2 relative">
-          <Label>{t("auth:onboarding.details.wilayaLabel")}</Label>
+          <Label className={labelClass}>{t("auth:onboarding.details.wilayaLabel")}</Label>
           <Input
             placeholder={t("auth:onboarding.details.wilayaPlaceholder")}
             value={showWilayaDropdown ? wilayaSearch : (selectedWilaya ? `${selectedWilaya.code} — ${selectedWilaya.name}` : "")}
@@ -157,7 +159,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
             onBlur={() => setTimeout(() => setShowWilayaDropdown(false), 200)}
           />
           {showWilayaDropdown && (
-            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-popover shadow-lg">
+            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-[8px] border bg-popover shadow-lg">
               {filteredWilayas.map((w) => (
                 <button
                   key={w.code}
@@ -168,8 +170,8 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
                     setShowWilayaDropdown(false);
                     setWilayaSearch("");
                   }}
-                  className={`block w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground ${
-                    wilayaCode === w.code ? "bg-primary/10 text-primary" : "text-popover-foreground"
+                  className={`block w-full text-left px-3 py-2 text-sm hover:bg-[var(--accent-light)] ${
+                    wilayaCode === w.code ? "bg-[var(--accent-light)] text-primary" : "text-popover-foreground"
                   }`}
                 >
                   {w.code} — {w.name}
@@ -184,7 +186,7 @@ const StepBusinessDetails = ({ category, defaultData, onNext, onBack }: StepBusi
         <Button variant="outline" type="button" onClick={onBack}>
           ← {t("auth:onboarding.back")}
         </Button>
-        <Button type="submit" disabled={!isValid || loading} className="px-8">
+        <Button type="submit" disabled={!isValid || loading} className="px-8 h-11">
           {loading ? t("common:buttons.saving") : t("auth:onboarding.continue") + " →"}
         </Button>
       </div>

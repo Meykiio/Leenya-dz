@@ -9,7 +9,7 @@ import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { openWhatsApp, buildQueueCalledUrl } from "@/lib/whatsapp";
 import { validateAlgerianPhone } from "@/lib/phone/validation";
-import { Plus, Tv, Users2, UserCheck } from "lucide-react";
+import { Plus, Tv, UserCheck } from "lucide-react";
 import type { QueueTicket, Service } from "@/types";
 import QueueWaitingList from "./queue/QueueWaitingList";
 import QueueServingList from "./queue/QueueServingList";
@@ -270,10 +270,10 @@ const DashboardQueue = () => {
   return (
       <div className="space-y-5">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-default)] pb-2.5">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:queue.title")}</h2>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-semibold text-[var(--accent)]">
+            <h2 className="font-display text-lg font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:queue.title")}</h2>
+            <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--accent-light)] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.05em] text-[var(--accent)]">
               <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               LIVE
             </span>
@@ -290,51 +290,51 @@ const DashboardQueue = () => {
 
         {initialLoading ? (
           <div className="space-y-3">
-            <Skeleton className="h-10 rounded-lg" />
+            <Skeleton className="h-10 rounded-2xl" />
             <div className="grid lg:grid-cols-2 gap-4">
-              <Skeleton className="h-48 rounded-lg" />
-              <Skeleton className="h-48 rounded-lg" />
+              <Skeleton className="h-48 rounded-2xl" />
+              <Skeleton className="h-48 rounded-2xl" />
             </div>
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-[var(--border-default)] py-12 text-center space-y-3">
+          <div className="rounded-2xl border border-[var(--border-default)] py-12 text-center space-y-3">
             <p className="text-destructive">{error}</p>
             <Button variant="outline" onClick={fetchTickets}>{t("dashboard:overview.retry")}</Button>
           </div>
         ) : (
           <div className="space-y-5">
             {/* Stats strip */}
-            <div className="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] rounded-lg px-6 py-2.5 flex items-center gap-6 flex-wrap">
+            <div className="flex items-center gap-6 flex-wrap border-b border-[var(--border-default)] pb-3">
               <span>
                 <span className="font-mono text-[15px] font-medium text-[var(--text-primary)]">{waiting.length}</span>
-                <span className="text-[13px] text-[var(--text-tertiary)] ml-1.5">{t("dashboard:queue.waiting")}</span>
+                <span className="text-[13px] text-[var(--text-secondary)] ml-1.5">{t("dashboard:queue.waiting")}</span>
               </span>
-              <span className="text-[var(--text-tertiary)]">·</span>
+              <span className="text-[var(--text-secondary)]">·</span>
               <span>
                 <span className="font-mono text-[15px] font-medium text-[var(--text-primary)]">{serving.length}</span>
-                <span className="text-[13px] text-[var(--text-tertiary)] ml-1.5">{t("dashboard:queue.inService")}</span>
+                <span className="text-[13px] text-[var(--text-secondary)] ml-1.5">{t("dashboard:queue.inService")}</span>
               </span>
-              <span className="text-[var(--text-tertiary)]">·</span>
+              <span className="text-[var(--text-secondary)]">·</span>
               <span>
                 <span className="font-mono text-[15px] font-medium text-[var(--text-primary)]">{completedToday.length}</span>
-                <span className="text-[13px] text-[var(--text-tertiary)] ml-1.5">{t("dashboard:queue.completedLabel")}</span>
+                <span className="text-[13px] text-[var(--text-secondary)] ml-1.5">{t("dashboard:queue.completedLabel")}</span>
               </span>
             </div>
 
             {/* Current ticket */}
             {currentTicket && (
-              <div className="border-l-[3px] border-l-[var(--accent)] bg-[var(--accent-light)] rounded-r-lg px-5 py-4">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)] mb-1">{t("dashboard:queue.currentTicket")}</p>
-                <p className="font-mono text-3xl font-bold text-[var(--text-primary)]">{currentTicket.ticket_label}</p>
+              <div className="border-s-[2px] border-s-[var(--accent)] bg-[var(--accent-light)] rounded-2xl px-5 py-4">
+                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)] mb-1">{t("dashboard:queue.currentTicket")}</p>
+                <p className="font-mono text-3xl font-medium tracking-[-0.02em] text-[var(--text-primary)]">{currentTicket.ticket_label}</p>
                 <p className="text-sm text-[var(--text-secondary)] mt-0.5">{currentTicket.client_name}</p>
               </div>
             )}
 
             <div className="grid lg:grid-cols-2 gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">{t("dashboard:queue.waitingSection")}</h3>
-                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-accent text-white font-mono text-[10px] font-semibold px-1.5">
+                <div className="flex items-center gap-2 mb-3 border-b border-[var(--border-default)] pb-2.5">
+                  <h3 className="font-display text-[14px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:queue.waitingSection")}</h3>
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-[2px] bg-accent text-white font-mono text-[10px] font-medium px-1.5">
                     {waiting.length}
                   </span>
                 </div>
@@ -347,9 +347,9 @@ const DashboardQueue = () => {
                 />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">{t("dashboard:queue.inServiceSection")}</h3>
-                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[var(--warning)] text-white font-mono text-[10px] font-semibold px-1.5">
+                <div className="flex items-center gap-2 mb-3 border-b border-[var(--border-default)] pb-2.5">
+                  <h3 className="font-display text-[14px] font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:queue.inServiceSection")}</h3>
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-[2px] bg-[var(--signal)] text-white font-mono text-[10px] font-medium px-1.5">
                     {serving.length}
                   </span>
                 </div>
@@ -379,7 +379,7 @@ const DashboardQueue = () => {
                   <button
                     key={sm.id}
                     onClick={() => confirmCall(sm.id)}
-                    className="w-full flex items-center gap-3 rounded-md border border-[var(--border-default)] px-4 py-3 text-left text-sm hover:bg-[var(--bg-subtle)] transition-colors"
+                    className="w-full flex items-center gap-3 rounded-[12px] border border-[var(--border-default)] px-4 py-3 text-left text-sm hover:bg-[var(--bg-muted)] transition-colors"
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-light)] text-accent">
                       <UserCheck className="h-4 w-4" />

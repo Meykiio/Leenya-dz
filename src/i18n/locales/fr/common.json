@@ -72,6 +72,9 @@
     "menu": "Menu",
     "close": "Fermer"
   },
+  "theme": {
+    "toggle": "Changer de thème"
+  },
   "push": {
     "enableTitle": "Recevoir des notifications",
     "enableMessage": "Nous vous préviendrons quand votre rendez-vous est confirmé ou quand c'est votre tour.",
@@ -95,5 +98,6 @@
       "invalidTooShort": "Au moins 10 chiffres requis",
       "invalidTooLong": "Doit contenir exactement 10 chiffres"
     }
-  }
+  },
+  "user": "Utilisateur"
 }

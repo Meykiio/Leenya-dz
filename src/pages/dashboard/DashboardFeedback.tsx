@@ -9,6 +9,8 @@ import { toast } from "@/hooks/use-toast";
 import { MessageSquare, Bug, Lightbulb, Send, CheckCircle2 } from "lucide-react";
 import type { FeedbackCategory } from "@/types";
 
+const labelClass = "text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground";
+
 const DashboardFeedback = () => {
   const { t } = useTranslation();
   const categories: { value: FeedbackCategory; label: string; icon: typeof Bug }[] = [
@@ -49,11 +51,11 @@ const DashboardFeedback = () => {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center space-y-4">
-          <div className="mx-auto h-12 w-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center">
-            <CheckCircle2 className="h-6 w-6 text-[var(--accent)]" />
+          <div className="mx-auto h-12 w-12 rounded-full bg-[var(--success-bg)] border border-[var(--success-border)] flex items-center justify-center">
+            <CheckCircle2 className="h-6 w-6 text-[var(--success)]" />
           </div>
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:feedback.thanksTitle")}</h2>
-          <p className="text-sm text-[var(--text-tertiary)] max-w-sm">
+          <h2 className="font-display text-lg font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:feedback.thanksTitle")}</h2>
+          <p className="text-sm text-[var(--text-secondary)] max-w-sm">
             {t("dashboard:feedback.thanksSubtitle")}
           </p>
           <Button variant="outline" size="sm" onClick={() => { setSent(false); setMessage(""); setEmail(""); }}>
@@ -67,25 +69,25 @@ const DashboardFeedback = () => {
   return (
     <div className="max-w-lg space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight">{t("dashboard:feedback.title")}</h2>
-        <p className="text-sm text-[var(--text-tertiary)] mt-1">
+        <h2 className="font-display text-xl font-extrabold text-[var(--text-primary)] tracking-[-0.02em]">{t("dashboard:feedback.title")}</h2>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">
           {t("dashboard:feedback.subtitle")}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-[var(--text-secondary)]">{t("dashboard:feedback.category")}</Label>
+          <Label className={labelClass}>{t("dashboard:feedback.category")}</Label>
           <div className="flex gap-2">
             {categories.map((c) => (
               <button
                 key={c.value}
                 type="button"
                 onClick={() => setCategory(c.value)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-[5px] border px-3 py-2 text-xs font-medium transition-all ${
                   category === c.value
-                    ? "bg-[var(--accent-light)] text-[var(--accent)] ring-1 ring-[var(--accent)]"
-                    : "bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]"
+                    ? "bg-[var(--accent-light)] border-primary text-[var(--accent)]"
+                    : "bg-[var(--bg-muted)] border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]"
                 }`}
               >
                 <c.icon className="h-3.5 w-3.5" />
@@ -96,7 +98,7 @@ const DashboardFeedback = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="message" className="text-xs font-medium text-[var(--text-secondary)]">
+          <Label htmlFor="message" className={labelClass}>
             {t("dashboard:feedback.message")}
           </Label>
           <Textarea
@@ -111,8 +113,8 @@ const DashboardFeedback = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs font-medium text-[var(--text-secondary)]">
-            {t("dashboard:feedback.email")} <span className="text-[var(--text-tertiary)]">{t("dashboard:feedback.optional")}</span>
+          <Label htmlFor="email" className={labelClass}>
+            {t("dashboard:feedback.email")} <span className="text-[var(--text-secondary)]">{t("dashboard:feedback.optional")}</span>
           </Label>
           <Input
             id="email"
@@ -121,7 +123,7 @@ const DashboardFeedback = () => {
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t("dashboard:feedback.emailPlaceholder")}
           />
-          <p className="text-[11px] text-[var(--text-tertiary)]">
+          <p className="text-[11px] text-[var(--text-secondary)]">
             {t("dashboard:feedback.emailHint")}
           </p>
         </div>

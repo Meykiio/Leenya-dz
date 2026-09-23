@@ -13,19 +13,19 @@ const trustSignals = [
 const CtaBanner = () => {
   const { t } = useTranslation();
   return (
-    <section className="py-24 px-6 bg-gradient-to-br from-[#2b2344] to-[#1a1630] relative overflow-hidden">
-      <div className="absolute inset-0 bg-dot-grid opacity-[0.04] pointer-events-none" />
+    <section className="py-[88px] px-6 bg-[var(--bg-dim)] border-t border-[var(--outline)] relative overflow-hidden">
+      <div className="absolute inset-0 bg-dot-grid opacity-25 pointer-events-none" aria-hidden="true" />
       <div className="max-w-5xl mx-auto relative z-10">
         <Reveal>
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="max-w-md">
-              <p className="text-xs font-medium uppercase tracking-wider text-white/40 mb-2">
+              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--signal)] mb-2">
                 {t("landing:ctaBanner.label")}
               </p>
-              <h2 className="text-[30px] font-bold text-white tracking-tight">
+              <h2 className="font-display text-[30px] font-extrabold text-foreground tracking-[-0.02em]">
                 {t("landing:ctaBanner.title")}
               </h2>
-              <p className="mt-2 text-[15px] text-white/45 max-w-sm">
+              <p className="mt-2 text-[15px] text-[var(--text-secondary)] max-w-sm">
                 {t("landing:ctaBanner.description")}
               </p>
 
@@ -34,8 +34,8 @@ const CtaBanner = () => {
                   const Icon = s.icon;
                   return (
                     <div key={s.key} className="flex items-center gap-1.5">
-                      <Icon className="h-3 w-3 text-white/30" />
-                      <span className="text-[11px] text-white/40">{t("landing:" + s.key)}</span>
+                      <Icon className="h-3 w-3 text-[var(--text-secondary)]" />
+                      <span className="text-[11px] text-[var(--text-secondary)]">{t("landing:" + s.key)}</span>
                     </div>
                   );
                 })}
@@ -46,7 +46,7 @@ const CtaBanner = () => {
               <Button
                 asChild
                 size="lg"
-                className="h-11 px-6 bg-white text-[#0C0C0A] hover:bg-white/90 border-0 text-[15px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] group"
+                className="h-11 px-6 text-[15px] group"
               >
                 <Link to="/login">
                   {t("landing:hero.cta")}
@@ -57,7 +57,7 @@ const CtaBanner = () => {
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-11 px-6 border-white/20 text-white bg-transparent hover:bg-white/10 text-[15px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="h-11 px-6 text-[15px]"
               >
                 <a href="#how-it-works">{t("landing:hero.ctaSecondary")}</a>
               </Button>

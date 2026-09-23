@@ -67,7 +67,7 @@ const ResetPassword = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="text-center space-y-3 max-w-md">
-          <h1 className="text-2xl font-bold text-foreground">{t("auth:resetPassword.invalidTitle")}</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground tracking-[-0.02em]">{t("auth:resetPassword.invalidTitle")}</h1>
           <p className="text-muted-foreground">{t("auth:resetPassword.invalidDesc")}</p>
           <Button variant="outline" asChild>
             <Link to="/login">{t("auth:resetPassword.backToLogin")}</Link>
@@ -81,22 +81,22 @@ const ResetPassword = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="font-display text-2xl font-bold text-foreground tracking-[-0.02em]">
             {t("auth:resetPassword.title")}
           </h1>
           <p className="text-muted-foreground mt-2">{t("auth:resetPassword.subtitle")}</p>
         </div>
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-pw">{t("auth:resetPassword.newPasswordLabel")}</Label>
+              <Label htmlFor="new-pw" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("auth:resetPassword.newPasswordLabel")}</Label>
               <Input id="new-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-pw">{t("auth:resetPassword.confirmLabel")}</Label>
+              <Label htmlFor="confirm-pw" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("auth:resetPassword.confirmLabel")}</Label>
               <Input id="confirm-pw" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading ? t("auth:resetPassword.loading") : t("auth:resetPassword.submit")}
             </Button>
           </form>

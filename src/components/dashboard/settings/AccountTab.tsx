@@ -4,13 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import Section from "@/components/dashboard/Section";
+
+const labelClass = "text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground";
 
 export default function AccountTab() {
   const { t } = useTranslation();
@@ -77,24 +79,23 @@ export default function AccountTab() {
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.account.personal")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+    <div className="space-y-8">
+      <Section title={t("dashboard:settings.account.personal")}>
+        <div className="space-y-4 max-w-lg">
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.account.email")}</Label>
+            <Label className={labelClass}>{t("dashboard:settings.account.email")}</Label>
             <Input value={user?.email || ""} disabled className="bg-muted" />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.account.name")}</Label>
+            <Label className={labelClass}>{t("dashboard:settings.account.name")}</Label>
             <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.account.phone")}</Label>
+            <Label className={labelClass}>{t("dashboard:settings.account.phone")}</Label>
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.account.language")}</Label>
+            <Label className={labelClass}>{t("dashboard:settings.account.language")}</Label>
             <Select value={form.preferred_lang} onValueChange={(v) => { setForm({ ...form, preferred_lang: v }); setLanguage(v); }}>
               <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -107,53 +108,52 @@ export default function AccountTab() {
           <Button onClick={saveProfile} disabled={loading}>
             {loading ? t("common:buttons.saving") : t("dashboard:settings.account.save")}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </Section>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("dashboard:settings.account.changePassword")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+      <Section title={t("dashboard:settings.account.changePassword")}>
+        <div className="space-y-4 max-w-lg">
           <div className="space-y-2">
-            <Label>{t("dashboard:settings.account.newPassword")}</Label>
+            <Label className={labelClass}>{t("dashboard:settings.account.newPassword")}</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
           <Button variant="outline" onClick={changePassword} disabled={!password}>{t("dashboard:settings.account.update")}</Button>
-        </CardContent>
-      </Card>
+        </div>
+      </Section>
 
-      <Card className="border-destructive/30">
-        <CardHeader><CardTitle className="text-base text-destructive">{t("dashboard:settings.account.dangerZone")}</CardTitle></CardHeader>
-        <CardContent>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">{t("dashboard:settings.account.delete")}</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("dashboard:settings.account.deleteTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("dashboard:settings.account.deleteDesc")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={async () => {
-                  const { error } = await supabase.rpc("delete_my_account");
-                  if (error) {
-                    toast({ title: t("common:toast.error"), description: error.message, variant: "destructive" });
-                    return;
-                  }
-                  toast({ title: t("dashboard:settings.account.toast.deleted") });
-                  await signOut();
-                  navigate("/");
-                }}>
-                  {t("dashboard:settings.account.confirmDelete")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
+      <section className="space-y-3">
+        <div className="border-b border-[var(--error-border)] pb-2.5">
+          <h3 className="font-display text-[15px] font-bold tracking-[-0.015em] text-[var(--error)]">{t("dashboard:settings.account.dangerZone")}</h3>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">{t("dashboard:settings.account.delete")}</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("dashboard:settings.account.deleteTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("dashboard:settings.account.deleteDesc")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common:buttons.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={async () => {
+                const { error } = await supabase.rpc("delete_my_account");
+                if (error) {
+                  toast({ title: t("common:toast.error"), description: error.message, variant: "destructive" });
+                  return;
+                }
+                toast({ title: t("dashboard:settings.account.toast.deleted") });
+                await signOut();
+                navigate("/");
+              }} className="bg-[var(--error)] text-white">
+                {t("dashboard:settings.account.confirmDelete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </section>
     </div>
   );
 }

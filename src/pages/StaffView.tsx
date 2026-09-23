@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
@@ -212,93 +211,105 @@ const StaffView = () => {
   }) => (
     <button
       onClick={() => sectionRef && scrollToSection(sectionRef)}
-      className={`flex flex-col items-center justify-center rounded-xl ${color} p-3 min-h-[72px] active:scale-95 transition-transform`}
+      className={`flex flex-col items-center justify-center rounded-2xl border ${color} p-3 min-h-[72px] active:scale-95 transition-transform`}
     >
       <Icon className="h-5 w-5 mb-0.5 opacity-70" />
-      <span className="text-xl font-bold leading-tight">{count}</span>
-      <span className="text-[10px] font-medium opacity-80">{label}</span>
+      <span className="font-mono text-xl font-medium leading-tight">{count}</span>
+      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.05em] opacity-80">{label}</span>
     </button>
   );
 
-  const TicketCard = ({ ticket, actions }: { ticket: QueueTicket; actions: React.ReactNode }) => (
-    <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 shadow-sm">
-      {ticket.checked_in_at && (
-        <div className="shrink-0" title={t("staff:staffView.checkedIn")}>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs">✓</span>
-        </div>
-      )}
-      <div className="flex flex-col items-center justify-center min-w-[48px]">
-        <span className="font-mono text-lg font-bold text-[var(--accent)] leading-none">{ticket.ticket_label}</span>
-        <span className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{t("staff:staffView.since")} {timeAgo(ticket.called_at || ticket.created_at)}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{ticket.client_name}</p>
-        <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"}</p>
-        {ticket.client_phone && (
-          <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{ticket.client_phone}</p>
+  const TicketCard = ({ ticket, actions }: { ticket: QueueTicket; actions: React.ReactNode }) => {
+    const lineColor = ticket.status === "called"
+      ? "border-s-[var(--primary)]"
+      : ticket.status === "in_service"
+      ? "border-s-[var(--signal)]"
+      : "border-s-[var(--border-strong)]";
+    const labelColor = ticket.status === "called"
+      ? "text-[var(--primary)]"
+      : ticket.status === "in_service"
+      ? "text-[var(--signal)]"
+      : "text-[var(--text-primary)]";
+    return (
+      <div className={`flex items-center gap-3 rounded-2xl border border-[var(--border-default)] border-s-[2px] ${lineColor} bg-card p-3.5 shadow-sm`}>
+        {ticket.checked_in_at && (
+          <div className="shrink-0" title={t("staff:staffView.checkedIn")}>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--success-bg)] text-[var(--success)] text-xs">✓</span>
+          </div>
         )}
+        <div className="flex flex-col items-center justify-center min-w-[48px]">
+          <span className={`font-mono text-lg font-medium leading-none ${labelColor}`}>{ticket.ticket_label}</span>
+          <span className="text-[10px] text-[var(--text-secondary)] mt-0.5">{t("staff:staffView.since")} {timeAgo(ticket.called_at || ticket.created_at)}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{ticket.client_name}</p>
+          <p className="text-xs text-[var(--text-secondary)]">{ticket.services?.name || "—"}</p>
+          {ticket.client_phone && (
+            <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">{ticket.client_phone}</p>
+          )}
+        </div>
+        <div className="flex gap-1.5 shrink-0">
+          {actions}
+        </div>
       </div>
-      <div className="flex gap-1.5 shrink-0">
-        {actions}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const BookingCard = ({ booking }: { booking: Booking }) => {
     const statusColors: Record<string, string> = {
-      pending: "border-amber-200 bg-amber-50 text-amber-700",
-      confirmed: "border-blue-200 bg-blue-50 text-blue-700",
-      arrived: "border-green-200 bg-green-50 text-green-700",
-      in_service: "border-purple-200 bg-purple-50 text-purple-700",
+      pending: "border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]",
+      confirmed: "border-[var(--badge-blue-border)] bg-[var(--badge-blue-bg)] text-[var(--badge-blue-fg)]",
+      arrived: "border-[var(--badge-signal-border)] bg-[var(--badge-signal-bg)] text-[var(--badge-signal-fg)]",
+      in_service: "border-[var(--badge-signal-border)] bg-[var(--badge-signal-bg)] text-[var(--badge-signal-fg)]",
     };
     const statusClass = statusColors[booking.status] || "";
     return (
-      <div className="flex items-start gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 shadow-sm">
+      <div className="flex items-start gap-3 rounded-2xl border border-[var(--border-default)] bg-card p-3.5 shadow-sm">
         <div className="flex flex-col items-center min-w-[44px] pt-0.5">
-          <span className="text-sm font-bold text-[var(--text-primary)]">{booking.start_time.slice(0, 5)}</span>
+          <span className="font-mono text-sm font-medium text-[var(--text-primary)]">{booking.start_time.slice(0, 5)}</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{booking.client_name}</p>
           <p className="text-xs text-[var(--text-secondary)]">{booking.services?.name || "—"}</p>
           {booking.client_phone && (
-            <p className="text-[10px] text-[var(--text-tertiary)]">{booking.client_phone}</p>
+            <p className="text-[10px] text-[var(--text-secondary)]">{booking.client_phone}</p>
           )}
         </div>
         <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusClass}`}>
+          <span className={`font-mono text-[10px] font-medium uppercase tracking-[0.05em] px-2 py-1 rounded-[2px] border ${statusClass}`}>
             {booking.status === "pending" ? t("staff:staffView.statusPending") :
              booking.status === "confirmed" ? t("staff:staffView.statusConfirmed") :
              booking.status === "arrived" ? t("staff:staffView.statusArrived") :
              t("staff:staffView.statusInProgress")}
           </span>
           <div className="flex gap-1">
-            <Button size="sm" variant="ghost" onClick={() => sendBookingWhatsApp(booking)} className="h-8 w-8 p-0">
+            <Button size="sm" variant="ghost" onClick={() => sendBookingWhatsApp(booking)} className="h-9 w-9 p-0">
               <MessageCircle className="h-4 w-4" />
             </Button>
             {booking.status === "pending" && (
-              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "confirmed")} className="h-8 text-xs px-2.5">
+              <Button size="sm" onClick={() => updateBookingStatus(booking.id, "confirmed")} className="h-9 text-xs px-2.5">
                 {t("staff:staffView.buttonAccept")}
               </Button>
             )}
             {booking.status === "confirmed" && (
-              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "arrived")} className="h-8 text-xs px-2.5">
+              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "arrived")} className="h-9 text-xs px-2.5">
                 {t("staff:staffView.buttonArrived")}
               </Button>
             )}
             {booking.status === "arrived" && (
-              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "in_service")} className="h-8 text-xs px-2.5">
+              <Button size="sm" variant="signal" onClick={() => updateBookingStatus(booking.id, "in_service")} className="h-9 text-xs px-2.5">
                 {t("staff:staffView.buttonStart")}
               </Button>
             )}
             {booking.status === "in_service" && (
-              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")} className="h-8 text-xs px-2.5">
+              <Button size="sm" variant="outline" onClick={() => updateBookingStatus(booking.id, "completed")} className="h-9 text-xs px-2.5 bg-[var(--success-bg)] text-[var(--success)] border-[var(--success-border)] hover:bg-[var(--success-bg)]">
                 <CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("staff:staffView.buttonComplete")}
               </Button>
             )}
             {(booking.status === "pending" || booking.status === "confirmed") && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive">
+                  <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-[var(--error)]">
                     <XCircle className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
@@ -311,7 +322,7 @@ const StaffView = () => {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => updateBookingStatus(booking.id, "cancelled")} className="bg-destructive text-destructive-foreground">
+                    <AlertDialogAction onClick={() => updateBookingStatus(booking.id, "cancelled")} className="bg-[var(--error)] text-white">
                       {t("staff:staffView.dialogYesCancel")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -328,16 +339,16 @@ const StaffView = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)] p-4">
         {loading ? (
-          <Skeleton className="h-32 w-64 rounded-xl" />
+          <Skeleton className="h-32 w-64 rounded-2xl" />
         ) : accessDenied ? (
           <div className="text-center space-y-3">
-            <Users className="h-12 w-12 text-[var(--text-tertiary)] mx-auto" />
+            <Users className="h-12 w-12 text-[var(--text-secondary)] mx-auto" />
             <p className="text-[var(--text-secondary)]">{t("staff:staffView.accessDenied")}</p>
             <Button variant="outline" onClick={signOut}>{t("staff:staffView.signOut")}</Button>
           </div>
         ) : (
           <div className="text-center space-y-3">
-            <Users className="h-12 w-12 text-[var(--text-tertiary)] mx-auto" />
+            <Users className="h-12 w-12 text-[var(--text-secondary)] mx-auto" />
             <p className="text-[var(--text-secondary)]">{t("staff:staffView.noBusiness")}</p>
             <Button variant="outline" onClick={signOut}>{t("staff:staffView.signOut")}</Button>
           </div>
@@ -349,7 +360,7 @@ const StaffView = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[var(--bg-base)] border-b border-[var(--border-subtle)]">
+      <header className="sticky top-0 z-40 bg-[var(--bg-base)] border-b border-[var(--border-default)]">
         <div className="flex items-center gap-3 px-4 h-14">
           <img
             src={generatePixelAvatar(staffName || "Staff", 32)}
@@ -358,16 +369,16 @@ const StaffView = () => {
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold text-[var(--text-primary)] truncate">{staffName}</h1>
-              <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full shrink-0">
-                On duty
+              <h1 className="font-display text-[14px] font-bold text-[var(--text-primary)] truncate tracking-[-0.015em]">{staffName}</h1>
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.05em] text-[var(--badge-positive-fg)] bg-[var(--badge-positive-bg)] border border-[var(--badge-positive-border)] px-1.5 py-0.5 rounded-[2px] shrink-0">
+                {t("staff:staffView.onDuty")}
               </span>
             </div>
-            <p className="text-[11px] text-[var(--text-tertiary)] truncate">{business.name} • {format(new Date(), "EEEE d MMMM", { locale: fr })}</p>
+            <p className="text-[11px] text-[var(--text-secondary)] truncate">{business.name} • {format(new Date(), "EEEE d MMMM", { locale: fr })}</p>
           </div>
           <button
             onClick={signOut}
-            className="h-9 w-9 flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:text-[var(--error)] hover:bg-[var(--bg-overlay)] transition-colors"
+            className="h-9 w-9 flex items-center justify-center rounded-[8px] text-[var(--text-secondary)] hover:text-[var(--error)] hover:bg-[var(--bg-overlay)] transition-colors"
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -381,14 +392,14 @@ const StaffView = () => {
             onClick={() => setTab("queue")}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
               tab === "queue"
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-tertiary)]"
+                ? "border-primary text-primary"
+                : "border-transparent text-[var(--text-secondary)]"
             }`}
           >
             <Ticket className="h-4 w-4" />
             {t("staff:staffView.tabQueue")}
             {waiting.length > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[var(--accent)] text-white text-[10px] font-semibold px-1.5">
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-[2px] bg-primary text-white font-mono text-[10px] font-medium px-1.5">
                 {waiting.length > 99 ? "99+" : waiting.length}
               </span>
             )}
@@ -399,14 +410,14 @@ const StaffView = () => {
             onClick={() => setTab("bookings")}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
               tab === "bookings"
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-tertiary)]"
+                ? "border-primary text-primary"
+                : "border-transparent text-[var(--text-secondary)]"
             }`}
           >
             <CalendarDays className="h-4 w-4" />
             {t("staff:staffView.tabBookings")}
             {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-amber-500 text-white text-[10px] font-semibold px-1.5">
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-[2px] bg-[var(--warning)] text-white font-mono text-[10px] font-medium px-1.5">
                 {bookings.filter((b) => b.status === "pending" || b.status === "confirmed").length}
               </span>
             )}
@@ -423,21 +434,21 @@ const StaffView = () => {
                 label={t("staff:staffView.statWaiting")}
                 count={waiting.length}
                 icon={Users}
-                color="bg-blue-50 text-blue-700 border border-blue-200"
+                color="bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)] border-[var(--badge-neutral-border)]"
                 sectionRef={waitingRef}
               />
               <StatCard
                 label={t("staff:staffView.sectionCalled")}
                 count={called.length}
                 icon={Phone}
-                color="bg-amber-50 text-amber-700 border border-amber-200"
+                color="bg-[var(--badge-blue-bg)] text-[var(--badge-blue-fg)] border-[var(--badge-blue-border)]"
                 sectionRef={calledRef}
               />
               <StatCard
                 label={t("staff:staffView.statInService")}
                 count={inService.length}
                 icon={Play}
-                color="bg-green-50 text-green-700 border border-green-200"
+                color="bg-[var(--badge-signal-bg)] text-[var(--badge-signal-fg)] border-[var(--badge-signal-border)]"
                 sectionRef={inServiceRef}
               />
             </div>
@@ -445,8 +456,8 @@ const StaffView = () => {
             {/* Called section */}
             {called.length > 0 && (
               <div ref={calledRef} className="space-y-2 scroll-mt-20">
-                <h3 className="text-sm font-bold text-amber-700 flex items-center gap-1.5 px-0.5">
-                  <ArrowRight className="h-4 w-4" /> {t("staff:staffView.sectionCalled")} ({called.length})
+                <h3 className="font-display text-[14px] font-bold text-primary flex items-center gap-1.5 px-0.5 tracking-[-0.015em]">
+                  <ArrowRight className="h-4 w-4 rtl:scale-x-[-1]" /> {t("staff:staffView.sectionCalled")} ({called.length})
                 </h3>
                 {called.map((ticket) => (
                   <TicketCard
@@ -454,15 +465,15 @@ const StaffView = () => {
                     ticket={ticket}
                     actions={
                       <>
-                        <Button size="sm" onClick={() => sendBackToQueue(ticket.id)} variant="ghost" className="h-9 text-xs">
+                        <Button size="sm" onClick={() => sendBackToQueue(ticket.id)} variant="ghost" className="h-11 text-xs">
                           {t("staff:staffView.buttonSendBack")}
                         </Button>
-                        <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "in_service")} className="h-9 gap-1">
+                        <Button size="sm" variant="signal" onClick={() => updateTicketStatus(ticket.id, "in_service")} className="h-11 gap-1">
                           <Play className="h-3.5 w-3.5" /> {t("staff:staffView.buttonStart")}
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="outline" className="h-9 text-destructive border-destructive/30">
+                            <Button size="sm" variant="destructive" className="h-11 text-xs">
                               {t("staff:staffView.dialogNoShowButton")}
                             </Button>
                           </AlertDialogTrigger>
@@ -487,7 +498,7 @@ const StaffView = () => {
             {/* In service section */}
             {inService.length > 0 && (
               <div ref={inServiceRef} className="space-y-2 scroll-mt-20">
-                <h3 className="text-sm font-bold text-green-700 flex items-center gap-1.5 px-0.5">
+                <h3 className="font-display text-[14px] font-bold text-[var(--signal)] flex items-center gap-1.5 px-0.5 tracking-[-0.015em]">
                   <CheckCircle className="h-4 w-4" /> {t("staff:staffView.sectionInProgress")} ({inService.length})
                 </h3>
                 {inService.map((ticket) => (
@@ -495,7 +506,7 @@ const StaffView = () => {
                     key={ticket.id}
                     ticket={ticket}
                     actions={
-                      <Button size="sm" variant="outline" onClick={() => updateTicketStatus(ticket.id, "completed")} className="h-9 gap-1">
+                      <Button size="sm" variant="outline" onClick={() => updateTicketStatus(ticket.id, "completed")} className="h-11 gap-1 bg-[var(--success-bg)] text-[var(--success)] border-[var(--success-border)] hover:bg-[var(--success-bg)]">
                         <CheckCircle className="h-3.5 w-3.5" /> {t("staff:staffView.buttonComplete")}
                       </Button>
                     }
@@ -506,14 +517,14 @@ const StaffView = () => {
 
             {/* Waiting queue */}
             <div ref={waitingRef} className="space-y-2 scroll-mt-20">
-              <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5 px-0.5">
+              <h3 className="font-display text-[14px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 px-0.5 tracking-[-0.015em]">
                 <Users className="h-4 w-4" /> {t("staff:staffView.sectionQueue")} ({waiting.length})
               </h3>
               {loading ? (
-                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-xl" />)}</div>
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-2xl" />)}</div>
               ) : waiting.length === 0 ? (
                 <div className="text-center py-12 space-y-2">
-                  <Users className="h-10 w-10 text-[var(--text-tertiary)] mx-auto" />
+                  <Users className="h-10 w-10 text-[var(--text-secondary)] mx-auto" />
                   <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoClients")}</p>
                 </div>
               ) : (
@@ -523,12 +534,12 @@ const StaffView = () => {
                     ticket={ticket}
                     actions={
                       <>
-                        <Button size="sm" onClick={() => updateTicketStatus(ticket.id, "called")} className="h-9 gap-1">
+                        <Button size="sm" variant="signal" onClick={() => updateTicketStatus(ticket.id, "called")} className="h-11 gap-1">
                           <Phone className="h-3.5 w-3.5" /> {t("staff:staffView.buttonCall")}
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive">
+                            <Button size="sm" variant="ghost" className="h-11 w-11 p-0 text-[var(--error)]">
                               <XCircle className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
@@ -541,7 +552,7 @@ const StaffView = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>{t("staff:staffView.dialogNo")}</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "cancelled")} className="bg-destructive text-destructive-foreground">
+                              <AlertDialogAction onClick={() => updateTicketStatus(ticket.id, "cancelled")} className="bg-[var(--error)] text-white">
                                 {t("staff:staffView.dialogYesCancel")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -558,33 +569,33 @@ const StaffView = () => {
           <>
             {/* Bookings stats */}
             <div className="grid grid-cols-3 gap-2.5">
-              <div className="flex flex-col items-center justify-center rounded-xl bg-amber-50 border border-amber-200 text-amber-700 p-3 min-h-[72px]">
+              <div className="flex flex-col items-center justify-center rounded-2xl border bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)] border-[var(--badge-neutral-border)] p-3 min-h-[72px]">
                 <Clock className="h-5 w-5 mb-0.5 opacity-70" />
-                <span className="text-xl font-bold leading-tight">{bookings.filter((b) => b.status === "pending").length}</span>
-                <span className="text-[10px] font-medium opacity-80">{t("staff:staffView.statPending")}</span>
+                <span className="font-mono text-xl font-medium leading-tight">{bookings.filter((b) => b.status === "pending").length}</span>
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.05em] opacity-80">{t("staff:staffView.statPending")}</span>
               </div>
-              <div className="flex flex-col items-center justify-center rounded-xl bg-blue-50 border border-blue-200 text-blue-700 p-3 min-h-[72px]">
+              <div className="flex flex-col items-center justify-center rounded-2xl border bg-[var(--badge-blue-bg)] text-[var(--badge-blue-fg)] border-[var(--badge-blue-border)] p-3 min-h-[72px]">
                 <UserCheck className="h-5 w-5 mb-0.5 opacity-70" />
-                <span className="text-xl font-bold leading-tight">{bookings.filter((b) => b.status === "confirmed").length}</span>
-                <span className="text-[10px] font-medium opacity-80">{t("staff:staffView.statConfirmed")}</span>
+                <span className="font-mono text-xl font-medium leading-tight">{bookings.filter((b) => b.status === "confirmed").length}</span>
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.05em] opacity-80">{t("staff:staffView.statConfirmed")}</span>
               </div>
-              <div className="flex flex-col items-center justify-center rounded-xl bg-green-50 border border-green-200 text-green-700 p-3 min-h-[72px]">
+              <div className="flex flex-col items-center justify-center rounded-2xl border bg-[var(--badge-signal-bg)] text-[var(--badge-signal-fg)] border-[var(--badge-signal-border)] p-3 min-h-[72px]">
                 <Play className="h-5 w-5 mb-0.5 opacity-70" />
-                <span className="text-xl font-bold leading-tight">{bookings.filter((b) => b.status === "arrived" || b.status === "in_service").length}</span>
-                <span className="text-[10px] font-medium opacity-80">{t("staff:staffView.statInProgress")}</span>
+                <span className="font-mono text-xl font-medium leading-tight">{bookings.filter((b) => b.status === "arrived" || b.status === "in_service").length}</span>
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.05em] opacity-80">{t("staff:staffView.statInProgress")}</span>
               </div>
             </div>
 
             {/* Bookings list */}
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5 px-0.5">
+              <h3 className="font-display text-[14px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 px-0.5 tracking-[-0.015em]">
                 <CalendarDays className="h-4 w-4" /> {t("staff:staffView.sectionTodayBookings")}
               </h3>
               {loading ? (
-                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-xl" />)}</div>
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-2xl" />)}</div>
               ) : bookings.length === 0 ? (
                 <div className="text-center py-12 space-y-2">
-                  <CalendarDays className="h-10 w-10 text-[var(--text-tertiary)] mx-auto" />
+                  <CalendarDays className="h-10 w-10 text-[var(--text-secondary)] mx-auto" />
                   <p className="text-sm text-[var(--text-secondary)]">{t("staff:staffView.emptyNoBookings")}</p>
                 </div>
               ) : (

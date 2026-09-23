@@ -1,12 +1,22 @@
 <!doctype html>
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Leenya — Gérez votre file. Gagnez du temps.</title>
     <meta name="description" content="Leenya — Plateforme de réservation et gestion de file d&#39;attente pour les entreprises algériennes. Gérez votre file. Gagnez du temps.">
     <meta name="author" content="Leenya" />
-    <meta name="theme-color" content="#6828e8" />
+    <meta name="theme-color" content="#F0F4FF" />
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("leenya-theme") === "dark") {
+            document.documentElement.classList.add("dark");
+            document.documentElement.setAttribute("data-theme", "dark");
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Leenya" />
@@ -20,7 +30,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
 
     
     <meta property="og:type" content="website" />

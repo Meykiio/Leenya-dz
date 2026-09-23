@@ -19,9 +19,9 @@ export default function QueueServingList({ tickets, onComplete, onNoShow, onSend
   const { t } = useTranslation();
   if (tickets.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--border-default)] py-10 text-center">
-        <Users2 className="h-6 w-6 text-[var(--text-tertiary)] mx-auto mb-2" />
-        <p className="text-sm text-[var(--text-tertiary)]">{t("dashboard:queue.emptyInService")}</p>
+      <div className="rounded-2xl border border-[var(--border-default)] py-10 text-center">
+        <Users2 className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-2" />
+        <p className="text-sm text-[var(--text-secondary)]">{t("dashboard:queue.emptyInService")}</p>
       </div>
     );
   }
@@ -29,12 +29,12 @@ export default function QueueServingList({ tickets, onComplete, onNoShow, onSend
   return (
     <div className="space-y-2">
       {tickets.map((ticket) => (
-        <div key={ticket.id} className="border-l-[3px] border-l-[var(--accent)] bg-[var(--bg-subtle)] rounded-r-lg p-4">
+        <div key={ticket.id} className="border-s-[2px] border-s-[var(--signal)] bg-[var(--signal-dim)] rounded-2xl p-4">
           <div className="flex items-start justify-between">
             <div>
-              <span className="font-mono text-xl font-bold text-[var(--text-primary)]">{ticket.ticket_label}</span>
+              <span className="font-mono text-xl font-medium tracking-[-0.02em] text-[var(--text-primary)]">{ticket.ticket_label}</span>
               <p className="text-[13px] font-medium text-[var(--text-primary)] mt-1">{ticket.client_name}</p>
-              <p className="text-xs text-[var(--text-tertiary)]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {ticket.services?.name || "—"} · {t("dashboard:queue.inServiceSince")} {ticket.called_at ? timeAgo(ticket.called_at) : "—"}
               </p>
             </div>

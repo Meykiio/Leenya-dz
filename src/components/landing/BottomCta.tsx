@@ -20,16 +20,18 @@ export default function BottomCta() {
 
   return (
     <div
-      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 rtl:translate-x-1/2 ${
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-slow [transition-timing-function:cubic-bezier(.22,1,.36,1)] rtl:translate-x-1/2 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       }`}
     >
-      <div className="flex items-center gap-3 bg-[#1C1C1A] border border-white/[0.1] rounded-full px-4 py-2 shadow-lg shadow-black/20 backdrop-blur-md">
-        <span className="text-white text-sm font-semibold tracking-tight">Leenya</span>
-        <span className="text-white/20 text-sm">·</span>
+      <div className="flex items-center gap-3 bg-card border border-[var(--border-default)] rounded-full px-4 py-2 shadow-lg">
+        <span className="font-display text-foreground text-sm font-extrabold tracking-[-0.02em]">
+          Leenya<span className="text-[var(--signal)]">.</span>
+        </span>
+        <span className="text-[var(--text-secondary)] text-sm">·</span>
         <Link
           to={session ? "/dashboard" : "/login"}
-          className="bg-[#7b39fc] hover:bg-[#6828e8] rounded-full px-4 py-1.5 text-white text-[13px] font-semibold transition-all duration-200 flex items-center gap-1"
+          className="bg-primary hover:opacity-90 rounded-full px-4 py-1.5 text-primary-foreground text-[13px] font-semibold transition-all duration-150 flex items-center gap-1"
         >
           <span className="sm:hidden">
             <ArrowRight className="h-4 w-4" />

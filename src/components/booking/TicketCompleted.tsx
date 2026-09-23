@@ -10,7 +10,7 @@ export default function TicketCompleted() {
       >
         <span style={{ color: 'var(--success)' }} className="text-xl">&#x2713;</span>
       </div>
-      <h2 className="text-[20px] font-bold text-foreground">{t("booking:ticketCompleted.title")}</h2>
+      <h2 className="font-display text-[20px] font-bold text-foreground tracking-[-0.02em]">{t("booking:ticketCompleted.title")}</h2>
       <p className="text-[13px] text-muted-foreground">{t("booking:ticketCompleted.subtitle")}</p>
     </div>
   );

@@ -18,13 +18,13 @@ import NewBookingSlideOver from "./bookings/NewBookingSlideOver";
 import PendingApprovals from "./bookings/PendingApprovals";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-[var(--warning-bg)] text-[var(--warning)] border-[var(--warning-border)]",
-  confirmed: "bg-[var(--info-bg)] text-[var(--info)] border-[var(--info-border)]",
-  arrived: "bg-[var(--success-bg)] text-[var(--success)] border-[var(--success-border)]",
-  in_service: "bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent-muted)]",
-  completed: "bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border-default)]",
-  cancelled: "bg-[var(--error-bg)] text-[var(--error)] border-[var(--error-border)]",
-  no_show: "bg-[var(--bg-muted)] text-[var(--text-tertiary)] border-[var(--border-default)]",
+  pending: "bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)] border-[var(--badge-neutral-border)]",
+  confirmed: "bg-[var(--badge-blue-bg)] text-[var(--badge-blue-fg)] border-[var(--badge-blue-border)]",
+  arrived: "bg-[var(--badge-signal-bg)] text-[var(--badge-signal-fg)] border-[var(--badge-signal-border)]",
+  in_service: "bg-[var(--badge-signal-bg)] text-[var(--badge-signal-fg)] border-[var(--badge-signal-border)]",
+  completed: "bg-[var(--badge-positive-bg)] text-[var(--badge-positive-fg)] border-[var(--badge-positive-border)]",
+  cancelled: "bg-[var(--badge-error-bg)] text-[var(--badge-error-fg)] border-[var(--badge-error-border)]",
+  no_show: "bg-[var(--badge-error-bg)] text-[var(--badge-error-fg)] border-[var(--badge-error-border)]",
 };
 
 /**
@@ -316,8 +316,8 @@ const DashboardBookings = () => {
 
   return (
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("dashboard:bookings.title")}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-default)] pb-2.5">
+          <h2 className="font-display text-lg font-bold text-[var(--text-primary)] tracking-[-0.015em]">{t("dashboard:bookings.title")}</h2>
           <Button size="sm" onClick={() => setShowNewBooking(true)} className="gap-1.5 text-xs">
             <Plus className="h-3.5 w-3.5" /> {t("dashboard:bookings.new")}
           </Button>
@@ -346,16 +346,16 @@ const DashboardBookings = () => {
 
         {initialLoading ? (
           <div className="space-y-2">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full rounded-2xl" />)}
           </div>
         ) : (
-          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-base)] overflow-hidden">
-            <div className="hidden sm:grid sm:grid-cols-[80px_1fr_1fr_120px_minmax(300px,1fr)] gap-3 px-4 py-2.5 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)]">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.time")}</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.client")}</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.service")}</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.status")}</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{t("dashboard:bookings.actions")}</span>
+          <div className="overflow-hidden">
+            <div className="hidden sm:grid sm:grid-cols-[80px_1fr_1fr_120px_minmax(300px,1fr)] gap-3 px-4 py-2.5 border-b border-[var(--border-default)]">
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)]">{t("dashboard:bookings.time")}</span>
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)]">{t("dashboard:bookings.client")}</span>
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)]">{t("dashboard:bookings.service")}</span>
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)]">{t("dashboard:bookings.status")}</span>
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)]">{t("dashboard:bookings.actions")}</span>
             </div>
 
             {filtered.length === 0 ? (

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { useTranslation } from "react-i18next";
 
@@ -43,58 +42,55 @@ const PricingSection = () => {
   const { t } = useTranslation();
 
   return (
-    <section id="pricing" className="py-28 px-6 bg-background relative overflow-hidden">
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/20 to-transparent" />
+    <section id="pricing" className="py-20 px-6 bg-[var(--bg-dim)] relative overflow-hidden border-t border-[var(--outline)]">
       <div className="max-w-4xl mx-auto relative z-10">
         <Reveal>
           <div className="text-center max-w-xl mx-auto mb-12">
-            <h2 className="text-[34px] font-bold text-foreground tracking-tight">
+            <h2 className="font-display text-[28px] font-extrabold text-foreground tracking-[-0.02em]">
               {t("landing:pricing.title")}
             </h2>
-            <p className="text-base text-muted-foreground mt-2">
+            <p className="text-[15px] text-[var(--text-secondary)] mt-2">
               {t("landing:pricing.subtitle")}
             </p>
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start max-w-2xl mx-auto">
           {plans.map((plan, index) => (
             <Reveal key={plan.nameKey} delay={150 + index * 100}>
               <div
-                className={`relative rounded-xl p-7 border transition-all duration-400 card-hover ${
+                className={`relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-med hover:-translate-y-[3px] hover:shadow-md ${
                   plan.highlighted
-                    ? "border-[var(--accent)] z-10 md:px-8 md:py-9 bg-background hover:shadow-xl hover:shadow-[var(--accent)]/5"
-                    : "border-border hover:border-[var(--accent)]/30 hover:shadow-lg hover:shadow-[var(--accent)]/5"
+                    ? "border-primary z-10"
+                    : "border-[var(--border-default)]"
                 }`}
               >
                 {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-semibold px-3 py-0.5 rounded-full border border-[var(--accent)]/30 text-[var(--accent)] bg-background shadow-sm shadow-[var(--accent)]/10 rtl:translate-x-1/2">
+                  <span className="inline-flex items-center gap-1 self-start rounded-full bg-primary px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.04em] text-primary-foreground mb-4">
                     {t("landing:pricing.recommended")}
                   </span>
                 )}
 
-                <p className="text-[13px] font-medium text-muted-foreground">
+                <p className="font-display text-[16px] font-bold text-primary">
                   {t("landing:" + plan.nameKey)}
                 </p>
 
-                <div className="mt-3 mb-5">
-                  <span className="font-mono text-[32px] font-bold text-foreground" dir="ltr">
+                <div className="mt-1.5 mb-5 flex items-baseline gap-1.5">
+                  <span className="font-mono text-[28px] font-medium text-foreground tracking-[-0.02em]" dir="ltr">
                     {plan.price}
                   </span>
                   {!plan.isFree && (
-                    <span className="text-[13px] text-muted-foreground ms-1">
+                    <span className="text-[13px] text-[var(--text-secondary)]">
                       {t("landing:pricing.perMonth")}
                     </span>
                   )}
                 </div>
 
-                <div className="h-px bg-border mb-5" />
-
-                <ul className="space-y-2.5 mb-7">
+                <ul className="flex-1 mb-7">
                   {plan.featureKeys.map((featureKey) => (
-                    <li key={featureKey} className="flex items-start gap-2">
-                      <Check className="h-3.5 w-3.5 mt-0.5 text-[var(--accent)] shrink-0" />
-                      <span className="text-[13px] text-muted-foreground">
+                    <li key={featureKey} className="flex items-center gap-2 border-b border-[var(--border-default)] py-1.5 last:border-b-0">
+                      <span className="h-[5px] w-[5px] rounded-full bg-[var(--success)] shrink-0" />
+                      <span className="text-[13px] text-[var(--text-secondary)]">
                         {t("landing:" + featureKey)}
                       </span>
                     </li>
@@ -104,14 +100,12 @@ const PricingSection = () => {
                 <Button
                   asChild
                   variant={plan.ctaVariant}
-                  className={`w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                    plan.highlighted ? "shadow-md shadow-[var(--accent)]/20" : ""
-                  }`}
+                  className="w-full h-11"
                 >
                   <Link to="/login">{t("landing:" + plan.ctaKey)}</Link>
                 </Button>
                 {plan.isFree && (
-                  <p className="text-[10px] text-muted-foreground/60 text-center mt-2">
+                  <p className="text-[10px] text-[var(--text-secondary)] text-center mt-2">
                     {t("landing:pricing.noCard")}
                   </p>
                 )}

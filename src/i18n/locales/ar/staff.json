@@ -35,6 +35,7 @@
   "staffView.emptyNoClients": "لا يوجد عملاء في الانتظار",
   "staffView.emptyNoBookings": "لا توجد حجوزات اليوم",
   "staffView.serviceDefault": "خدمة",
+  "staffView.onDuty": "في الخدمة",
   "staffView.toast.queueLoadError": "تعذر تحميل طابور الانتظار.",
   "staffView.toast.bookingsLoadError": "تعذر تحميل الحجوزات.",
   "staffView.toast.updateError": "تعذر التحديث.",
@@ -49,5 +50,6 @@
   "staffView.statusInProgress": "قيد التنفيذ",
   "staffView.since": "منذ",
   "staffView.timeJustNow": "منذ لحظات",
-  "staffView.timeMin": "{{mins}} د"
+  "staffView.timeMin": "{{mins}} د",
+  "staffView.sectionInProgress": "قيد الخدمة"
 }

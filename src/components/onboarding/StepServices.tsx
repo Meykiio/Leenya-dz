@@ -89,7 +89,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="font-display text-2xl font-bold text-foreground tracking-[-0.02em]">
           {t("auth:onboarding.services.title")}
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -106,8 +106,8 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
             return (
               <div
                 key={s.name}
-                className={`flex items-center justify-between rounded-lg border p-3 ${
-                  added ? "border-primary/30 bg-primary/5" : "border-border bg-card"
+                className={`flex items-center justify-between rounded-[12px] border p-3 ${
+                  added ? "border-primary/30 bg-[var(--accent-light)]" : "border-border bg-card"
                 }`}
               >
                 <div>
@@ -140,7 +140,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
             {services
               .filter((s) => !suggestions.some((sg) => sg.name === s.name))
               .map((s) => (
-                <div key={s.id} className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-primary/30 bg-[var(--accent-light)] p-3">
                   <div>
                     <span className="font-medium text-foreground">{s.name}</span>
                     <span className="text-sm text-muted-foreground ml-2">
@@ -157,7 +157,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
 
         {/* Add custom */}
         {showCustom ? (
-          <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="rounded-[12px] border bg-card p-4 space-y-3">
             <Input placeholder={t("auth:onboarding.services.namePlaceholder")} value={customName} onChange={(e) => setCustomName(e.target.value)} />
             <div className="flex gap-2">
               <Input placeholder={t("auth:onboarding.services.durationPlaceholder")} type="number" value={customDuration} onChange={(e) => setCustomDuration(e.target.value)} />
@@ -183,7 +183,7 @@ const StepServices = ({ businessId, category, slug, onComplete, onBack }: StepSe
         <Button variant="outline" onClick={onBack}>
           ← {t("auth:onboarding.back")}
         </Button>
-        <Button onClick={handleComplete} disabled={services.length === 0 || loading} className="px-8">
+        <Button onClick={handleComplete} disabled={services.length === 0 || loading} className="px-8 h-11">
           {loading ? t("common:buttons.saving") : t("auth:onboarding.finishSetup")}
         </Button>
       </div>

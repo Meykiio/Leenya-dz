@@ -336,13 +336,13 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
     <div className="px-5 py-5 space-y-5">
       {/* Queue paused notice — top of the page */}
       {isPaused && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-4 text-center">
-          <p className="text-[14px] font-semibold text-amber-800">{t("booking:queueFlow.queuePaused")}</p>
+        <div className="rounded-[12px] border border-[var(--warning-border)] bg-[var(--warning-bg)] px-4 py-4 text-center">
+          <p className="text-[14px] font-semibold text-[var(--warning)]">{t("booking:queueFlow.queuePaused")}</p>
         </div>
       )}
 
       {cachedData && (
-        <div className="rounded-md border border-primary/30 bg-primary/5 p-4 space-y-3">
+        <div className="rounded-[12px] border border-primary/30 bg-[var(--accent-light)] p-4 space-y-3">
           <p className="text-[13px] font-medium text-foreground">
             {t("booking:queueFlow.activeTicketBanner", { label: cachedData.ticketLabel ?? "" })}
           </p>
@@ -358,10 +358,10 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
       )}
 
       {/* Live stats */}
-      <div className="rounded-md border border-border p-4 space-y-2">
+      <div className="rounded-[12px] border border-[var(--border-default)] p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${isPaused ? "bg-amber-400" : "bg-primary animate-pulse"}`} />
-          <h3 className="text-[13px] font-semibold text-foreground">{t("booking:queueFlow.liveQueueTitle")}</h3>
+          <span className={`h-2 w-2 rounded-full ${isPaused ? "bg-[var(--warning)]" : "bg-primary animate-pulse"}`} />
+          <h3 className="font-display text-[14px] font-bold text-foreground">{t("booking:queueFlow.liveQueueTitle")}</h3>
         </div>
         <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
           <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {t("booking:queueFlow.waitingCount", { count: waitingCount })}</span>
@@ -392,7 +392,7 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
         <>
           {/* Service selection */}
           <div>
-            <h2 className="text-[15px] font-semibold text-foreground mb-3.5">{t("booking:queueFlow.serviceTitle")}</h2>
+            <h2 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em] mb-3.5">{t("booking:queueFlow.serviceTitle")}</h2>
             <div className="flex flex-col gap-2">
               {services.map((s) => {
                 const isSelected = selectedService?.id === s.id;
@@ -401,10 +401,10 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
                     key={s.id}
                     type="button"
                     onClick={() => setSelectedService(s)}
-                    className={`flex items-center justify-between rounded-md border p-[14px_16px] text-left transition-all ${
+                    className={`flex items-center justify-between rounded-[12px] border p-[14px_16px] text-left transition-all ${
                       isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-foreground/20 hover:bg-muted/50"
+                        ? "border-primary bg-[var(--accent-light)]"
+                        : "border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-muted/50"
                     }`}
                   >
                     <div>
@@ -439,13 +439,13 @@ export default function QueueFlow({ businessId, businessName, services }: Props)
           {/* Join form */}
           {selectedService && (staffMembers.length === 0 || staffConfirmed) && (
             <div className="space-y-3">
-              <h3 className="text-[15px] font-semibold text-foreground">{t("booking:queueFlow.joinTitle")}</h3>
+              <h3 className="font-display text-[16px] font-bold text-foreground tracking-[-0.015em]">{t("booking:queueFlow.joinTitle")}</h3>
               <div>
-                <label htmlFor="queue-name" className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.nameLabel")}</label>
+                <label htmlFor="queue-name" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("booking:queueFlow.nameLabel")}</label>
                 <Input id="queue-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("booking:queueFlow.namePlaceholder")} className="mt-1" />
               </div>
               <div>
-                <label htmlFor="queue-phone" className="text-[13px] font-medium text-foreground">{t("booking:queueFlow.phoneLabel")}</label>
+                <label htmlFor="queue-phone" className="text-[11px] font-semibold uppercase tracking-[0.03em] text-muted-foreground">{t("booking:queueFlow.phoneLabel")}</label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     id="queue-phone"

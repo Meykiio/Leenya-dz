@@ -14,11 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        mono: ['Geist Mono', 'JetBrains Mono', 'ui-monospace', 'monospace'],
-        arabic: ['Cairo', 'sans-serif'],
+        sans: ['Noto Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['Noto Sans', 'system-ui', 'sans-serif'],
+        display: ['Outfit', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'Cascadia Code', 'ui-monospace', 'monospace'],
+        arabic: ['Noto Sans Arabic', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         xs: ['11px', { lineHeight: '1.45', letterSpacing: '0.01em' }],
@@ -75,6 +75,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        signal: "var(--signal)",
+        positive: "var(--success)",
+        warning: "var(--warning)",
+        error: "var(--error)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -89,6 +93,11 @@ export default {
         'md': 'var(--shadow-md)',
         'lg': 'var(--shadow-lg)',
         'dashboard': 'var(--shadow-dashboard)',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        med: '260ms',
+        slow: '480ms',
       },
       keyframes: {
         "accordion-down": {
